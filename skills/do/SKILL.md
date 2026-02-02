@@ -1,6 +1,6 @@
 ---
 name: do
-description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 7-phase workflow (Discovery, Exploration, Clarification, Architecture, Implementation, Review, Summary) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, and develop agents in parallel.
+description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 7-phase workflow (Discovery, Exploration, Clarification, Architecture, Implementation, Review, Summary) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, develop, and frontend-ui-ux-engineer agents in parallel.
 allowed-tools: ["Bash(${SKILL_DIR}/scripts/setup-do.sh:*)"]
 ---
 
@@ -56,6 +56,7 @@ To abort early, set `active: false` in the state file.
 | `code-architect` | Design approaches, file plans, build sequences | `agents/code-architect.md` |
 | `code-reviewer` | Review for bugs, simplicity, conventions | `agents/code-reviewer.md` |
 | `develop` | Implement code, run tests | (uses global config) |
+| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX interactions | (uses global config) |
 
 ## Context Pack Template
 
@@ -69,7 +70,8 @@ To abort early, set `active: false` in the state file.
 - Code-explorer output: <paste or "None">
 - Code-architect output: <paste or "None">
 - Code-reviewer output: <paste or "None">
-- Develop output: <paste or "None">
+- Backend (develop) output: <paste or "None">
+- Frontend (UI/UX) output: <paste or "None">
 - Open questions: <list or "None">
 
 ## Current Task
@@ -200,6 +202,10 @@ workdir: .
 ## Current Task
 Propose minimal-change architecture: reuse existing abstractions, minimize new files.
 Output: file touch list, risks, edge cases.
+Include a `## Task Classification` section:
+- `task_type`: "backend_only" | "frontend_only" | "fullstack"
+- `backend_tasks`: list backend implementation tasks (if any)
+- `frontend_tasks`: list frontend implementation tasks (if any)
 
 ## Acceptance Criteria
 Concrete blueprint; minimal moving parts.
@@ -219,6 +225,10 @@ workdir: .
 ## Current Task
 Propose pragmatic-clean architecture: introduce seams for testability.
 Output: file touch list, testing plan, risks.
+Include a `## Task Classification` section:
+- `task_type`: "backend_only" | "frontend_only" | "fullstack"
+- `backend_tasks`: list backend implementation tasks (if any)
+- `frontend_tasks`: list frontend implementation tasks (if any)
 
 ## Acceptance Criteria
 Implementable blueprint with build sequence and tests.
@@ -229,11 +239,19 @@ Use AskUserQuestion to let user choose approach.
 
 ### Phase 5: Implementation (Approval Required)
 
-**Goal:** Build the feature.
+**Goal:** Build the feature based on Phase 4 task classification.
+
+**Execution Rules (based on Phase 4 `task_type`):**
+- `backend_only`: invoke only `develop` agent
+- `frontend_only`: invoke only `frontend-ui-ux-engineer` agent
+- `fullstack`: invoke both agents in parallel
+- Missing `task_type`: default to `develop` agent only
 
 **Actions:**
 1. Use AskUserQuestion: "Approve starting implementation?" (Approve / Not yet)
-2. If approved, invoke `develop`:
+2. If approved, select the appropriate execution pattern based on `task_type`:
+
+**Example: backend_only (develop only)**
 
 ```bash
 codeagent-wrapper --agent develop - . <<'EOF'
@@ -245,13 +263,81 @@ codeagent-wrapper --agent develop - . <<'EOF'
 - Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
 
 ## Current Task
-Implement with minimal change set following chosen architecture.
+Implement backend changes following chosen architecture.
 - Follow Phase 2 patterns
 - Add/adjust tests per Phase 4 plan
 - Run narrowest relevant tests
 
 ## Acceptance Criteria
-Feature works end-to-end; tests pass; diff is minimal.
+Backend functionality works; tests pass; diff is minimal.
+EOF
+```
+
+**Example: frontend_only (frontend-ui-ux-engineer only)**
+
+```bash
+codeagent-wrapper --agent frontend-ui-ux-engineer - . <<'EOF'
+## Original User Request
+/do <request>
+
+## Context Pack
+- Code-explorer output: <ALL Phase 2 outputs>
+- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+
+## Current Task
+Implement frontend changes following chosen architecture.
+- Follow Phase 2 patterns
+- Focus on UI/UX correctness and accessibility
+- Run narrowest relevant frontend tests
+
+## Acceptance Criteria
+Frontend functionality complete; UI/UX is consistent; tests pass.
+EOF
+```
+
+**Example: fullstack (parallel develop + frontend-ui-ux-engineer)**
+
+```bash
+codeagent-wrapper --parallel <<'EOF'
+---TASK---
+id: p5_backend
+agent: develop
+workdir: .
+---CONTENT---
+## Original User Request
+/do <request>
+
+## Context Pack
+- Code-explorer output: <ALL Phase 2 outputs>
+- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+
+## Current Task
+Implement backend logic and API contracts, following Phase 4 architecture.
+- Output interface definitions/DTOs/routes/service layer
+- Add/adjust backend tests per Phase 4 plan
+
+## Acceptance Criteria
+Backend functionality works; tests pass; API contract is clear.
+
+---TASK---
+id: p5_frontend
+agent: frontend-ui-ux-engineer
+workdir: .
+---CONTENT---
+## Original User Request
+/do <request>
+
+## Context Pack
+- Code-explorer output: <ALL Phase 2 outputs>
+- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+
+## Current Task
+Implement frontend UI/UX and interactions, following Phase 4 architecture.
+- Align component structure/state management/interaction details
+- Add/adjust frontend tests per Phase 4 plan
+
+## Acceptance Criteria
+Frontend functionality complete; interactions match design; tests pass.
 EOF
 ```
 
@@ -273,7 +359,8 @@ workdir: .
 
 ## Context Pack
 - Code-architect output: <Phase 4 blueprint>
-- Develop output: <Phase 5 output>
+- Backend (develop) output: <Phase 5 backend output>
+- Frontend (UI/UX) output: <Phase 5 frontend output>
 
 ## Current Task
 Review for correctness, edge cases, failure modes. Assume adversarial inputs.
@@ -291,7 +378,8 @@ workdir: .
 
 ## Context Pack
 - Code-architect output: <Phase 4 blueprint>
-- Develop output: <Phase 5 output>
+- Backend (develop) output: <Phase 5 backend output>
+- Frontend (UI/UX) output: <Phase 5 frontend output>
 
 ## Current Task
 Review for KISS: remove bloat, collapse needless abstractions.
@@ -317,7 +405,8 @@ codeagent-wrapper --agent code-reviewer - . <<'EOF'
 ## Context Pack
 - Code-architect output: <Phase 4 blueprint>
 - Code-reviewer output: <Phase 6 outcomes>
-- Develop output: <Phase 5 output + fixes>
+- Backend (develop) output: <Phase 5 backend output + fixes>
+- Frontend (UI/UX) output: <Phase 5 frontend output + fixes>
 
 ## Current Task
 Write completion summary:

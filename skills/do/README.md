@@ -32,7 +32,7 @@ Examples:
 | 2 | Exploration | Map codebase patterns | 2-3 parallel code-explorer tasks |
 | 3 | Clarification | Resolve ambiguities | **MANDATORY** - must answer before proceeding |
 | 4 | Architecture | Design implementation | 2 parallel code-architect approaches |
-| 5 | Implementation | Build the feature | **Requires approval** - develop agent |
+| 5 | Implementation | Build the feature | **Requires approval** - develop + frontend-ui-ux-engineer parallel |
 | 6 | Review | Catch defects | 2-3 parallel code-reviewer tasks |
 | 7 | Summary | Document results | code-reviewer summary |
 
@@ -44,6 +44,7 @@ Examples:
 | `code-architect` | Design approaches, file planning | `agents/code-architect.md` |
 | `code-reviewer` | Code review, simplification | `agents/code-reviewer.md` |
 | `develop` | Implement code, run tests | global config |
+| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX interactions | global config |
 
 To customize agents, create same-named files in `~/.codeagent/agents/` to override.
 
@@ -68,7 +69,8 @@ To customize agents, create same-named files in `~/.codeagent/agents/` to overri
 - Code-explorer output: <paste or "None">
 - Code-architect output: <paste or "None">
 - Code-reviewer output: <paste or "None">
-- Develop output: <paste or "None">
+- Backend (develop) output: <paste or "None">
+- Frontend (UI/UX) output: <paste or "None">
 - Open questions: <list or "None">
 
 ## Current Task
