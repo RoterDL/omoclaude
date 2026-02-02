@@ -165,7 +165,10 @@ def _create_hook_marker(module_name: str) -> str:
 def _replace_hook_variables(obj: Any, plugin_root: str) -> Any:
     """Recursively replace ${CLAUDE_PLUGIN_ROOT} in hook config."""
     if isinstance(obj, str):
-        return obj.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
+        value = obj.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
+        if sys.platform == "win32" and value.endswith(".sh"):
+            value = value[:-3] + ".bat"
+        return value
     elif isinstance(obj, dict):
         return {k: _replace_hook_variables(v, plugin_root) for k, v in obj.items()}
     elif isinstance(obj, list):
