@@ -166,8 +166,11 @@ def _replace_hook_variables(obj: Any, plugin_root: str) -> Any:
     """Recursively replace ${CLAUDE_PLUGIN_ROOT} in hook config."""
     if isinstance(obj, str):
         value = obj.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
-        if sys.platform == "win32" and value.endswith(".sh"):
-            value = value[:-3] + ".bat"
+        if sys.platform == "win32":
+            if value.endswith(".sh"):
+                value = value[:-3] + ".bat"
+            # Normalize path separators on Windows
+            value = value.replace("/", "\\")
         return value
     elif isinstance(obj, dict):
         return {k: _replace_hook_variables(v, plugin_root) for k, v in obj.items()}
