@@ -84,13 +84,13 @@ To customize agents, create same-named files in `~/.codeagent/agents/` to overri
 
 When triggered via `/do <task>`, initializes `.claude/do.{task_id}.local.md` with:
 - `active: true`
-- `current_phase: 1`
+- `current_phase: "phase_1"`
 - `max_phases: 7`
 - `completion_promise: "<promise>DO_COMPLETE</promise>"`
 
 After each phase, update frontmatter:
 ```yaml
-current_phase: <next phase number>
+current_phase: "phase_<next phase number>"
 phase_name: "<next phase name>"
 ```
 

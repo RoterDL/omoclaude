@@ -95,7 +95,7 @@ set "DO_PHASE_NAME=%phase_name%"
 set "DO_PROMPT=%prompt%"
 set "DO_STATE_FILE=%state_file%"
 
-powershell -NoProfile -Command "$sf=$env:DO_STATE_FILE; $max=[int]$env:DO_MAX_PHASES; $phase=$env:DO_PHASE_NAME; $promise=$env:DO_COMPLETION_PROMISE; $prompt=$env:DO_PROMPT; $nl=[Environment]::NewLine; $q=[char]34; $lines=@('---','active: true','current_phase: 1',('phase_name: ' + $q + $phase + $q),('max_phases: ' + $max),('completion_promise: ' + $q + $promise + $q),'---','','# do loop state','','## Prompt',$prompt,'','## Notes','- Update frontmatter current_phase/phase_name as you progress','- When complete, include the frontmatter completion_promise in your final output'); $content=($lines -join $nl) + $nl; $enc=New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText($sf, $content, $enc);" >nul
+powershell -NoProfile -Command "$sf=$env:DO_STATE_FILE; $max=[int]$env:DO_MAX_PHASES; $phase=$env:DO_PHASE_NAME; $promise=$env:DO_COMPLETION_PROMISE; $prompt=$env:DO_PROMPT; $nl=[Environment]::NewLine; $q=[char]34; $lines=@('---','active: true',('current_phase: ' + $q + 'phase_1' + $q),('phase_name: ' + $q + $phase + $q),('max_phases: ' + $max),('completion_promise: ' + $q + $promise + $q),'---','','# do loop state','','## Prompt',$prompt,'','## Notes','- Update frontmatter current_phase/phase_name as you progress','- When complete, include the frontmatter completion_promise in your final output'); $content=($lines -join $nl) + $nl; $enc=New-Object System.Text.UTF8Encoding $false; [System.IO.File]::WriteAllText($sf, $content, $enc);" >nul
 
 if errorlevel 1 (
 	call :die "Failed to write state file: %state_file%"

@@ -92,7 +92,7 @@ phase_name="$(phase_name_for 1)"
 cat > "$state_file" << EOF
 ---
 active: true
-current_phase: 1
+current_phase: "phase_1"
 phase_name: "$phase_name"
 max_phases: $max_phases
 completion_promise: "$completion_promise"

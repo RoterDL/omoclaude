@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh"
+            "command": "[ \"$OS\" = \"Windows_NT\" ] && cmd.exe /c \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.bat\" || \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh\""
           }
         ]
       }

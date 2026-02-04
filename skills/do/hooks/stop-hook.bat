@@ -116,10 +116,13 @@ if "!is_active!"=="0" goto check_done
 
 set "current_phase=1"
 set "tmp=!current_phase_raw!"
-set "non_digit="
 if defined tmp (
-	for /f "delims=0123456789" %%A in ("!tmp!") do set "non_digit=1"
-	if not defined non_digit set "current_phase=!tmp!"
+	if /i "!tmp:~0,6!"=="phase_" (
+		set "num=!tmp:~6!"
+		set "non_digit="
+		for /f "delims=0123456789" %%A in ("!num!") do set "non_digit=1"
+		if not defined non_digit if defined num set "current_phase=!num!"
+	)
 )
 
 set "max_phases=7"

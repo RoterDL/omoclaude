@@ -1,7 +1,7 @@
 ---
 name: do
 description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 7-phase workflow (Discovery, Exploration, Clarification, Architecture, Implementation, Review, Summary) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, develop, and frontend-ui-ux-engineer agents in parallel.
-allowed-tools: ["Bash(${SKILL_DIR}/scripts/setup-do.sh:*)"]
+allowed-tools: ["Bash(${SKILL_DIR}/scripts/setup-do.sh:*)", "Bash(${SKILL_DIR}/scripts/setup-do.bat:*)"]
 ---
 
 # do - Feature Development Orchestrator
@@ -10,15 +10,14 @@ An orchestrator for systematic feature development. Invoke agents via `codeagent
 
 ## Loop Initialization (REQUIRED)
 
-When triggered via `/do <task>`, **first** initialize the loop state:
+When triggered via `/do <task>`, **first** initialize the loop state. Check the `Platform:` field in the environment info to determine which script to use:
 
-```bash
-"${SKILL_DIR}/scripts/setup-do.sh" "<task description>"
-```
+- **Windows (Platform: win32):** `"${SKILL_DIR}/scripts/setup-do.bat" "<task description>"`
+- **Linux/macOS:** `"${SKILL_DIR}/scripts/setup-do.sh" "<task description>"`
 
 This creates `.claude/do.{task_id}.local.md` with:
 - `active: true`
-- `current_phase: 1`
+- `current_phase: "phase_1"`
 - `max_phases: 7`
 - `completion_promise: "<promise>DO_COMPLETE</promise>"`
 
@@ -26,7 +25,7 @@ This creates `.claude/do.{task_id}.local.md` with:
 
 After each phase, update `.claude/do.{task_id}.local.md` frontmatter:
 ```yaml
-current_phase: <next phase number>
+current_phase: "phase_<next phase number>"
 phase_name: "<next phase name>"
 ```
 

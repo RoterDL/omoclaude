@@ -86,8 +86,8 @@ check_state_file() {
 	completion_promise="$(frontmatter_get "$state_file" completion_promise || true)"
 
 	local current_phase=1
-	if [[ "${current_phase_raw:-}" =~ ^[0-9]+$ ]]; then
-		current_phase="$current_phase_raw"
+	if [[ "${current_phase_raw:-}" =~ ^phase_([0-9]+)$ ]]; then
+		current_phase="${BASH_REMATCH[1]}"
 	fi
 
 	local max_phases=7
