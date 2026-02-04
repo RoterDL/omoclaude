@@ -24,6 +24,9 @@ type Config struct {
 	SkipPermissions    bool
 	Yolo               bool
 	MaxParallelWorkers int
+	AllowedTools       []string
+	DisallowedTools    []string
+	Worktree           bool // Execute in a new git worktree
 }
 
 // EnvFlagEnabled returns true when the environment variable exists and is not

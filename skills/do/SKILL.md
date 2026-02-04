@@ -1,7 +1,7 @@
 ---
 name: do
-description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 7-phase workflow (Discovery, Exploration, Clarification, Architecture, Implementation, Review, Summary) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, develop, and frontend-ui-ux-engineer agents in parallel.
-allowed-tools: ["Bash(${SKILL_DIR}/scripts/setup-do.sh:*)", "Bash(${SKILL_DIR}/scripts/setup-do.bat:*)"]
+description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 5-phase workflow (Understand, Clarify, Design, Implement, Complete) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, develop, and frontend-ui-ux-engineer agents in parallel.
+allowed-tools: ["Bash(${SKILL_DIR}/scripts/setup-do.py:*)"]
 ---
 
 # do - Feature Development Orchestrator
@@ -10,26 +10,67 @@ An orchestrator for systematic feature development. Invoke agents via `codeagent
 
 ## Loop Initialization (REQUIRED)
 
-When triggered via `/do <task>`, **first** initialize the loop state. Check the `Platform:` field in the environment info to determine which script to use:
+When triggered via `/do <task>`, follow these steps:
 
-- **Windows (Platform: win32):** `"${SKILL_DIR}/scripts/setup-do.bat" "<task description>"`
-- **Linux/macOS:** `"${SKILL_DIR}/scripts/setup-do.sh" "<task description>"`
+### Step 1: Ask about worktree mode
+
+Use AskUserQuestion to ask:
+
+```
+Develop in a separate worktree? (Isolates changes from main branch)
+- Yes (Recommended for larger changes)
+- No (Work directly in current directory)
+```
+
+### Step 2: Initialize state
+
+```bash
+# If worktree mode selected:
+python3 "${SKILL_DIR}/scripts/setup-do.py" --worktree "<task description>"
+
+# If no worktree:
+python3 "${SKILL_DIR}/scripts/setup-do.py" "<task description>"
+```
 
 This creates `.claude/do.{task_id}.local.md` with:
 - `active: true`
-- `current_phase: "phase_1"`
-- `max_phases: 7`
+- `current_phase: 1`
+- `max_phases: 5`
 - `completion_promise: "<promise>DO_COMPLETE</promise>"`
+- `use_worktree: true/false`
+
+## Worktree Mode
+
+When `use_worktree: true` in state file, ALL `codeagent-wrapper` calls that modify code MUST include `--worktree`:
+
+```bash
+# With worktree mode enabled
+codeagent-wrapper --worktree --agent develop - . <<'EOF'
+...
+EOF
+
+# Parallel tasks with worktree
+codeagent-wrapper --worktree --parallel <<'EOF'
+---TASK---
+id: task1
+agent: develop
+workdir: .
+---CONTENT---
+...
+EOF
+```
+
+The `--worktree` flag tells codeagent-wrapper to create/use a worktree internally. Read-only agents (code-explorer, code-architect, code-reviewer) do NOT need `--worktree`.
 
 ## Loop State Management
 
 After each phase, update `.claude/do.{task_id}.local.md` frontmatter:
 ```yaml
-current_phase: "phase_<next phase number>"
+current_phase: <next phase number>
 phase_name: "<next phase name>"
 ```
 
-When all 7 phases complete, output the completion signal:
+When all 5 phases complete, output the completion signal:
 ```
 <promise>DO_COMPLETE</promise>
 ```
@@ -39,23 +80,36 @@ To abort early, set `active: false` in the state file.
 ## Hard Constraints
 
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
-2. **Phase 3 (Clarification) is mandatory.** Do not proceed until questions are answered.
-3. **Phase 5 (Implementation) requires explicit approval.** Stop after Phase 4 if not approved.
-4. **Pass complete context forward.** Every agent invocation includes the Context Pack.
-5. **Parallel-first.** Run independent tasks via `codeagent-wrapper --parallel`.
-6. **Update state after each phase.** Keep `.claude/do.{task_id}.local.md` current.
-7. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes (e.g. `xhigh`) can take a long time; stay in the orchestrator role and wait for agents to complete.
-8. **Timeouts are not an escape hatch.** If a `codeagent-wrapper` invocation times out/errors, retry `codeagent-wrapper` (split/narrow the task if needed); never switch to direct implementation.
+2. **Pass complete context forward.** Every agent invocation includes the Context Pack.
+3. **Parallel-first.** Run independent tasks via `codeagent-wrapper --parallel`.
+4. **Update state after each phase.** Keep `.claude/do.{task_id}.local.md` current.
+5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; stay in the orchestrator role and wait for agents to complete.
+6. **Timeouts are not an escape hatch.** If a `codeagent-wrapper` invocation times out/errors, retry (split/narrow the task if needed); never switch to direct implementation.
+7. **Respect worktree setting.** If `use_worktree: true`, always pass `--worktree` to develop/frontend agent calls.
 
 ## Agents
 
-| Agent | Purpose | Prompt |
-|-------|---------|--------|
-| `code-explorer` | Trace code, map architecture, find patterns | `agents/code-explorer.md` |
-| `code-architect` | Design approaches, file plans, build sequences | `agents/code-architect.md` |
-| `code-reviewer` | Review for bugs, simplicity, conventions | `agents/code-reviewer.md` |
-| `develop` | Implement code, run tests | (uses global config) |
-| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX interactions | (uses global config) |
+| Agent | Purpose | Needs --worktree |
+|-------|---------|------------------|
+| `code-explorer` | Trace code, map architecture, find patterns | No (read-only) |
+| `code-architect` | Design approaches, file plans, build sequences | No (read-only) |
+| `code-reviewer` | Review for bugs, simplicity, conventions | No (read-only) |
+| `develop` | Implement backend code, run tests | **Yes** (if worktree enabled) |
+| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX interactions | **Yes** (if worktree enabled) |
+
+## Issue Severity Definitions
+
+**Blocking issues** (require user input):
+- Impacts core functionality or correctness
+- Security vulnerabilities
+- Architectural conflicts with existing patterns
+- Ambiguous requirements with multiple valid interpretations
+
+**Minor issues** (auto-fix without asking):
+- Code style inconsistencies
+- Naming improvements
+- Missing documentation
+- Non-critical test coverage gaps
 
 ## Context Pack Template
 
@@ -64,7 +118,7 @@ To abort early, set `active: false` in the state file.
 <verbatim request>
 
 ## Context Pack
-- Phase: <1-7 name>
+- Phase: <1-5 name>
 - Decisions: <requirements/constraints/choices>
 - Code-explorer output: <paste or "None">
 - Code-architect output: <paste or "None">
@@ -80,18 +134,21 @@ To abort early, set `active: false` in the state file.
 <checkable outputs>
 ```
 
-## 7-Phase Workflow
+## 5-Phase Workflow
 
-### Phase 1: Discovery
+### Phase 1: Understand (Parallel, No Interaction)
 
-**Goal:** Understand what to build.
+**Goal:** Understand requirements and map codebase simultaneously.
 
-**Actions:**
-1. Use AskUserQuestion for: user-visible behavior, scope, constraints, acceptance criteria
-2. Invoke `code-architect` to draft requirements checklist and clarifying questions
+**Actions:** Run `code-architect` and 2-3 `code-explorer` tasks in parallel.
 
 ```bash
-codeagent-wrapper --agent code-architect - . <<'EOF'
+codeagent-wrapper --parallel <<'EOF'
+---TASK---
+id: p1_requirements
+agent: code-architect
+workdir: .
+---CONTENT---
 ## Original User Request
 /do <request>
 
@@ -100,32 +157,28 @@ codeagent-wrapper --agent code-architect - . <<'EOF'
 - Code-architect output: None
 
 ## Current Task
-Produce requirements checklist and identify missing information.
-Output: Requirements, Non-goals, Risks, Acceptance criteria, Questions (<= 10)
+1. Analyze requirements completeness (score 1-10)
+2. Extract explicit requirements, constraints, acceptance criteria
+3. Identify blocking questions (issues that prevent implementation)
+4. Identify minor clarifications (nice-to-have but can proceed without)
+
+Output format:
+- Completeness score: X/10
+- Requirements: [list]
+- Non-goals: [list]
+- Blocking questions: [list, if any]
+- Minor clarifications: [list, if any]
 
 ## Acceptance Criteria
-Concrete, testable checklist; specific questions; no implementation.
-EOF
-```
+Concrete checklist; blocking vs minor questions clearly separated.
 
-### Phase 2: Exploration
-
-**Goal:** Map codebase patterns and extension points.
-
-**Actions:** Run 2-3 `code-explorer` tasks in parallel (similar features, architecture, tests/conventions).
-
-```bash
-codeagent-wrapper --parallel <<'EOF'
 ---TASK---
-id: p2_similar_features
+id: p1_similar_features
 agent: code-explorer
 workdir: .
 ---CONTENT---
 ## Original User Request
 /do <request>
-
-## Context Pack
-- Code-architect output: <Phase 1 output>
 
 ## Current Task
 Find 1-3 similar features, trace end-to-end. Return: key files with line numbers, call flow, extension points.
@@ -134,15 +187,12 @@ Find 1-3 similar features, trace end-to-end. Return: key files with line numbers
 Concrete file:line map + reuse points.
 
 ---TASK---
-id: p2_architecture
+id: p1_architecture
 agent: code-explorer
 workdir: .
 ---CONTENT---
 ## Original User Request
 /do <request>
-
-## Context Pack
-- Code-architect output: <Phase 1 output>
 
 ## Current Task
 Map architecture for relevant subsystem. Return: module map + 5-10 key files.
@@ -151,15 +201,12 @@ Map architecture for relevant subsystem. Return: module map + 5-10 key files.
 Clear boundaries; file:line references.
 
 ---TASK---
-id: p2_conventions
+id: p1_conventions
 agent: code-explorer
 workdir: .
 ---CONTENT---
 ## Original User Request
 /do <request>
-
-## Context Pack
-- Code-architect output: <Phase 1 output>
 
 ## Current Task
 Identify testing patterns, conventions, config. Return: test commands + file locations.
@@ -169,102 +216,87 @@ Test commands + relevant test file paths.
 EOF
 ```
 
-### Phase 3: Clarification (MANDATORY)
+### Phase 2: Clarify (Conditional)
 
-**Goal:** Resolve all ambiguities before design.
+**Goal:** Resolve blocking ambiguities only.
 
 **Actions:**
-1. Invoke `code-architect` to generate prioritized questions from Phase 1+2 outputs
-2. Use AskUserQuestion to present questions and wait for answers
-3. **Do not proceed until answered or defaults accepted**
-
-### Phase 4: Architecture
-
-**Goal:** Produce implementation plan fitting existing patterns.
-
-**Actions:** Run 2 `code-architect` tasks in parallel (minimal-change vs pragmatic-clean).
+1. Review `p1_requirements` output for blocking questions
+2. **IF blocking questions exist** → Use AskUserQuestion
+3. **IF no blocking questions (completeness >= 8)** → Skip to Phase 3, log "Requirements clear, proceeding"
 
 ```bash
-codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: p4_minimal
-agent: code-architect
-workdir: .
----CONTENT---
+# Only if blocking questions exist:
+# Use AskUserQuestion with the blocking questions from Phase 1
+```
+
+### Phase 3: Design (No Interaction)
+
+**Goal:** Produce minimal-change implementation plan with task classification.
+
+**Actions:** Invoke `code-architect` with all Phase 1 context to generate a single implementation plan.
+
+```bash
+codeagent-wrapper --agent code-architect - . <<'EOF'
 ## Original User Request
 /do <request>
 
 ## Context Pack
-- Code-explorer output: <ALL Phase 2 outputs>
-- Code-architect output: <Phase 1 + Phase 3 answers>
+- Code-explorer output: <ALL Phase 1 explorer outputs>
+- Code-architect output: <Phase 1 requirements + Phase 2 answers if any>
 
 ## Current Task
-Propose minimal-change architecture: reuse existing abstractions, minimize new files.
-Output: file touch list, risks, edge cases.
+Design minimal-change implementation:
+- Reuse existing abstractions
+- Minimize new files
+- Follow established patterns from code-explorer output
+
+Output:
+- File touch list with specific changes
+- Build sequence
+- Test plan
+- Risks and mitigations
+
 Include a `## Task Classification` section:
 - `task_type`: "backend_only" | "frontend_only" | "fullstack"
 - `backend_tasks`: list backend implementation tasks (if any)
 - `frontend_tasks`: list frontend implementation tasks (if any)
 
 ## Acceptance Criteria
-Concrete blueprint; minimal moving parts.
-
----TASK---
-id: p4_pragmatic
-agent: code-architect
-workdir: .
----CONTENT---
-## Original User Request
-/do <request>
-
-## Context Pack
-- Code-explorer output: <ALL Phase 2 outputs>
-- Code-architect output: <Phase 1 + Phase 3 answers>
-
-## Current Task
-Propose pragmatic-clean architecture: introduce seams for testability.
-Output: file touch list, testing plan, risks.
-Include a `## Task Classification` section:
-- `task_type`: "backend_only" | "frontend_only" | "fullstack"
-- `backend_tasks`: list backend implementation tasks (if any)
-- `frontend_tasks`: list frontend implementation tasks (if any)
-
-## Acceptance Criteria
-Implementable blueprint with build sequence and tests.
+Concrete, implementable blueprint with task classification for Phase 4.
 EOF
 ```
 
-Use AskUserQuestion to let user choose approach.
+### Phase 4: Implement + Review (Single Interaction Point)
 
-### Phase 5: Implementation (Approval Required)
+**Goal:** Build feature and review in one phase, using task classification from Phase 3.
 
-**Goal:** Build the feature based on Phase 4 task classification.
-
-**Execution Rules (based on Phase 4 `task_type`):**
+**Execution Rules (based on Phase 3 `task_type`):**
 - `backend_only`: invoke only `develop` agent
 - `frontend_only`: invoke only `frontend-ui-ux-engineer` agent
 - `fullstack`: invoke both agents in parallel
 - Missing `task_type`: default to `develop` agent only
 
 **Actions:**
-1. Use AskUserQuestion: "Approve starting implementation?" (Approve / Not yet)
-2. If approved, select the appropriate execution pattern based on `task_type`:
+
+#### Step 1: Implementation (based on task_type)
 
 **Example: backend_only (develop only)**
 
 ```bash
-codeagent-wrapper --agent develop - . <<'EOF'
+# Check use_worktree from state file, add --worktree if true
+codeagent-wrapper --worktree --agent develop - . <<'EOF'
 ## Original User Request
 /do <request>
 
 ## Context Pack
-- Code-explorer output: <ALL Phase 2 outputs>
-- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+- Code-explorer output: <ALL Phase 1 outputs>
+- Code-architect output: <Phase 3 blueprint>
 
 ## Current Task
-Implement backend changes following chosen architecture.
-- Follow Phase 2 patterns
-- Add/adjust tests per Phase 4 plan
+Implement backend changes following the blueprint.
+- Follow Phase 1 patterns
+- Add/adjust tests per Phase 3 plan
 - Run narrowest relevant tests
 
 ## Acceptance Criteria
@@ -275,17 +307,17 @@ EOF
 **Example: frontend_only (frontend-ui-ux-engineer only)**
 
 ```bash
-codeagent-wrapper --agent frontend-ui-ux-engineer - . <<'EOF'
+codeagent-wrapper --worktree --agent frontend-ui-ux-engineer - . <<'EOF'
 ## Original User Request
 /do <request>
 
 ## Context Pack
-- Code-explorer output: <ALL Phase 2 outputs>
-- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+- Code-explorer output: <ALL Phase 1 outputs>
+- Code-architect output: <Phase 3 blueprint>
 
 ## Current Task
-Implement frontend changes following chosen architecture.
-- Follow Phase 2 patterns
+Implement frontend changes following the blueprint.
+- Follow Phase 1 patterns
 - Focus on UI/UX correctness and accessibility
 - Run narrowest relevant frontend tests
 
@@ -297,9 +329,9 @@ EOF
 **Example: fullstack (parallel develop + frontend-ui-ux-engineer)**
 
 ```bash
-codeagent-wrapper --parallel <<'EOF'
+codeagent-wrapper --worktree --parallel <<'EOF'
 ---TASK---
-id: p5_backend
+id: p4_backend
 agent: develop
 workdir: .
 ---CONTENT---
@@ -307,19 +339,19 @@ workdir: .
 /do <request>
 
 ## Context Pack
-- Code-explorer output: <ALL Phase 2 outputs>
-- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+- Code-explorer output: <ALL Phase 1 outputs>
+- Code-architect output: <Phase 3 blueprint>
 
 ## Current Task
-Implement backend logic and API contracts, following Phase 4 architecture.
+Implement backend logic and API contracts, following Phase 3 architecture.
 - Output interface definitions/DTOs/routes/service layer
-- Add/adjust backend tests per Phase 4 plan
+- Add/adjust backend tests per Phase 3 plan
 
 ## Acceptance Criteria
 Backend functionality works; tests pass; API contract is clear.
 
 ---TASK---
-id: p5_frontend
+id: p4_frontend
 agent: frontend-ui-ux-engineer
 workdir: .
 ---CONTENT---
@@ -327,29 +359,25 @@ workdir: .
 /do <request>
 
 ## Context Pack
-- Code-explorer output: <ALL Phase 2 outputs>
-- Code-architect output: <selected Phase 4 blueprint + Phase 3 answers>
+- Code-explorer output: <ALL Phase 1 outputs>
+- Code-architect output: <Phase 3 blueprint>
 
 ## Current Task
-Implement frontend UI/UX and interactions, following Phase 4 architecture.
+Implement frontend UI/UX and interactions, following Phase 3 architecture.
 - Align component structure/state management/interaction details
-- Add/adjust frontend tests per Phase 4 plan
+- Add/adjust frontend tests per Phase 3 plan
 
 ## Acceptance Criteria
 Frontend functionality complete; interactions match design; tests pass.
 EOF
 ```
 
-### Phase 6: Review
-
-**Goal:** Catch defects and unnecessary complexity.
-
-**Actions:** Run 2-3 `code-reviewer` tasks in parallel (correctness, simplicity).
+#### Step 2: Run parallel reviews (no --worktree needed, read-only)
 
 ```bash
 codeagent-wrapper --parallel <<'EOF'
 ---TASK---
-id: p6_correctness
+id: p4_correctness
 agent: code-reviewer
 workdir: .
 ---CONTENT---
@@ -357,18 +385,19 @@ workdir: .
 /do <request>
 
 ## Context Pack
-- Code-architect output: <Phase 4 blueprint>
-- Backend (develop) output: <Phase 5 backend output>
-- Frontend (UI/UX) output: <Phase 5 frontend output>
+- Code-architect output: <Phase 3 blueprint>
+- Backend (develop) output: <Phase 4 backend output>
+- Frontend (UI/UX) output: <Phase 4 frontend output>
 
 ## Current Task
-Review for correctness, edge cases, failure modes. Assume adversarial inputs.
+Review for correctness, edge cases, failure modes.
+Classify each issue as BLOCKING or MINOR.
 
 ## Acceptance Criteria
-Issues with file:line references and concrete fixes.
+Issues with file:line references, severity, and concrete fixes.
 
 ---TASK---
-id: p6_simplicity
+id: p4_simplicity
 agent: code-reviewer
 workdir: .
 ---CONTENT---
@@ -376,21 +405,24 @@ workdir: .
 /do <request>
 
 ## Context Pack
-- Code-architect output: <Phase 4 blueprint>
-- Backend (develop) output: <Phase 5 backend output>
-- Frontend (UI/UX) output: <Phase 5 frontend output>
+- Code-architect output: <Phase 3 blueprint>
+- Backend (develop) output: <Phase 4 backend output>
+- Frontend (UI/UX) output: <Phase 4 frontend output>
 
 ## Current Task
 Review for KISS: remove bloat, collapse needless abstractions.
+Classify each issue as BLOCKING or MINOR.
 
 ## Acceptance Criteria
-Actionable simplifications with justification.
+Actionable simplifications with severity and justification.
 EOF
 ```
 
-Use AskUserQuestion: Fix now / Fix later / Proceed as-is.
+#### Step 3: Handle review results
+- **MINOR issues only** → Auto-fix via `develop`/`frontend-ui-ux-engineer` (with `--worktree` if enabled), no user interaction
+- **BLOCKING issues** → Use AskUserQuestion: "Fix now / Proceed as-is"
 
-### Phase 7: Summary
+### Phase 5: Complete (No Interaction)
 
 **Goal:** Document what was built.
 
@@ -402,10 +434,10 @@ codeagent-wrapper --agent code-reviewer - . <<'EOF'
 /do <request>
 
 ## Context Pack
-- Code-architect output: <Phase 4 blueprint>
-- Code-reviewer output: <Phase 6 outcomes>
-- Backend (develop) output: <Phase 5 backend output + fixes>
-- Frontend (UI/UX) output: <Phase 5 frontend output + fixes>
+- Code-architect output: <Phase 3 blueprint>
+- Code-reviewer output: <Phase 4 review outcomes>
+- Backend (develop) output: <Phase 4 backend output + fixes>
+- Frontend (UI/UX) output: <Phase 4 frontend output + fixes>
 
 ## Current Task
 Write completion summary:
@@ -418,4 +450,9 @@ Write completion summary:
 ## Acceptance Criteria
 Short, technical, actionable summary.
 EOF
+```
+
+Output the completion signal:
+```
+<promise>DO_COMPLETE</promise>
 ```

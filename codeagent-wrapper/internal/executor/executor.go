@@ -21,6 +21,7 @@ import (
 	ilogger "codeagent-wrapper/internal/logger"
 	parser "codeagent-wrapper/internal/parser"
 	utils "codeagent-wrapper/internal/utils"
+	"codeagent-wrapper/internal/worktree"
 )
 
 const postMessageTerminateDelay = 1 * time.Second
@@ -49,6 +50,7 @@ var (
 	selectBackendFn    = backend.Select
 	commandContext     = exec.CommandContext
 	terminateCommandFn = terminateCommand
+	createWorktreeFn   = worktree.CreateWorktree
 )
 
 var forceKillDelay atomic.Int32
@@ -905,6 +907,8 @@ func RunCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		ReasoningEffort: taskSpec.ReasoningEffort,
 		SkipPermissions: taskSpec.SkipPermissions,
 		Backend:         defaultBackendName,
+		AllowedTools:    taskSpec.AllowedTools,
+		DisallowedTools: taskSpec.DisallowedTools,
 	}
 
 	commandName := strings.TrimSpace(defaultCommandName)
@@ -921,6 +925,11 @@ func RunCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		cfg.Backend = backend.Name()
 	} else if taskSpec.Backend != "" {
 		cfg.Backend = taskSpec.Backend
+		if selectBackendFn != nil {
+			if b, err := selectBackendFn(taskSpec.Backend); err == nil {
+				argsBuilder = b.BuildArgs
+			}
+		}
 	} else if commandName != "" {
 		cfg.Backend = commandName
 	}
@@ -930,6 +939,18 @@ func RunCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	}
 	if cfg.WorkDir == "" {
 		cfg.WorkDir = defaultWorkdir
+	}
+
+	// Handle worktree mode: create a new git worktree and update cfg.WorkDir
+	if taskSpec.Worktree {
+		paths, err := createWorktreeFn(cfg.WorkDir)
+		if err != nil {
+			result.ExitCode = 1
+			result.Error = fmt.Sprintf("failed to create worktree: %v", err)
+			return result
+		}
+		cfg.WorkDir = paths.Dir
+		logInfo(fmt.Sprintf("Using worktree: %s (task_id: %s, branch: %s)", paths.Dir, paths.TaskID, paths.Branch))
 	}
 
 	if cfg.Mode == "resume" && strings.TrimSpace(cfg.SessionID) == "" {
@@ -1070,7 +1091,7 @@ func RunCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	if envBackend != nil {
 		baseURL, apiKey := config.ResolveBackendConfig(cfg.Backend)
 		if agentName := strings.TrimSpace(taskSpec.Agent); agentName != "" {
-			agentBackend, _, _, _, agentBaseURL, agentAPIKey, _, err := config.ResolveAgentConfig(agentName)
+			agentBackend, _, _, _, agentBaseURL, agentAPIKey, _, _, _, err := config.ResolveAgentConfig(agentName)
 			if err == nil {
 				if strings.EqualFold(strings.TrimSpace(agentBackend), strings.TrimSpace(cfg.Backend)) {
 					baseURL, apiKey = agentBaseURL, agentAPIKey

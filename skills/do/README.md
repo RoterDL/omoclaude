@@ -1,6 +1,6 @@
 # do - Feature Development Orchestrator
 
-7-phase feature development workflow orchestrating multiple agents via codeagent-wrapper.
+5-phase feature development workflow orchestrating multiple agents via codeagent-wrapper.
 
 ## Installation
 
@@ -24,38 +24,44 @@ Examples:
 /do implement order export to CSV
 ```
 
-## 7-Phase Workflow
+## 5-Phase Workflow
 
 | Phase | Name | Goal | Key Actions |
 |-------|------|------|-------------|
-| 1 | Discovery | Understand requirements | AskUserQuestion + code-architect draft |
-| 2 | Exploration | Map codebase patterns | 2-3 parallel code-explorer tasks |
-| 3 | Clarification | Resolve ambiguities | **MANDATORY** - must answer before proceeding |
-| 4 | Architecture | Design implementation | 2 parallel code-architect approaches |
-| 5 | Implementation | Build the feature | **Requires approval** - develop + frontend-ui-ux-engineer parallel |
-| 6 | Review | Catch defects | 2-3 parallel code-reviewer tasks |
-| 7 | Summary | Document results | code-reviewer summary |
+| 1 | Understand | Gather requirements + map codebase | Parallel code-architect + code-explorer |
+| 2 | Clarify | Resolve blocking ambiguities | Conditional - only if blocking questions exist |
+| 3 | Design | Plan implementation with task classification | code-architect blueprint + task_type |
+| 4 | Implement | Build the feature | develop / frontend-ui-ux-engineer based on task_type |
+| 5 | Complete | Finalize and document | code-reviewer summary |
+
+## Task Classification
+
+Phase 3 outputs `task_type` to determine agent selection in Phase 4:
+- `backend_only`: invoke only `develop` agent
+- `frontend_only`: invoke only `frontend-ui-ux-engineer` agent
+- `fullstack`: invoke both agents in parallel
+- Missing `task_type`: default to `develop` agent only
 
 ## Agents
 
-| Agent | Purpose | Prompt Location |
-|-------|---------|----------------|
-| `code-explorer` | Code tracing, architecture mapping | `agents/code-explorer.md` |
-| `code-architect` | Design approaches, file planning | `agents/code-architect.md` |
-| `code-reviewer` | Code review, simplification | `agents/code-reviewer.md` |
-| `develop` | Implement code, run tests | global config |
-| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX interactions | global config |
+| Agent | Purpose | Needs --worktree |
+|-------|---------|------------------|
+| `code-explorer` | Code tracing, architecture mapping | No (read-only) |
+| `code-architect` | Design approaches, file planning | No (read-only) |
+| `code-reviewer` | Code review, simplification | No (read-only) |
+| `develop` | Implement backend code, run tests | **Yes** (if worktree enabled) |
+| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX | **Yes** (if worktree enabled) |
 
 To customize agents, create same-named files in `~/.codeagent/agents/` to override.
 
 ## Hard Constraints
 
 1. **Never write code directly** - delegate all changes to codeagent-wrapper agents
-2. **Phase 3 is mandatory** - do not proceed until questions are answered
-3. **Phase 5 requires approval** - stop after Phase 4 if not approved
-4. **Pass complete context forward** - every agent gets the Context Pack
-5. **Parallel-first** - run independent tasks via `codeagent-wrapper --parallel`
-6. **Update state after each phase** - keep `.claude/do.{task_id}.local.md` current
+2. **Phase 2 is conditional** - only if blocking questions exist
+3. **Pass complete context forward** - every agent gets the Context Pack
+4. **Parallel-first** - run independent tasks via `codeagent-wrapper --parallel`
+5. **Update state after each phase** - keep `.claude/do.{task_id}.local.md` current
+6. **Respect worktree setting** - if `use_worktree: true`, pass `--worktree` to develop/frontend agents
 
 ## Context Pack Template
 
@@ -64,7 +70,7 @@ To customize agents, create same-named files in `~/.codeagent/agents/` to overri
 <verbatim request>
 
 ## Context Pack
-- Phase: <1-7 name>
+- Phase: <1-5 name>
 - Decisions: <requirements/constraints/choices>
 - Code-explorer output: <paste or "None">
 - Code-architect output: <paste or "None">
@@ -84,17 +90,18 @@ To customize agents, create same-named files in `~/.codeagent/agents/` to overri
 
 When triggered via `/do <task>`, initializes `.claude/do.{task_id}.local.md` with:
 - `active: true`
-- `current_phase: "phase_1"`
-- `max_phases: 7`
+- `current_phase: 1`
+- `max_phases: 5`
 - `completion_promise: "<promise>DO_COMPLETE</promise>"`
+- `use_worktree: true/false`
 
 After each phase, update frontmatter:
 ```yaml
-current_phase: "phase_<next phase number>"
+current_phase: <next phase number>
 phase_name: "<next phase name>"
 ```
 
-When all 7 phases complete, output:
+When all 5 phases complete, output:
 ```
 <promise>DO_COMPLETE</promise>
 ```
@@ -111,51 +118,30 @@ A Stop hook is registered after installation:
 
 Manual exit: Set `active` to `false` in the state file.
 
-## Parallel Execution Examples
+## Worktree Mode
 
-### Phase 2: Exploration (3 parallel tasks)
+Use `--worktree` to execute tasks in an isolated git worktree, preventing changes to your main branch:
+
 ```bash
-codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: p2_similar_features
-agent: code-explorer
-workdir: .
----CONTENT---
-Find similar features, trace end-to-end.
-
----TASK---
-id: p2_architecture
-agent: code-explorer
-workdir: .
----CONTENT---
-Map architecture for relevant subsystem.
-
----TASK---
-id: p2_conventions
-agent: code-explorer
-workdir: .
----CONTENT---
-Identify testing patterns and conventions.
-EOF
+codeagent-wrapper --worktree --agent develop "implement feature X" .
 ```
 
-### Phase 4: Architecture (2 approaches)
-```bash
-codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: p4_minimal
-agent: code-architect
-workdir: .
----CONTENT---
-Propose minimal-change architecture.
+This automatically:
+1. Generates a unique task ID (format: `YYYYMMDD-xxxxxx`)
+2. Creates a new worktree at `.worktrees/do-{task_id}/`
+3. Creates a new branch `do/{task_id}`
+4. Executes the task in the isolated worktree
 
+Output includes: `Using worktree: .worktrees/do-{task_id}/ (task_id: {id}, branch: do/{id})`
+
+In parallel mode, add `worktree: true` to task blocks:
+```
 ---TASK---
-id: p4_pragmatic
-agent: code-architect
-workdir: .
+id: feature_impl
+agent: develop
+worktree: true
 ---CONTENT---
-Propose pragmatic-clean architecture.
-EOF
+Implement the feature
 ```
 
 ## ~/.codeagent/models.json Configuration
