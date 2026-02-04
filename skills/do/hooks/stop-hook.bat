@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-REM do loop stop hook（Windows 版）：未完成则输出 JSON block，完成则清理状态文件
+REM do loop stop hook (Windows): output JSON block if incomplete, cleanup state file if done
 
 call :main
 exit /b %ERRORLEVEL%
@@ -61,8 +61,8 @@ if defined stdin_tmp del /f /q "%stdin_tmp%" >nul 2>nul
 exit /b 0
 
 REM ------------------------
-REM 子程序：检查单个状态文件
-REM 输出：若阻塞则设置 out_var 为原因字符串，否则为空
+REM Subroutine: check single state file
+REM Output: if blocked, set out_var to reason string; otherwise empty
 REM ------------------------
 :check_state_file
 setlocal EnableDelayedExpansion
@@ -170,7 +170,7 @@ if "!phases_done!"=="0" (
 endlocal & set "%~2=%out_reason%" & exit /b 0
 
 REM ------------------------
-REM 子程序：根据 phase number 返回 phase_name（与 stop-hook.sh 一致）
+REM Subroutine: return phase_name for given phase number (matches stop-hook.sh)
 REM ------------------------
 :phase_name_for
 setlocal
@@ -187,7 +187,7 @@ endlocal & set "%~2=%name%"
 exit /b 0
 
 REM ------------------------
-REM 子程序：检查 state_file 的 body（frontmatter 之后）是否包含 completion_promise
+REM Subroutine: check if state_file body (after frontmatter) contains completion_promise
 REM ------------------------
 :body_contains_promise
 setlocal EnableDelayedExpansion

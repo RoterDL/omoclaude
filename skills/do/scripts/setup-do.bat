@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-REM 初始化 do 循环状态（Windows 版）
+REM Initialize do loop state (Windows version)
 
 call :main %*
 exit /b %ERRORLEVEL%
@@ -126,7 +126,7 @@ echo   -h, --help                Show this help
 exit /b 0
 
 :die
-echo ❌ %~1 >&2
+echo [ERROR] %~1 >&2
 exit /b 1
 
 :append_prompt

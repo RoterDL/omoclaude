@@ -336,10 +336,10 @@ def list_modules(config: Dict[str, Any]) -> None:
     print(f"{'#':<3} {'Name':<15} {'Default':<8} Description")
     print("-" * 65)
     for idx, (name, cfg) in enumerate(config.get("modules", {}).items(), 1):
-        default = "✓" if cfg.get("enabled", False) else "✗"
+        default = "[Y]" if cfg.get("enabled", False) else "[N]"
         desc = cfg.get("description", "")
         print(f"{idx:<3} {name:<15} {default:<8} {desc}")
-    print("\n✓ = installed by default when no --module specified")
+    print("\n[Y] = installed by default when no --module specified")
 
 
 def load_installed_status(ctx: Dict[str, Any]) -> Dict[str, Any]:
@@ -434,10 +434,10 @@ def list_modules_with_status(config: Dict[str, Any], ctx: Dict[str, Any]) -> Non
     for idx, (name, cfg) in enumerate(config.get("modules", {}).items(), 1):
         desc = cfg.get("description", "")[:25]
         if installed_status.get(name, False):
-            status = "✅ Installed"
+            status = "[OK] Installed"
             installed_at = status_modules.get(name, {}).get("installed_at", "")[:16]
         else:
-            status = "⬚ Not installed"
+            status = "[ ] Not installed"
             installed_at = ""
         print(f"{idx:<3} {name:<15} {status:<15} {installed_at:<20} {desc}")
 
@@ -660,9 +660,9 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
         for idx, (name, cfg) in enumerate(modules.items(), 1):
             desc = cfg.get("description", "")[:30]
             if installed_status.get(name, False):
-                status = "✅ Installed"
+                status = "[OK] Installed"
             else:
-                status = "⬚ Not installed"
+                status = "[ ] Not installed"
             print(f"{idx:<3} {name:<15} {status:<15} {desc}")
 
         total = len(modules)
@@ -706,9 +706,9 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
                 for name, cfg in to_install.items():
                     try:
                         results.append(execute_module(name, cfg, ctx))
-                        print(f"  ✓ {name} installed")
+                        print(f"  [+] {name} installed")
                     except Exception as exc:
-                        print(f"  ✗ {name} failed: {exc}")
+                        print(f"  [X] {name} failed: {exc}")
                 # Update status
                 current_status = load_installed_status(ctx)
                 for r in results:
@@ -735,9 +735,9 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
                 for name, cfg in to_uninstall.items():
                     try:
                         uninstall_module(name, cfg, ctx)
-                        print(f"  ✓ {name} uninstalled")
+                        print(f"  [+] {name} uninstalled")
                     except Exception as exc:
-                        print(f"  ✗ {name} failed: {exc}")
+                        print(f"  [X] {name} failed: {exc}")
                 update_status_after_uninstall(list(to_uninstall.keys()), ctx)
 
         else:
@@ -1057,7 +1057,7 @@ def write_log(entry: Dict[str, Any], ctx: Dict[str, Any]) -> None:
 
     # Terminal output when verbose
     if ctx.get("verbose"):
-        prefix = {"INFO": "ℹ️ ", "WARNING": "⚠️ ", "ERROR": "❌"}.get(level, "")
+        prefix = {"INFO": "[i] ", "WARNING": "[!] ", "ERROR": "[X]"}.get(level, "")
         print(f"{prefix}[{level}] {message}")
         if entry.get("stdout"):
             print(f"  stdout: {entry['stdout'][:500]}")
@@ -1156,12 +1156,12 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         for name, cfg in to_uninstall.items():
             try:
                 uninstall_module(name, cfg, ctx)
-                print(f"  ✓ {name} uninstalled")
+                print(f"  [+] {name} uninstalled")
             except Exception as exc:
-                print(f"  ✗ {name} failed: {exc}", file=sys.stderr)
+                print(f"  [X] {name} failed: {exc}", file=sys.stderr)
 
         update_status_after_uninstall(list(to_uninstall.keys()), ctx)
-        print(f"\n✓ Uninstall complete")
+        print(f"\n[+] Uninstall complete")
         return 0
 
     # Handle --update
@@ -1198,9 +1198,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
             print(f"[{idx}/{total}] Updating module: {name}...")
             try:
                 results.append(execute_module(name, cfg, ctx))
-                print(f"  ✓ {name} updated successfully")
+                print(f"  [+] {name} updated successfully")
             except Exception as exc:  # noqa: BLE001
-                print(f"  ✗ {name} failed: {exc}", file=sys.stderr)
+                print(f"  [X] {name} failed: {exc}", file=sys.stderr)
                 rollback(ctx)
                 if not args.force:
                     return 1
@@ -1225,9 +1225,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         success = sum(1 for r in results if r.get("status") == "success")
         failed = len(results) - success
         if failed == 0:
-            print(f"\n✓ Update complete: {success} module(s) updated")
+            print(f"\n[+] Update complete: {success} module(s) updated")
         else:
-            print(f"\n⚠ Update finished with errors: {success} success, {failed} failed")
+            print(f"\n[!] Update finished with errors: {success} success, {failed} failed")
             if not args.force:
                 return 1
         return 0
@@ -1260,9 +1260,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         print(f"[{idx}/{total}] Installing module: {name}...")
         try:
             results.append(execute_module(name, cfg, ctx))
-            print(f"  ✓ {name} installed successfully")
+            print(f"  [+] {name} installed successfully")
         except Exception as exc:  # noqa: BLE001
-            print(f"  ✗ {name} failed: {exc}", file=sys.stderr)
+            print(f"  [X] {name} failed: {exc}", file=sys.stderr)
             if not args.force:
                 rollback(ctx)
                 return 1
@@ -1290,10 +1290,10 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     success = sum(1 for r in results if r.get("status") == "success")
     failed = len(results) - success
     if failed == 0:
-        print(f"\n✓ Installation complete: {success} module(s) installed")
+        print(f"\n[+] Installation complete: {success} module(s) installed")
         print(f"  Log file: {ctx['log_file']}")
     else:
-        print(f"\n⚠ Installation finished with errors: {success} success, {failed} failed")
+        print(f"\n[!] Installation finished with errors: {success} success, {failed} failed")
         print(f"  Check log file for details: {ctx['log_file']}")
         if not args.force:
             return 1
