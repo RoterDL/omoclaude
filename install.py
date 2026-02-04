@@ -1120,12 +1120,11 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if not args.module:
             print("Error: --uninstall requires --module to specify which modules to uninstall")
             return 1
-        modules = config.get("modules", {})
-        installed = load_installed_status(ctx)
-        installed_modules = installed.get("modules", {})
 
         selected = select_modules(config, args.module)
-        to_uninstall = {k: v for k, v in selected.items() if k in installed_modules}
+        # Check both status file and filesystem (consistent with --status)
+        installed_status = get_installed_modules(config, ctx)
+        to_uninstall = {k: v for k, v in selected.items() if installed_status.get(k, False)}
 
         if not to_uninstall:
             print("None of the specified modules are installed.")
