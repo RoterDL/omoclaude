@@ -359,9 +359,14 @@ def check_module_installed(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) 
 
     for op in cfg.get("operations", []):
         op_type = op.get("type")
-        if op_type in ("copy_dir", "copy_file"):
+        if op_type == "copy_file":
             target = (install_dir / op["target"]).expanduser().resolve()
             if target.exists():
+                return True
+        elif op_type == "copy_dir":
+            target = (install_dir / op["target"]).expanduser().resolve()
+            # Directory must exist AND be non-empty
+            if target.exists() and target.is_dir() and any(target.iterdir()):
                 return True
         elif op_type == "merge_dir":
             src = (ctx["config_dir"] / op["source"]).expanduser().resolve()
@@ -380,16 +385,33 @@ def check_module_installed(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) 
 
 
 def get_installed_modules(config: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, bool]:
-    """Get installation status of all modules by checking files."""
+    """Get installation status of all modules by checking files on disk.
+
+    This function determines installation status solely based on whether
+    the module's files actually exist on the filesystem, not the status file.
+    """
     result = {}
     modules = config.get("modules", {})
 
-    # First check status file
+    for name, cfg in modules.items():
+        result[name] = check_module_installed(name, cfg, ctx)
+
+    return result
+
+
+def get_modules_to_uninstall(config: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, bool]:
+    """Get modules that need cleanup (files exist OR status file has record).
+
+    For uninstall operations, we need to check both filesystem and status file
+    to ensure complete cleanup.
+    """
+    result = {}
+    modules = config.get("modules", {})
+
     status = load_installed_status(ctx)
     status_modules = status.get("modules", {})
 
     for name, cfg in modules.items():
-        # Check both status file and filesystem
         in_status = name in status_modules
         files_exist = check_module_installed(name, cfg, ctx)
         result[name] = in_status or files_exist
@@ -1122,9 +1144,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
             return 1
 
         selected = select_modules(config, args.module)
-        # Check both status file and filesystem (consistent with --status)
-        installed_status = get_installed_modules(config, ctx)
-        to_uninstall = {k: v for k, v in selected.items() if installed_status.get(k, False)}
+        # Check both status file and filesystem for uninstall
+        uninstall_status = get_modules_to_uninstall(config, ctx)
+        to_uninstall = {k: v for k, v in selected.items() if uninstall_status.get(k, False)}
 
         if not to_uninstall:
             print("None of the specified modules are installed.")
