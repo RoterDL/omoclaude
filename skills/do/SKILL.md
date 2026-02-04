@@ -24,11 +24,21 @@ Develop in a separate worktree? (Isolates changes from main branch)
 
 ### Step 2: Initialize state
 
+Check the `Platform:` field in the environment info to determine which Python command to use:
+- **Windows (Platform: win32):** use `python`
+- **Linux/macOS:** use `python3`
+
 ```bash
 # If worktree mode selected:
+# Windows:
+python "${SKILL_DIR}/scripts/setup-do.py" --worktree "<task description>"
+# Linux/macOS:
 python3 "${SKILL_DIR}/scripts/setup-do.py" --worktree "<task description>"
 
 # If no worktree:
+# Windows:
+python "${SKILL_DIR}/scripts/setup-do.py" "<task description>"
+# Linux/macOS:
 python3 "${SKILL_DIR}/scripts/setup-do.py" "<task description>"
 ```
 
