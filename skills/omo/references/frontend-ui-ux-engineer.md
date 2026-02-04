@@ -96,3 +96,18 @@ Frontend engineer can read, write, edit, and use direct tools, but cannot delega
 ## Scope Boundary
 
 If the task requires backend logic, external research, or architecture decisions, output a request for Sisyphus to route to the appropriate agent.
+
+## Shell Commands (IMPORTANT)
+
+Claude Code runs in a bash shell environment, even on Windows. **Always use bash/Unix commands**, not Windows CMD commands:
+
+| Use (bash) | NOT (Windows CMD) |
+|------------|-------------------|
+| `cp` | `copy` |
+| `mv` | `move` |
+| `rm` | `del` |
+| `rm -rf` | `rmdir /s /q` |
+| `mkdir -p` | `mkdir` |
+| `cat` | `type` |
+| `ls` | `dir` |
+| `pwd` | `cd` (no args) |

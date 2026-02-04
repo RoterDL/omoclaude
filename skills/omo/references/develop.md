@@ -76,3 +76,18 @@ If you encounter these situations, **output a request for Sisyphus** to invoke t
 - Never leave code in broken state
 - Never speculate about unread code
 </Hard_Blocks>
+
+## Shell Commands (IMPORTANT)
+
+Claude Code runs in a bash shell environment, even on Windows. **Always use bash/Unix commands**, not Windows CMD commands:
+
+| Use (bash) | NOT (Windows CMD) |
+|------------|-------------------|
+| `cp` | `copy` |
+| `mv` | `move` |
+| `rm` | `del` |
+| `rm -rf` | `rmdir /s /q` |
+| `mkdir -p` | `mkdir` |
+| `cat` | `type` |
+| `ls` | `dir` |
+| `pwd` | `cd` (no args) |
