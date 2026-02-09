@@ -337,6 +337,16 @@ func DefaultRunCodexTaskFn(task TaskSpec, timeout int) TaskResult {
 		}
 		task.Task = WrapTaskWithAgentPrompt(prompt, task.Task)
 	}
+	// Resolve skills: explicit > auto-detect from workdir
+	skills := task.Skills
+	if len(skills) == 0 {
+		skills = DetectProjectSkills(task.WorkDir)
+	}
+	if len(skills) > 0 {
+		if content := ResolveSkillContent(skills, 0); content != "" {
+			task.Task = task.Task + "\n\n# Domain Best Practices\n\n" + content
+		}
+	}
 	if task.UseStdin || ShouldUseStdin(task.Task, false) {
 		task.UseStdin = true
 	}
@@ -941,8 +951,13 @@ func RunCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		cfg.WorkDir = defaultWorkdir
 	}
 
-	// Handle worktree mode: create a new git worktree and update cfg.WorkDir
-	if taskSpec.Worktree {
+	// Handle worktree mode: check DO_WORKTREE_DIR env var first, then create if needed
+	if worktreeDir := os.Getenv("DO_WORKTREE_DIR"); worktreeDir != "" {
+		// Use existing worktree from /do setup
+		cfg.WorkDir = worktreeDir
+		logInfo(fmt.Sprintf("Using existing worktree from DO_WORKTREE_DIR: %s", worktreeDir))
+	} else if taskSpec.Worktree {
+		// Create new worktree (backward compatibility for standalone --worktree usage)
 		paths, err := createWorktreeFn(cfg.WorkDir)
 		if err != nil {
 			result.ExitCode = 1
