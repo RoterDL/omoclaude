@@ -15,6 +15,7 @@ DEFAULT_INSTALL_DIR = "~/.claude"
 
 # Files created by installer itself (not by modules)
 INSTALLER_FILES = ["install.log", "installed_modules.json", "installed_modules.json.bak"]
+SETTINGS_FILE = "settings.json"
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
@@ -110,6 +111,57 @@ def get_module_files(module_name: str, config: Dict[str, Any]) -> Set[str]:
                 files.add("bin")
 
     return files
+
+
+def unmerge_hooks_from_settings(module_name: str, install_dir: Path) -> bool:
+    """Remove hooks belonging to a module from settings.json."""
+    settings_path = install_dir / SETTINGS_FILE
+    if not settings_path.exists():
+        return False
+
+    try:
+        with settings_path.open("r", encoding="utf-8") as f:
+            settings = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return False
+
+    hooks = settings.get("hooks")
+    if not isinstance(hooks, dict):
+        return False
+
+    modified = False
+    for hook_type in list(hooks.keys()):
+        entries = hooks.get(hook_type)
+        if not isinstance(entries, list):
+            continue
+
+        filtered_entries = []
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("__module__") == module_name:
+                modified = True
+                continue
+            filtered_entries.append(entry)
+
+        hooks[hook_type] = filtered_entries
+        if not filtered_entries:
+            del hooks[hook_type]
+            modified = True
+
+    if not hooks:
+        settings.pop("hooks", None)
+        modified = True
+
+    if not modified:
+        return False
+
+    try:
+        with settings_path.open("w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+    except OSError:
+        return False
+
+    return True
 
 
 def cleanup_shell_config(rc_file: Path, bin_dir: Path) -> bool:
@@ -260,6 +312,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                     removed.append(item)
             except OSError as e:
                 print(f"  ✗ Failed to remove {item}: {e}", file=sys.stderr)
+
+        # Remove hooks from settings.json
+        for m in selected:
+            try:
+                if unmerge_hooks_from_settings(m, install_dir):
+                    print(f"  ✓ Removed hooks for {m} from settings.json")
+            except Exception as e:
+                print(f"  ✗ Failed to remove hooks for {m}: {e}", file=sys.stderr)
 
         # Update installed_modules.json
         status_file = install_dir / "installed_modules.json"
