@@ -178,8 +178,10 @@ def _replace_hook_variables(obj: Any, plugin_root: str) -> Any:
         if sys.platform == "win32":
             if value.endswith(".sh"):
                 value = value[:-3] + ".bat"
+            if value.startswith("python3 "):
+                value = "python " + value[len("python3 "):]
             # Normalize path separators on Windows
-            value = value.replace("/", "\\")
+            value = value.replace("\\", "/")
         return value
     elif isinstance(obj, dict):
         return {k: _replace_hook_variables(v, plugin_root) for k, v in obj.items()}
