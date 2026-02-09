@@ -10,3 +10,4 @@ coverage.out
 references
 output/
 .worktrees/
+.serena
