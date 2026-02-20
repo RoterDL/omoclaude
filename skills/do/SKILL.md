@@ -1,7 +1,7 @@
 ---
 name: do
 description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 5-phase workflow (Understand, Clarify, Design, Implement, Complete) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, develop, and frontend-ui-ux-engineer agents in parallel.
-allowed-tools: ["Bash(.claude/skills/do/scripts/setup-do.py:*)", "Bash(.claude/skills/do/scripts/task.py:*)"]
+allowed-tools: ["Bash(~/.claude/skills/do/scripts/setup-do.py:*)", "Bash(~/.claude/skills/do/scripts/task.py:*)"]
 ---
 
 # do - Feature Development Orchestrator
@@ -24,22 +24,22 @@ Develop in a separate worktree? (Isolates changes from main branch)
 
 ### Step 2: Initialize task directory
 
-Check the `Platform:` field in the environment info to determine which Python command to use:
-- **Windows (Platform: win32):** use `python`
-- **Linux/macOS:** use `python3`
+Check the `Platform:` field in the environment info to determine the correct command:
+- **Windows (Platform: win32):** use `python` and `%USERPROFILE%` for home directory
+- **Linux/macOS:** use `python3` and `$HOME` for home directory
 
 ```bash
 # If worktree mode selected:
 # Windows:
-python ".claude/skills/do/scripts/setup-do.py" --worktree "<task description>"
+python "%USERPROFILE%/.claude/skills/do/scripts/setup-do.py" --worktree "<task description>"
 # Linux/macOS:
-python3 ".claude/skills/do/scripts/setup-do.py" --worktree "<task description>"
+python3 "$HOME/.claude/skills/do/scripts/setup-do.py" --worktree "<task description>"
 
 # If no worktree:
 # Windows:
-python ".claude/skills/do/scripts/setup-do.py" "<task description>"
+python "%USERPROFILE%/.claude/skills/do/scripts/setup-do.py" "<task description>"
 # Linux/macOS:
-python3 ".claude/skills/do/scripts/setup-do.py" "<task description>"
+python3 "$HOME/.claude/skills/do/scripts/setup-do.py" "<task description>"
 ```
 
 This creates a task directory under `.claude/do-tasks/` with:
@@ -47,17 +47,17 @@ This creates a task directory under `.claude/do-tasks/` with:
 
 ## Task Directory Management
 
-Use `task.py` to manage task state (use `python` on Windows, `python3` on Linux/macOS):
+Use `task.py` to manage task state (use `python` and `%USERPROFILE%` on Windows, `python3` and `$HOME` on Linux/macOS):
 
 ```bash
-# Update phase
-python3 ".claude/skills/do/scripts/task.py" update-phase 2
+# Update phase (Linux/macOS)
+python3 "$HOME/.claude/skills/do/scripts/task.py" update-phase 2
 
 # Check status
-python3 ".claude/skills/do/scripts/task.py" status
+python3 "$HOME/.claude/skills/do/scripts/task.py" status
 
 # List all tasks
-python3 ".claude/skills/do/scripts/task.py" list
+python3 "$HOME/.claude/skills/do/scripts/task.py" list
 ```
 
 ## Worktree Mode
