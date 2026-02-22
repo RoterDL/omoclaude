@@ -9,13 +9,14 @@ import re
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 DEFAULT_INSTALL_DIR = "~/.claude"
 
 # Files created by installer itself (not by modules)
 INSTALLER_FILES = ["install.log", "installed_modules.json", "installed_modules.json.bak"]
 SETTINGS_FILE = "settings.json"
+WRAPPER_MODULES = {"do", "omo"}
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
@@ -103,14 +104,164 @@ def get_module_files(module_name: str, config: Dict[str, Any]) -> Set[str]:
                 for subdir in source_path.iterdir():
                     if subdir.is_dir():
                         files.add(subdir.name)
-        elif op_type == "run_command":
-            # install.sh installs bin/codeagent-wrapper
-            cmd = op.get("command", "")
-            if "install.sh" in cmd or "install.bat" in cmd:
-                files.add("bin/codeagent-wrapper")
-                files.add("bin")
-
     return files
+
+
+def get_recorded_merge_dir_files(module_status: Dict[str, Any]) -> Set[str]:
+    """Read merge_dir output files recorded during install."""
+    recorded: Set[str] = set()
+    merge_dir_files = module_status.get("merge_dir_files", [])
+    if not isinstance(merge_dir_files, list):
+        return recorded
+
+    for rel in merge_dir_files:
+        rel_str = str(rel).replace("\\", "/").strip()
+        if not rel_str:
+            continue
+        rel_path = Path(rel_str)
+        if rel_path.is_absolute() or ".." in rel_path.parts:
+            continue
+        recorded.add(str(rel_path))
+
+    return recorded
+
+
+def module_needs_wrapper(module_name: str, config: Dict[str, Any]) -> bool:
+    """Whether a module requires codeagent-wrapper."""
+    if module_name in WRAPPER_MODULES:
+        return True
+
+    module_cfg = config.get("modules", {}).get(module_name, {})
+    for op in module_cfg.get("operations", []):
+        if op.get("type") != "run_command":
+            continue
+        cmd = str(op.get("command", ""))
+        if "install.sh" in cmd or "install.bat" in cmd:
+            return True
+    return False
+
+
+def collect_module_files(
+    module_names: Set[str],
+    installed_modules: Dict[str, Any],
+    config: Dict[str, Any],
+) -> Dict[str, Set[str]]:
+    """Collect removable file set for each installed module."""
+    module_files: Dict[str, Set[str]] = {}
+    for name in module_names:
+        files = get_module_files(name, config)
+        status = installed_modules.get(name, {})
+        if isinstance(status, dict):
+            files.update(get_recorded_merge_dir_files(status))
+        module_files[name] = files
+    return module_files
+
+
+def build_uninstall_file_set(
+    selected: List[str],
+    installed_modules: Dict[str, Any],
+    config: Dict[str, Any],
+) -> Tuple[Set[str], Set[str]]:
+    """Build file set to remove and shared paths that must be preserved."""
+    selected_set = set(selected)
+    installed_set = set(installed_modules.keys())
+    remaining_set = installed_set - selected_set
+
+    module_files = collect_module_files(selected_set | remaining_set, installed_modules, config)
+
+    protected_by_remaining: Set[str] = set()
+    for mod in remaining_set:
+        protected_by_remaining.update(module_files.get(mod, set()))
+
+    files_to_remove: Set[str] = set()
+    skipped_shared: Set[str] = set()
+    for mod in selected_set:
+        for rel in module_files.get(mod, set()):
+            if rel in protected_by_remaining:
+                skipped_shared.add(rel)
+                continue
+            files_to_remove.add(rel)
+
+    return files_to_remove, skipped_shared
+
+
+def resolve_install_path(install_dir: Path, item: str) -> Optional[Path]:
+    """Resolve an install-relative path safely within install_dir."""
+    rel_path = Path(item)
+    if rel_path.is_absolute() or ".." in rel_path.parts:
+        return None
+    path = (install_dir / rel_path).resolve()
+    if path == install_dir or install_dir not in path.parents:
+        return None
+    return path
+
+
+def prune_empty_parents(path: Path, stop_at: Path) -> None:
+    """Remove empty parent dirs up to stop_at (exclusive)."""
+    parent = path.parent
+    while parent != stop_at and parent.exists():
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+        parent = parent.parent
+
+
+def unmerge_agents_from_models(
+    module_name: str,
+    remaining_modules: Set[str],
+    installed_modules: Dict[str, Any],
+    config: Dict[str, Any],
+) -> bool:
+    """Remove module agents from ~/.codeagent/models.json and restore shared ones."""
+    models_path = Path.home() / ".codeagent" / "models.json"
+    if not models_path.exists():
+        return False
+
+    try:
+        with models_path.open("r", encoding="utf-8") as fh:
+            models = json.load(fh)
+    except (json.JSONDecodeError, OSError):
+        return False
+
+    agents = models.get("agents")
+    if not isinstance(agents, dict):
+        return False
+
+    to_remove = [
+        name
+        for name, cfg in agents.items()
+        if isinstance(cfg, dict) and cfg.get("__module__") == module_name
+    ]
+    if not to_remove:
+        return False
+
+    modules_cfg = config.get("modules", {})
+    for name in to_remove:
+        agents.pop(name, None)
+        for other_mod in remaining_modules:
+            other_status = installed_modules.get(other_mod, {})
+            if isinstance(other_status, dict):
+                status = other_status.get("status")
+                if status not in (None, "success"):
+                    continue
+            other_cfg = modules_cfg.get(other_mod, {})
+            other_agents = other_cfg.get("agents", {})
+            other_agent_cfg = other_agents.get(name)
+            if isinstance(other_agent_cfg, dict):
+                restored = dict(other_agent_cfg)
+                restored["__module__"] = other_mod
+                agents[name] = restored
+                break
+
+    try:
+        with models_path.open("w", encoding="utf-8") as fh:
+            json.dump(models, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+    except OSError:
+        return False
+
+    return True
 
 
 def unmerge_hooks_from_settings(module_name: str, install_dir: Path) -> bool:
@@ -242,14 +393,28 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Use --list to see installed modules, or --purge to remove everything.")
         return 0
 
-    # Collect files to remove
-    files_to_remove: Set[str] = set()
-    for module_name in selected:
-        files_to_remove.update(get_module_files(module_name, config))
+    selected_set = set(selected)
+    installed_set = set(installed_modules.keys())
+    remaining_modules = installed_set - selected_set
+    remove_all_modules = selected_set == installed_set
+
+    # Collect files to remove (protect targets still used by remaining modules)
+    files_to_remove, skipped_shared = build_uninstall_file_set(selected, installed_modules, config)
 
     # Add installer files if removing all modules
-    if set(selected) == set(installed_modules.keys()):
+    if remove_all_modules:
         files_to_remove.update(INSTALLER_FILES)
+
+    # Wrapper and PATH cleanup decision is based on module dependencies after uninstall
+    selected_touches_wrapper = remove_all_modules or any(
+        module_needs_wrapper(name, config) for name in selected_set
+    )
+    wrapper_needed_after = any(module_needs_wrapper(name, config) for name in remaining_modules)
+    should_remove_wrapper = selected_touches_wrapper and not wrapper_needed_after
+    should_cleanup_shell_path = args.purge or should_remove_wrapper
+
+    files_to_remove.discard("bin")
+    files_to_remove.discard("bin/codeagent-wrapper")
 
     # Show what will be removed
     print(f"Install directory: {install_dir}")
@@ -259,9 +424,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"\nModules to uninstall: {', '.join(selected)}")
         print(f"\nFiles/directories to remove:")
         for f in sorted(files_to_remove):
-            path = install_dir / f
-            exists = "✓" if path.exists() else "✗ (not found)"
+            path = resolve_install_path(install_dir, f)
+            if path is None:
+                exists = "⚠ (unsafe path, skipped)"
+            else:
+                exists = "✓" if path.exists() else "✗ (not found)"
             print(f"  {f} {exists}")
+        if should_remove_wrapper:
+            wrapper_path = bin_dir / "codeagent-wrapper"
+            exists = "✓" if wrapper_path.exists() else "✗ (not found)"
+            print(f"  bin/codeagent-wrapper {exists}")
+        if skipped_shared:
+            print("\nPreserved shared paths (still used by installed modules):")
+            for f in sorted(skipped_shared):
+                print(f"  {f}")
 
     # Confirmation
     if not args.yes and not args.dry_run:
@@ -285,33 +461,45 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         # Remove files/dirs in reverse order (files before parent dirs)
         for item in sorted(files_to_remove, key=lambda x: x.count("/"), reverse=True):
-            path = install_dir / item
+            path = resolve_install_path(install_dir, item)
+            if path is None:
+                print(f"  ⚠ Skipped unsafe path: {item}", file=sys.stderr)
+                continue
             if not path.exists():
                 continue
             try:
                 if path.is_dir():
-                    # Only remove if empty or if it's a known module dir
-                    if item in ("bin",):
-                        # For bin, only remove codeagent-wrapper
-                        wrapper = path / "codeagent-wrapper"
-                        if wrapper.exists():
-                            wrapper.unlink()
-                            print(f"  ✓ Removed bin/codeagent-wrapper")
-                            removed.append("bin/codeagent-wrapper")
-                        # Remove bin if empty
-                        if path.exists() and not any(path.iterdir()):
-                            path.rmdir()
-                            print(f"  ✓ Removed empty bin/")
-                    else:
-                        shutil.rmtree(path)
-                        print(f"  ✓ Removed {item}/")
-                        removed.append(item)
+                    shutil.rmtree(path)
+                    print(f"  ✓ Removed {item}/")
+                    removed.append(item)
+                    prune_empty_parents(path, install_dir)
                 else:
                     path.unlink()
                     print(f"  ✓ Removed {item}")
                     removed.append(item)
+                    prune_empty_parents(path, install_dir)
             except OSError as e:
                 print(f"  ✗ Failed to remove {item}: {e}", file=sys.stderr)
+
+        if should_remove_wrapper:
+            wrapper = bin_dir / "codeagent-wrapper"
+            if wrapper.exists():
+                try:
+                    wrapper.unlink()
+                    print("  ✓ Removed bin/codeagent-wrapper")
+                    removed.append("bin/codeagent-wrapper")
+                    prune_empty_parents(wrapper, install_dir)
+                except OSError as e:
+                    print(f"  ✗ Failed to remove bin/codeagent-wrapper: {e}", file=sys.stderr)
+
+            if bin_dir.exists() and bin_dir.is_dir():
+                try:
+                    if not any(bin_dir.iterdir()):
+                        bin_dir.rmdir()
+                        print("  ✓ Removed empty bin/")
+                        prune_empty_parents(bin_dir, install_dir)
+                except OSError as e:
+                    print(f"  ✗ Failed to remove empty bin/: {e}", file=sys.stderr)
 
         # Remove hooks from settings.json
         for m in selected:
@@ -321,16 +509,29 @@ def main(argv: Optional[List[str]] = None) -> int:
             except Exception as e:
                 print(f"  ✗ Failed to remove hooks for {m}: {e}", file=sys.stderr)
 
+    # Remove module agents from ~/.codeagent/models.json
+    for m in selected:
+        try:
+            if unmerge_agents_from_models(m, remaining_modules, installed_modules, config):
+                print(f"  ✓ Removed agents for {m} from ~/.codeagent/models.json")
+        except Exception as e:
+            print(f"  ✗ Failed to remove agents for {m}: {e}", file=sys.stderr)
+
+    if not args.purge:
         # Update installed_modules.json
         status_file = install_dir / "installed_modules.json"
-        if status_file.exists() and selected != list(installed_modules.keys()):
+        if status_file.exists() and selected_set != installed_set:
             # Partial uninstall: update status file
             for m in selected:
                 installed_modules.pop(m, None)
             if installed_modules:
                 with status_file.open("w", encoding="utf-8") as f:
                     json.dump({"modules": installed_modules}, f, indent=2)
+                    f.write("\n")
                 print(f"  ✓ Updated installed_modules.json")
+            else:
+                status_file.unlink()
+                print("  ✓ Removed installed_modules.json")
 
         # Remove install dir if empty
         if install_dir.exists() and not any(install_dir.iterdir()):
@@ -338,10 +539,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"  ✓ Removed empty install directory")
 
     # Clean shell configs
-    for rc_name in (".bashrc", ".zshrc"):
-        rc_file = Path.home() / rc_name
-        if cleanup_shell_config(rc_file, bin_dir):
-            print(f"  ✓ Cleaned PATH from {rc_name}")
+    if should_cleanup_shell_path:
+        for rc_name in (".bashrc", ".zshrc", ".profile", ".zprofile"):
+            rc_file = Path.home() / rc_name
+            if cleanup_shell_config(rc_file, bin_dir):
+                print(f"  ✓ Cleaned PATH from {rc_name}")
 
     print("")
     if removed:
