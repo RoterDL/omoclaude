@@ -135,8 +135,10 @@ def find_module_hooks(module_name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]
     1. {target_dir}/hooks/hooks.json (for skills with hooks subdirectory)
     2. {target_dir}/hooks.json (for hooks directory itself)
     """
+    del module_name  # Hooks are discovered from module operations, no name-based filtering needed.
     results = []
     seen_paths = set()
+    hook_rel_paths = ("hooks/hooks.json", "hooks.json")
 
     # Check for hooks in operations (copy_dir targets)
     for op in cfg.get("operations", []):
@@ -144,23 +146,30 @@ def find_module_hooks(module_name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]
             target_dir = ctx["install_dir"] / op["target"]
             source_dir = ctx["config_dir"] / op["source"]
 
-            # Check both target and source directories
-            for base_dir, plugin_root in [(target_dir, str(target_dir)), (source_dir, str(target_dir))]:
-                # First check {dir}/hooks/hooks.json (for skills)
-                hooks_file = base_dir / "hooks" / "hooks.json"
-                if hooks_file.exists() and str(hooks_file) not in seen_paths:
+            loaded_rel_paths = set()
+            plugin_root = str(target_dir)
+
+            # Prefer installed target hooks; fallback to source only for missing relative paths.
+            for rel_path in hook_rel_paths:
+                hooks_file = target_dir / rel_path
+                path_key = str(hooks_file)
+                if hooks_file.exists() and path_key not in seen_paths:
                     try:
                         results.append((_load_json(hooks_file), plugin_root))
-                        seen_paths.add(str(hooks_file))
+                        seen_paths.add(path_key)
+                        loaded_rel_paths.add(rel_path)
                     except (ValueError, FileNotFoundError):
                         pass
 
-                # Then check {dir}/hooks.json (for hooks directory itself)
-                hooks_file = base_dir / "hooks.json"
-                if hooks_file.exists() and str(hooks_file) not in seen_paths:
+            for rel_path in hook_rel_paths:
+                if rel_path in loaded_rel_paths:
+                    continue
+                hooks_file = source_dir / rel_path
+                path_key = str(hooks_file)
+                if hooks_file.exists() and path_key not in seen_paths:
                     try:
                         results.append((_load_json(hooks_file), plugin_root))
-                        seen_paths.add(str(hooks_file))
+                        seen_paths.add(path_key)
                     except (ValueError, FileNotFoundError):
                         pass
 
@@ -191,7 +200,12 @@ def _replace_hook_variables(obj: Any, plugin_root: str) -> Any:
     return obj
 
 
-def merge_hooks_to_settings(module_name: str, hooks_config: Dict[str, Any], ctx: Dict[str, Any], plugin_root: str = "") -> None:
+def merge_hooks_to_settings(
+    module_name: str,
+    hooks_config: Dict[str, Any],
+    ctx: Dict[str, Any],
+    plugin_root: str = "",
+) -> bool:
     """Merge module hooks into settings.json."""
     settings = load_settings(ctx)
     settings.setdefault("hooks", {})
@@ -203,6 +217,7 @@ def merge_hooks_to_settings(module_name: str, hooks_config: Dict[str, Any], ctx:
     if plugin_root:
         module_hooks = _replace_hook_variables(module_hooks, plugin_root)
 
+    modified = False
     for hook_type, hook_entries in module_hooks.items():
         settings["hooks"].setdefault(hook_type, [])
 
@@ -222,9 +237,13 @@ def merge_hooks_to_settings(module_name: str, hooks_config: Dict[str, Any], ctx:
 
             if not exists:
                 settings["hooks"][hook_type].append(entry_copy)
+                modified = True
 
-    save_settings(ctx, settings)
-    write_log({"level": "INFO", "message": f"Merged hooks for module: {module_name}"}, ctx)
+    if modified:
+        save_settings(ctx, settings)
+        write_log({"level": "INFO", "message": f"Merged hooks for module: {module_name}"}, ctx)
+
+    return modified
 
 
 def unmerge_hooks_from_settings(module_name: str, ctx: Dict[str, Any]) -> None:
@@ -983,14 +1002,18 @@ def execute_module(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[
     # Handle hooks: find and merge module hooks into settings.json
     hooks_results = find_module_hooks(name, cfg, ctx)
     if hooks_results:
+        has_hook_entries = False
         for hooks_config, plugin_root in hooks_results:
             try:
-                merge_hooks_to_settings(name, hooks_config, ctx, plugin_root)
-                result["operations"].append({"type": "merge_hooks", "status": "success"})
-                result["has_hooks"] = True
+                changed = merge_hooks_to_settings(name, hooks_config, ctx, plugin_root)
+                if changed:
+                    result["operations"].append({"type": "merge_hooks", "status": "success"})
+                    has_hook_entries = True
             except Exception as exc:
                 write_log({"level": "WARNING", "message": f"Failed to merge hooks for {name}: {exc}"}, ctx)
                 result["operations"].append({"type": "merge_hooks", "status": "failed", "error": str(exc)})
+        if has_hook_entries:
+            result["has_hooks"] = True
 
     # Handle agents: merge module agent configs into ~/.codeagent/models.json
     module_agents = cfg.get("agents", {})
