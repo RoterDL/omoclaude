@@ -24,8 +24,7 @@ except ImportError:  # pragma: no cover
 
 DEFAULT_INSTALL_DIR = "~/.claude"
 SETTINGS_FILE = "settings.json"
-WRAPPER_REQUIRED_MODULES = {"do", "omo"}
-AUTO_HOOKS_MODULE = "claudekit"
+WRAPPER_REQUIRED_MODULES = {"do", "omo", "codeagent"}
 
 
 def _ensure_list(ctx: Dict[str, Any], key: str) -> List[Any]:
@@ -139,19 +138,10 @@ def find_module_hooks(module_name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]
     results = []
     seen_paths = set()
     hook_rel_paths = ("hooks/hooks.json", "hooks.json")
-    selected_modules = set(ctx.get("selected_modules", set()))
-    skip_do_hooks_for_claudekit = (
-        module_name == AUTO_HOOKS_MODULE and "do" in selected_modules
-    )
 
     # Check for hooks in operations (copy_dir targets)
     for op in cfg.get("operations", []):
         if op.get("type") == "copy_dir":
-            if skip_do_hooks_for_claudekit and (
-                _path_eq(op.get("source"), "skills/do")
-                or _path_eq(op.get("target"), "skills/do")
-            ):
-                continue
             target_dir = ctx["install_dir"] / Path(str(op["target"]).replace("\\", "/"))
             source_dir = ctx["config_dir"] / Path(str(op["source"]).replace("\\", "/"))
 
@@ -582,53 +572,12 @@ def get_modules_to_uninstall(config: Dict[str, Any], ctx: Dict[str, Any]) -> Dic
     return result
 
 
-def _normalize_op_path(value: Any) -> str:
-    if not isinstance(value, str):
-        return ""
-    return value.replace("\\", "/").lstrip("./").strip("/")
-
-
-def _path_eq(value: Any, expected: str) -> bool:
-    return _normalize_op_path(value) == _normalize_op_path(expected)
-
-
-def _is_skills_path(value: Any) -> bool:
-    normalized = _normalize_op_path(value)
-    return normalized == "skills" or normalized.startswith("skills/")
-
-
-def module_installs_skill_files(cfg: Dict[str, Any]) -> bool:
-    """Return True when a module operation installs files under skills/."""
-    for op in cfg.get("operations", []):
-        if op.get("type") not in {"copy_dir", "copy_file", "merge_dir"}:
-            continue
-        for key in ("source", "target"):
-            value = op.get(key)
-            if _is_skills_path(value):
-                return True
-    return False
-
-
 def add_required_modules_for_install(
     selected: Dict[str, Any], config: Dict[str, Any]
 ) -> tuple[Dict[str, Any], List[str]]:
-    """Auto-add required modules for install flows."""
-    modules = config.get("modules", {})
-    expanded = dict(selected)
-    auto_added: List[str] = []
-
-    if AUTO_HOOKS_MODULE not in modules or AUTO_HOOKS_MODULE in expanded:
-        return expanded, auto_added
-
-    needs_hooks = any(
-        name != AUTO_HOOKS_MODULE and module_installs_skill_files(cfg)
-        for name, cfg in expanded.items()
-    )
-    if needs_hooks:
-        expanded[AUTO_HOOKS_MODULE] = modules[AUTO_HOOKS_MODULE]
-        auto_added.append(AUTO_HOOKS_MODULE)
-
-    return expanded, auto_added
+    """Return selected modules unchanged (no implicit module injection)."""
+    _ = config
+    return dict(selected), []
 
 
 def list_modules_with_status(config: Dict[str, Any], ctx: Dict[str, Any]) -> None:

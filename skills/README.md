@@ -1,23 +1,33 @@
 # Skills
 
-This directory contains agent skills (each skill lives in its own folder with a `SKILL.md`).
+This repository currently includes only these skills:
 
-## Install with `npx` (recommended)
+- `codeagent`
+- `do`
+- `omo`
 
-List installable items:
+## Install with `install.py` (recommended)
+
+List available modules:
 
 ```bash
-npx github:cexll/myclaude --list
+python3 install.py --list-modules
 ```
 
-Install (interactive; pick `skill:<name>`):
+Install interactively:
 
 ```bash
-npx github:cexll/myclaude
+python3 install.py
 ```
 
 Force overwrite / custom install directory:
 
 ```bash
-npx github:cexll/myclaude --install-dir ~/.claude --force
+python3 install.py --install-dir ~/.claude --module do --force
+```
+
+Uninstall modules:
+
+```bash
+python3 uninstall.py --module do,omo
 ```

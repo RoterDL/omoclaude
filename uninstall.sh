@@ -29,6 +29,7 @@ Examples:
   $0 --list                    # List installed modules
   $0 --dry-run                 # Preview what would be removed
   $0 --module do               # Uninstall only 'do' module
+  $0 --module do,omo           # Uninstall selected modules
   $0 -y                        # Uninstall all without confirmation
   $0 --purge -y                # Remove everything (DANGEROUS)
 EOF
@@ -128,7 +129,7 @@ else
     echo "Modules to uninstall: $SELECTED"
     echo ""
     echo "Files/directories that may be removed:"
-    for item in commands agents skills docs bin CLAUDE.md install.log installed_modules.json; do
+    for item in skills bin settings.json CLAUDE.md install.log installed_modules.json; do
         if [ -e "${INSTALL_DIR}/${item}" ]; then
             echo "  $item ✓"
         fi
@@ -171,7 +172,7 @@ else
     fi
 
     # Remove installed directories
-    for dir in commands agents skills docs; do
+    for dir in skills; do
         if [ -d "${INSTALL_DIR}/${dir}" ]; then
             rm -rf "${INSTALL_DIR}/${dir}"
             echo "  ✓ Removed ${dir}/"
@@ -179,7 +180,7 @@ else
     done
 
     # Remove installed files
-    for file in CLAUDE.md install.log installed_modules.json installed_modules.json.bak; do
+    for file in settings.json CLAUDE.md install.log installed_modules.json installed_modules.json.bak; do
         if [ -f "${INSTALL_DIR}/${file}" ]; then
             rm -f "${INSTALL_DIR}/${file}"
             echo "  ✓ Removed ${file}"

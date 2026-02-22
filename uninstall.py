@@ -16,7 +16,7 @@ DEFAULT_INSTALL_DIR = "~/.claude"
 # Files created by installer itself (not by modules)
 INSTALLER_FILES = ["install.log", "installed_modules.json", "installed_modules.json.bak"]
 SETTINGS_FILE = "settings.json"
-WRAPPER_MODULES = {"do", "omo"}
+WRAPPER_MODULES = {"do", "omo", "codeagent"}
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:

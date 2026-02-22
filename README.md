@@ -1,19 +1,22 @@
 [中文](README_CN.md) [English](README.md)
 
-# Claude Code Multi-Agent Workflow System
+# omoclaude
 
-[![Run in Smithery](https://smithery.ai/badge/skills/cexll)](https://smithery.ai/skills?ns=cexll&utm_source=github&utm_medium=badge)
+[![Repository](https://img.shields.io/badge/GitHub-RoterDL%2Fomoclaude-black)](https://github.com/RoterDL/omoclaude)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-blue)](https://claude.ai/code)
-[![Version](https://img.shields.io/badge/Version-6.x-green)](https://github.com/cexll/myclaude)
+[![Version](https://img.shields.io/badge/Version-6.x-green)](https://github.com/RoterDL/omoclaude)
 
 > AI-powered development automation with multi-backend execution (Codex/Claude/Gemini/OpenCode)
 
 ## Quick Start
 
 ```bash
-npx github:cexll/myclaude
+python3 install.py
 ```
+
+Project repository: https://github.com/RoterDL/omoclaude  
+Original upstream project: https://github.com/cexll/myclaude
 
 ## Modules Overview
 
@@ -21,46 +24,41 @@ npx github:cexll/myclaude
 |--------|-------------|---------------|
 | [do](skills/do/README.md) | **Recommended** - 5-phase feature development with codeagent orchestration | `/do` command |
 | [omo](skills/omo/README.md) | Multi-agent orchestration with intelligent routing | `/omo` command |
-| [bmad](agents/bmad/README.md) | BMAD agile workflow with 6 specialized agents | `/bmad-pilot` command |
-| [requirements](agents/requirements/README.md) | Lightweight requirements-to-code pipeline | `/requirements-pilot` command |
-| [essentials](agents/development-essentials/README.md) | 11 core dev commands: ask, bugfix, code, debug, docs, enhance-prompt, optimize, refactor, review, test, think | `/code`, `/debug`, etc. |
-| [sparv](skills/sparv/README.md) | SPARV workflow (Specify→Plan→Act→Review→Vault) | `/sparv` command |
-| course | Course development (combines dev + product-requirements + test-cases) | Composite module |
-| claudekit | ClaudeKit: do skill + global hooks (pre-bash, inject-spec, log-prompt) | Composite module |
+| [codeagent](skills/codeagent/SKILL.md) | Focused implementation skill using codeagent-wrapper | `skill:codeagent` or `module:codeagent` |
 
-### Available Skills
+## Available Skills
 
-Individual skills can be installed separately via `npx github:cexll/myclaude --list` (skills bundled in modules like do, omo, sparv are listed above):
+Installable skills in this repository:
 
 | Skill | Description |
 |-------|-------------|
-| browser | Browser automation for web testing and data extraction |
-| codeagent | codeagent-wrapper invocation for multi-backend AI code tasks |
-| codex | Direct Codex backend execution |
-| dev | Lightweight end-to-end development workflow |
-| gemini | Direct Gemini backend execution |
-| product-requirements | Interactive PRD generation with quality scoring |
-| prototype-prompt-generator | Structured UI/UX prototype prompt generation |
-| skill-install | Install skills from GitHub with security scanning |
-| test-cases | Comprehensive test case generation from requirements |
+| do | 5-phase feature development workflow |
+| omo | Multi-agent orchestration workflow |
+| codeagent | Focused implementation with codeagent-wrapper |
 
 ## Installation
 
 ```bash
 # Interactive installer (recommended)
-npx github:cexll/myclaude
+python3 install.py
 
-# List installable items (modules / skills / wrapper)
-npx github:cexll/myclaude --list
+# List available modules
+python3 install.py --list-modules
 
-# Detect installed modules and update from GitHub
-npx github:cexll/myclaude --update
+# Install selected modules
+python3 install.py --module do,omo,codeagent
 
 # Custom install directory / overwrite
-npx github:cexll/myclaude --install-dir ~/.claude --force
+python3 install.py --install-dir ~/.claude --module do --force
+
+# Update installed modules
+python3 install.py --update
+
+# Uninstall selected modules
+python3 uninstall.py --module do,omo
 ```
 
-`--update` detects already installed modules in the target install dir (defaults to `~/.claude`, via `installed_modules.json` when present) and updates them from GitHub (latest release) by overwriting the module files.
+`--update` detects already installed modules in the target install dir (defaults to `~/.claude`, via `installed_modules.json` when present) and updates module files.
 
 ### Module Configuration
 
@@ -69,18 +67,12 @@ Edit `config.json` to enable/disable modules:
 ```json
 {
   "modules": {
-    "bmad": { "enabled": false },
-    "requirements": { "enabled": false },
-    "essentials": { "enabled": false },
-    "omo": { "enabled": false },
-    "sparv": { "enabled": false },
     "do": { "enabled": true },
-    "course": { "enabled": false }
+    "omo": { "enabled": false },
+    "codeagent": { "enabled": false }
   }
 }
 ```
-
-Note: Installing any skill-based module (`do`, `omo`, `sparv`, `course`, etc.) auto-adds `claudekit` so global hooks are installed together.
 
 ## Workflow Selection Guide
 
@@ -88,9 +80,7 @@ Note: Installing any skill-based module (`do`, `omo`, `sparv`, `course`, etc.) a
 |----------|-------------|
 | Feature development (default) | `/do` |
 | Bug investigation + fix | `/omo` |
-| Large enterprise project | `/bmad-pilot` |
-| Quick prototype | `/requirements-pilot` |
-| Simple task | `/code`, `/debug` |
+| Focused single-track implementation | `skill:codeagent` |
 
 ## Core Architecture
 
@@ -110,37 +100,30 @@ Note: Installing any skill-based module (`do`, `omo`, `sparv`, `course`, etc.) a
 
 ## Directory Structure After Installation
 
-```
+```text
 ~/.claude/
 ├── bin/codeagent-wrapper
 ├── CLAUDE.md              (installed by default)
-├── commands/              (from essentials module)
-├── agents/                (from bmad/requirements modules)
-├── skills/                (from do/omo/sparv/course modules)
-├── hooks/                 (from claudekit module)
+├── skills/
+│   ├── do/
+│   ├── omo/
+│   └── codeagent/
 ├── settings.json          (auto-generated, hooks config)
 └── installed_modules.json (auto-generated, tracks modules)
 ```
 
 ## Documentation
 
+- [skills](skills/README.md)
 - [codeagent-wrapper](codeagent-wrapper/README.md)
 - [Plugin System](PLUGIN_README.md)
 
 ## Troubleshooting
 
-### Common Issues
-
-**Codex wrapper not found:**
-```bash
-# Select: codeagent-wrapper
-npx github:cexll/myclaude
-```
-
 **Module not loading:**
 ```bash
 cat ~/.claude/installed_modules.json
-npx github:cexll/myclaude --force
+python3 install.py --module do --force
 ```
 
 **Backend CLI errors:**
@@ -148,17 +131,8 @@ npx github:cexll/myclaude --force
 which codex && codex --version
 which claude && claude --version
 which gemini && gemini --version
+which opencode && opencode --version
 ```
-
-## FAQ
-
-| Issue | Solution |
-|-------|----------|
-| "Unknown event format" | Logging display issue, can be ignored |
-| Gemini can't read .gitignore files | Remove from .gitignore or use different backend |
-| Codex permission denied | Set `approval_policy = "never"` in ~/.codex/config.yaml |
-
-See [GitHub Issues](https://github.com/cexll/myclaude/issues) for more.
 
 ## License
 
@@ -170,4 +144,4 @@ For commercial use without AGPL obligations, contact: evanxian9@gmail.com
 
 ## Support
 
-- [GitHub Issues](https://github.com/cexll/myclaude/issues)
+- [GitHub Issues](https://github.com/RoterDL/omoclaude/issues)

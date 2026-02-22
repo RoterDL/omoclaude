@@ -5,14 +5,14 @@ Claude Code plugins for this repo are defined in `.claude-plugin/marketplace.jso
 ## Install
 
 ```bash
-/plugin marketplace add cexll/myclaude
+/plugin marketplace add RoterDL/omoclaude
 /plugin list
 ```
 
 ## Available Plugins
 
-- `bmad` - BMAD workflow (`./agents/bmad`)
-- `requirements` - requirements-driven workflow (`./agents/requirements`)
-- `dev-kit` - development essentials (`./agents/development-essentials`)
 - `omo` - orchestration skill (`./skills/omo`)
-- `sparv` - SPARV workflow (`./skills/sparv`)
+
+Notes:
+- `do` and `codeagent` are distributed through the `install.py` installer workflow.
+- Original upstream project: `cexll/myclaude` (`https://github.com/cexll/myclaude`)

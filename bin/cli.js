@@ -15,8 +15,8 @@ const API_HEADERS = {
   "User-Agent": "myclaude-npx",
   Accept: "application/vnd.github+json",
 };
-const WRAPPER_REQUIRED_MODULES = new Set(["do", "omo"]);
-const WRAPPER_REQUIRED_SKILLS = new Set(["dev"]);
+const WRAPPER_REQUIRED_MODULES = new Set(["do", "omo", "codeagent"]);
+const WRAPPER_REQUIRED_SKILLS = new Set(["do", "omo", "codeagent"]);
 
 function parseArgs(argv) {
   const out = {
@@ -65,7 +65,7 @@ function printHelp() {
       "  npx github:cexll/myclaude --update",
       "  npx github:cexll/myclaude --install-dir ~/.claude --force",
       "  npx github:cexll/myclaude uninstall",
-      "  npx github:cexll/myclaude uninstall --module bmad,do -y",
+      "  npx github:cexll/myclaude uninstall --module do,omo -y",
       "",
       "Options:",
       "  --install-dir <path>   Default: ~/.claude",
