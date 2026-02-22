@@ -220,6 +220,8 @@ npx github:cexll/myclaude --install-dir ~/.claude --force
 }
 ```
 
+说明：安装任意技能类模块（如 `do`、`omo`、`sparv`、`course`）时，会自动附加安装 `claudekit`，以确保全局 hooks 同步安装。
+
 ## 工作流选择指南
 
 | 场景 | 推荐 |
