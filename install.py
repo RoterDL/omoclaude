@@ -25,6 +25,7 @@ except ImportError:  # pragma: no cover
 DEFAULT_INSTALL_DIR = "~/.claude"
 SETTINGS_FILE = "settings.json"
 WRAPPER_REQUIRED_MODULES = {"do", "omo"}
+AUTO_HOOKS_MODULE = "claudekit"
 
 
 def _ensure_list(ctx: Dict[str, Any], key: str) -> List[Any]:
@@ -135,16 +136,24 @@ def find_module_hooks(module_name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]
     1. {target_dir}/hooks/hooks.json (for skills with hooks subdirectory)
     2. {target_dir}/hooks.json (for hooks directory itself)
     """
-    del module_name  # Hooks are discovered from module operations, no name-based filtering needed.
     results = []
     seen_paths = set()
     hook_rel_paths = ("hooks/hooks.json", "hooks.json")
+    selected_modules = set(ctx.get("selected_modules", set()))
+    skip_do_hooks_for_claudekit = (
+        module_name == AUTO_HOOKS_MODULE and "do" in selected_modules
+    )
 
     # Check for hooks in operations (copy_dir targets)
     for op in cfg.get("operations", []):
         if op.get("type") == "copy_dir":
-            target_dir = ctx["install_dir"] / op["target"]
-            source_dir = ctx["config_dir"] / op["source"]
+            if skip_do_hooks_for_claudekit and (
+                _path_eq(op.get("source"), "skills/do")
+                or _path_eq(op.get("target"), "skills/do")
+            ):
+                continue
+            target_dir = ctx["install_dir"] / Path(str(op["target"]).replace("\\", "/"))
+            source_dir = ctx["config_dir"] / Path(str(op["source"]).replace("\\", "/"))
 
             loaded_rel_paths = set()
             plugin_root = str(target_dir)
@@ -524,36 +533,102 @@ def check_module_installed(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) 
 def get_installed_modules(config: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, bool]:
     """Get installation status of all modules by checking files on disk.
 
-    This function determines installation status solely based on whether
-    the module's files actually exist on the filesystem, not the status file.
+    Prefer recorded successful installs from installed_modules.json.
+    If no status records exist yet, fall back to filesystem detection.
     """
     result = {}
     modules = config.get("modules", {})
+    status_modules = load_installed_status(ctx).get("modules", {})
+    has_status_records = bool(status_modules)
 
     for name, cfg in modules.items():
-        result[name] = check_module_installed(name, cfg, ctx)
+        module_status = status_modules.get(name, {})
+        if isinstance(module_status, dict) and module_status.get("status") == "success":
+            result[name] = True
+            continue
+
+        if has_status_records:
+            result[name] = False
+        else:
+            result[name] = check_module_installed(name, cfg, ctx)
 
     return result
 
 
 def get_modules_to_uninstall(config: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, bool]:
-    """Get modules that need cleanup (files exist OR status file has record).
+    """Get modules that need cleanup.
 
-    For uninstall operations, we need to check both filesystem and status file
-    to ensure complete cleanup.
+    Prefer status records when available; fall back to filesystem detection
+    only when no status records exist.
     """
     result = {}
     modules = config.get("modules", {})
 
     status = load_installed_status(ctx)
     status_modules = status.get("modules", {})
+    has_status_records = bool(status_modules)
 
     for name, cfg in modules.items():
         in_status = name in status_modules
-        files_exist = check_module_installed(name, cfg, ctx)
-        result[name] = in_status or files_exist
+        if in_status:
+            result[name] = True
+            continue
+
+        if has_status_records:
+            result[name] = False
+        else:
+            result[name] = check_module_installed(name, cfg, ctx)
 
     return result
+
+
+def _normalize_op_path(value: Any) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.replace("\\", "/").lstrip("./").strip("/")
+
+
+def _path_eq(value: Any, expected: str) -> bool:
+    return _normalize_op_path(value) == _normalize_op_path(expected)
+
+
+def _is_skills_path(value: Any) -> bool:
+    normalized = _normalize_op_path(value)
+    return normalized == "skills" or normalized.startswith("skills/")
+
+
+def module_installs_skill_files(cfg: Dict[str, Any]) -> bool:
+    """Return True when a module operation installs files under skills/."""
+    for op in cfg.get("operations", []):
+        if op.get("type") not in {"copy_dir", "copy_file", "merge_dir"}:
+            continue
+        for key in ("source", "target"):
+            value = op.get(key)
+            if _is_skills_path(value):
+                return True
+    return False
+
+
+def add_required_modules_for_install(
+    selected: Dict[str, Any], config: Dict[str, Any]
+) -> tuple[Dict[str, Any], List[str]]:
+    """Auto-add required modules for install flows."""
+    modules = config.get("modules", {})
+    expanded = dict(selected)
+    auto_added: List[str] = []
+
+    if AUTO_HOOKS_MODULE not in modules or AUTO_HOOKS_MODULE in expanded:
+        return expanded, auto_added
+
+    needs_hooks = any(
+        name != AUTO_HOOKS_MODULE and module_installs_skill_files(cfg)
+        for name, cfg in expanded.items()
+    )
+    if needs_hooks:
+        expanded[AUTO_HOOKS_MODULE] = modules[AUTO_HOOKS_MODULE]
+        auto_added.append(AUTO_HOOKS_MODULE)
+
+    return expanded, auto_added
 
 
 def list_modules_with_status(config: Dict[str, Any], ctx: Dict[str, Any]) -> None:
@@ -850,12 +925,16 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
             # Install
             selected = _parse_module_selection(args, modules, module_names)
             if selected:
+                selected, auto_added = add_required_modules_for_install(selected, config)
+                if auto_added:
+                    print(f"Auto-added dependencies: {', '.join(auto_added)}")
                 # Filter out already installed
                 to_install = {k: v for k, v in selected.items() if not installed_status.get(k, False)}
                 if not to_install:
                     print("All selected modules are already installed.")
                     continue
                 print(f"\nInstalling: {', '.join(to_install.keys())}")
+                ctx["selected_modules"] = set(to_install.keys())
                 results = []
                 for name, cfg in to_install.items():
                     try:
@@ -1030,11 +1109,11 @@ def execute_module(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[
 
 
 def _source_path(op: Dict[str, Any], ctx: Dict[str, Any]) -> Path:
-    return (ctx["config_dir"] / op["source"]).expanduser().resolve()
+    return (ctx["config_dir"] / Path(str(op["source"]).replace("\\", "/"))).expanduser().resolve()
 
 
 def _target_path(op: Dict[str, Any], ctx: Dict[str, Any]) -> Path:
-    return (ctx["install_dir"] / op["target"]).expanduser().resolve()
+    return (ctx["install_dir"] / Path(str(op["target"]).replace("\\", "/"))).expanduser().resolve()
 
 
 def _record_created(path: Path, ctx: Dict[str, Any]) -> None:
@@ -1462,6 +1541,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
         total = len(modules)
         print(f"Updating {total} module(s) in {ctx['install_dir']}...")
+        ctx["selected_modules"] = set(modules.keys())
 
         results: List[Dict[str, Any]] = []
         for idx, (name, cfg) in enumerate(modules.items(), 1):
@@ -1519,6 +1599,9 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
     # Install specified modules
     modules = select_modules(config, args.module)
+    modules, auto_added = add_required_modules_for_install(modules, config)
+    if auto_added:
+        print(f"Auto-added dependencies: {', '.join(auto_added)}")
 
     try:
         ensure_install_dir(ctx["install_dir"])
@@ -1530,6 +1613,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
     total = len(modules)
     print(f"Installing {total} module(s) to {ctx['install_dir']}...")
+    ctx["selected_modules"] = set(modules.keys())
 
     results: List[Dict[str, Any]] = []
     for idx, (name, cfg) in enumerate(modules.items(), 1):

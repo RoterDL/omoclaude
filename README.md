@@ -80,6 +80,8 @@ Edit `config.json` to enable/disable modules:
 }
 ```
 
+Note: Installing any skill-based module (`do`, `omo`, `sparv`, `course`, etc.) auto-adds `claudekit` so global hooks are installed together.
+
 ## Workflow Selection Guide
 
 | Scenario | Recommended |
