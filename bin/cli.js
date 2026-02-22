@@ -8,13 +8,15 @@ const os = require("os");
 const path = require("path");
 const readline = require("readline");
 const zlib = require("zlib");
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 
 const REPO = { owner: "cexll", name: "myclaude" };
 const API_HEADERS = {
   "User-Agent": "myclaude-npx",
   Accept: "application/vnd.github+json",
 };
+const WRAPPER_REQUIRED_MODULES = new Set(["do", "omo"]);
+const WRAPPER_REQUIRED_SKILLS = new Set(["dev"]);
 
 function parseArgs(argv) {
   const out = {
@@ -499,9 +501,19 @@ async function updateInstalledModules(installDir, tag, config, dryRun) {
     }
 
     await fs.promises.mkdir(installDir, { recursive: true });
+    const installState = { wrapperInstalled: false };
+
+    async function ensureWrapperInstalled() {
+      if (installState.wrapperInstalled) return;
+      process.stdout.write("Installing codeagent-wrapper...\n");
+      await runInstallSh(repoRoot, installDir, tag);
+      installState.wrapperInstalled = true;
+    }
+
     for (const name of toUpdate) {
+      if (WRAPPER_REQUIRED_MODULES.has(name)) await ensureWrapperInstalled();
       process.stdout.write(`Updating module: ${name}\n`);
-      const r = await applyModule(name, config, repoRoot, installDir, true, tag);
+      const r = await applyModule(name, config, repoRoot, installDir, true, tag, installState);
       upsertModuleStatus(installDir, r);
     }
   } finally {
@@ -777,7 +789,57 @@ async function rmTree(p) {
   await fs.promises.rmdir(p, { recursive: true });
 }
 
-async function applyModule(moduleName, config, repoRoot, installDir, force, tag) {
+function defaultModelsConfig() {
+  return {
+    default_backend: "codex",
+    default_model: "gpt-4.1",
+    backends: {},
+    agents: {},
+  };
+}
+
+function mergeModuleAgentsToModels(moduleName, mod, repoRoot) {
+  const moduleAgents = mod && mod.agents;
+  if (!isPlainObject(moduleAgents) || !Object.keys(moduleAgents).length) return false;
+
+  const modelsPath = path.join(os.homedir(), ".codeagent", "models.json");
+  fs.mkdirSync(path.dirname(modelsPath), { recursive: true });
+
+  let models;
+  if (fs.existsSync(modelsPath)) {
+    models = JSON.parse(fs.readFileSync(modelsPath, "utf8"));
+  } else {
+    const templatePath = path.join(repoRoot, "templates", "models.json.example");
+    if (fs.existsSync(templatePath)) {
+      models = JSON.parse(fs.readFileSync(templatePath, "utf8"));
+      if (!isPlainObject(models)) models = defaultModelsConfig();
+      models.agents = {};
+    } else {
+      models = defaultModelsConfig();
+    }
+  }
+
+  if (!isPlainObject(models)) models = defaultModelsConfig();
+  if (!isPlainObject(models.agents)) models.agents = {};
+
+  let modified = false;
+  for (const [agentName, agentCfg] of Object.entries(moduleAgents)) {
+    if (!isPlainObject(agentCfg)) continue;
+    const existing = models.agents[agentName];
+    const canOverwrite = !isPlainObject(existing) || Object.prototype.hasOwnProperty.call(existing, "__module__");
+    if (!canOverwrite) continue;
+    const next = { ...agentCfg, __module__: moduleName };
+    if (!deepEqual(existing, next)) {
+      models.agents[agentName] = next;
+      modified = true;
+    }
+  }
+
+  if (modified) fs.writeFileSync(modelsPath, JSON.stringify(models, null, 2) + "\n", "utf8");
+  return modified;
+}
+
+async function applyModule(moduleName, config, repoRoot, installDir, force, tag, installState) {
   const mod = config && config.modules && config.modules[moduleName];
   if (!mod) throw new Error(`Unknown module: ${moduleName}`);
   const ops = Array.isArray(mod.operations) ? mod.operations : [];
@@ -803,7 +865,12 @@ async function applyModule(moduleName, config, repoRoot, installDir, force, tag)
         if (cmd !== "bash install.sh") {
           throw new Error(`Refusing run_command: ${cmd || "(empty)"}`);
         }
+        if (installState && installState.wrapperInstalled) {
+          result.operations.push({ type, status: "success", skipped: true });
+          continue;
+        }
         await runInstallSh(repoRoot, installDir, tag);
+        if (installState) installState.wrapperInstalled = true;
       } else {
         throw new Error(`Unsupported operation type: ${type}`);
       }
@@ -829,6 +896,19 @@ async function applyModule(moduleName, config, repoRoot, installDir, force, tag)
   } catch (err) {
     result.operations.push({
       type: "merge_hooks",
+      status: "failed",
+      error: err && err.message ? err.message : String(err),
+    });
+  }
+
+  try {
+    if (mergeModuleAgentsToModels(moduleName, mod, repoRoot)) {
+      result.has_agents = true;
+      result.operations.push({ type: "merge_agents", status: "success" });
+    }
+  } catch (err) {
+    result.operations.push({
+      type: "merge_agents",
       status: "failed",
       error: err && err.message ? err.message : String(err),
     });
@@ -931,6 +1011,63 @@ async function uninstallModule(moduleName, config, repoRoot, installDir, dryRun)
   deleteModuleStatus(installDir, moduleName);
 }
 
+async function installDefaultConfigs(installDir, repoRoot) {
+  try {
+    const claudeMdTarget = path.join(installDir, "CLAUDE.md");
+    const claudeMdSrc = path.join(repoRoot, "memorys", "CLAUDE.md");
+    if (!fs.existsSync(claudeMdTarget) && fs.existsSync(claudeMdSrc)) {
+      await fs.promises.copyFile(claudeMdSrc, claudeMdTarget);
+      process.stdout.write(`Installed CLAUDE.md to ${claudeMdTarget}\n`);
+    }
+  } catch (err) {
+    process.stderr.write(`Warning: could not install default configs: ${err.message}\n`);
+  }
+}
+
+function printPostInstallInfo(installDir) {
+  process.stdout.write("\n");
+
+  // Check codeagent-wrapper version
+  const wrapperBin = path.join(installDir, "bin", "codeagent-wrapper");
+  let wrapperVersion = null;
+  try {
+    const r = spawnSync(wrapperBin, ["--version"], { timeout: 5000 });
+    if (r.status === 0 && r.stdout) {
+      wrapperVersion = r.stdout.toString().trim();
+    }
+  } catch {}
+
+  // Check PATH
+  const binDir = path.join(installDir, "bin");
+  const envPath = process.env.PATH || "";
+  const pathOk = envPath.split(path.delimiter).some((p) => {
+    try { return fs.realpathSync(p) === fs.realpathSync(binDir); } catch { return p === binDir; }
+  });
+
+  // Check backend CLIs
+  const whichCmd = process.platform === "win32" ? "where" : "which";
+  const backends = ["codex", "claude", "gemini", "opencode"];
+  const detected = {};
+  for (const name of backends) {
+    try {
+      const r = spawnSync(whichCmd, [name], { timeout: 3000 });
+      detected[name] = r.status === 0;
+    } catch {
+      detected[name] = false;
+    }
+  }
+
+  process.stdout.write("Setup Complete!\n");
+  process.stdout.write(`  codeagent-wrapper: ${wrapperVersion || "(not found)"} ${wrapperVersion ? "✓" : "✗"}\n`);
+  process.stdout.write(`  PATH: ${binDir} ${pathOk ? "✓" : "✗ (not in PATH)"}\n`);
+  process.stdout.write("\nBackend CLIs detected:\n");
+  process.stdout.write("  " + backends.map((b) => `${b} ${detected[b] ? "✓" : "✗"}`).join("  |  ") + "\n");
+  process.stdout.write("\nNext steps:\n");
+  process.stdout.write("  1. Configure API keys in ~/.codeagent/models.json\n");
+  process.stdout.write('  2. Try: /do "your first task"\n');
+  process.stdout.write("\n");
+}
+
 async function installSelected(picks, tag, config, installDir, force, dryRun) {
   const needRepo = picks.some((p) => p.kind !== "wrapper");
   const needWrapper = picks.some((p) => p.kind === "wrapper");
@@ -949,34 +1086,54 @@ async function installSelected(picks, tag, config, installDir, force, dryRun) {
   try {
     let repoRoot = repoRootFromHere();
     if (needRepo || needWrapper) {
-      if (!tag) throw new Error("No tag available to download");
-      const archive = path.join(tmp, "src.tgz");
-      const url = `https://codeload.github.com/${REPO.owner}/${REPO.name}/tar.gz/refs/tags/${encodeURIComponent(
-        tag
-      )}`;
-      process.stdout.write(`Downloading ${REPO.owner}/${REPO.name}@${tag}...\n`);
-      await downloadToFile(url, archive);
-      process.stdout.write("Extracting...\n");
-      const extracted = path.join(tmp, "src");
-      await extractTarGz(archive, extracted);
-      repoRoot = extracted;
+      if (tag) {
+        const archive = path.join(tmp, "src.tgz");
+        const url = `https://codeload.github.com/${REPO.owner}/${REPO.name}/tar.gz/refs/tags/${encodeURIComponent(
+          tag
+        )}`;
+        process.stdout.write(`Downloading ${REPO.owner}/${REPO.name}@${tag}...\n`);
+        await downloadToFile(url, archive);
+        process.stdout.write("Extracting...\n");
+        const extracted = path.join(tmp, "src");
+        await extractTarGz(archive, extracted);
+        repoRoot = extracted;
+      } else {
+        process.stdout.write("Offline mode: installing from local package contents.\n");
+      }
     }
 
     await fs.promises.mkdir(installDir, { recursive: true });
+    const installState = { wrapperInstalled: false };
+
+    async function ensureWrapperInstalled() {
+      if (installState.wrapperInstalled) return;
+      process.stdout.write("Installing codeagent-wrapper...\n");
+      await runInstallSh(repoRoot, installDir, tag);
+      installState.wrapperInstalled = true;
+    }
 
     for (const p of picks) {
       if (p.kind === "wrapper") {
-        process.stdout.write("Installing codeagent-wrapper...\n");
-        await runInstallSh(repoRoot, installDir, tag);
+        await ensureWrapperInstalled();
         continue;
       }
       if (p.kind === "module") {
+        if (WRAPPER_REQUIRED_MODULES.has(p.moduleName)) await ensureWrapperInstalled();
         process.stdout.write(`Installing module: ${p.moduleName}\n`);
-        const r = await applyModule(p.moduleName, config, repoRoot, installDir, force, tag);
+        const r = await applyModule(
+          p.moduleName,
+          config,
+          repoRoot,
+          installDir,
+          force,
+          tag,
+          installState
+        );
         upsertModuleStatus(installDir, r);
         continue;
       }
       if (p.kind === "skill") {
+        if (WRAPPER_REQUIRED_SKILLS.has(p.skillName)) await ensureWrapperInstalled();
         process.stdout.write(`Installing skill: ${p.skillName}\n`);
         await copyDirRecursive(
           path.join(repoRoot, "skills", p.skillName),
@@ -985,6 +1142,9 @@ async function installSelected(picks, tag, config, installDir, force, dryRun) {
         );
       }
     }
+
+    await installDefaultConfigs(installDir, repoRoot);
+    printPostInstallInfo(installDir);
   } finally {
     await rmTree(tmp);
   }

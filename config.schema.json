@@ -41,6 +41,21 @@
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/operation" }
+        },
+        "agents": {
+          "type": "object",
+          "description": "Agent configurations merged into ~/.codeagent/models.json on install",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "backend": { "type": "string" },
+              "model": { "type": "string" },
+              "reasoning": { "type": "string" },
+              "yolo": { "type": "boolean" }
+            },
+            "required": ["backend", "model"],
+            "additionalProperties": false
+          }
         }
       }
     },

@@ -315,6 +315,49 @@ def get_status() -> dict | None:
     return task_data
 
 
+def enable_worktree() -> bool:
+    """Enable worktree for the current task without creating a new task."""
+    project_root = get_project_root()
+    current_task = get_current_task(project_root)
+
+    if not current_task:
+        print("Error: No active task.", file=sys.stderr)
+        return False
+
+    task_dir = os.path.join(project_root, current_task)
+    task_md_path = os.path.join(task_dir, FILE_TASK_MD)
+
+    parsed = read_task_md(task_md_path)
+    if not parsed:
+        print("Error: task.md not found or invalid.", file=sys.stderr)
+        return False
+
+    frontmatter = parsed["frontmatter"]
+
+    if frontmatter.get("use_worktree") and frontmatter.get("worktree_dir"):
+        print(f"worktree_dir: {frontmatter['worktree_dir']}")
+        print(f"export DO_WORKTREE_DIR={frontmatter['worktree_dir']}")
+        return True
+
+    task_id = frontmatter["id"]
+    try:
+        worktree_dir = create_worktree(project_root, task_id)
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return False
+
+    frontmatter["use_worktree"] = True
+    frontmatter["worktree_dir"] = worktree_dir
+
+    if not write_task_md(task_md_path, frontmatter, parsed["body"]):
+        print("Error: Failed to write task.md.", file=sys.stderr)
+        return False
+
+    print(f"worktree_dir: {worktree_dir}")
+    print(f"export DO_WORKTREE_DIR={worktree_dir}")
+    return True
+
+
 def update_phase(phase: int) -> bool:
     """Update current task phase."""
     project_root = get_project_root()
@@ -371,6 +414,9 @@ def main():
     phase_parser = subparsers.add_parser("update-phase", help="Update current phase")
     phase_parser.add_argument("phase", type=int, help="Phase number (1-5)")
 
+    # enable-worktree command
+    subparsers.add_parser("enable-worktree", help="Enable worktree for current task")
+
     args = parser.parse_args()
 
     if args.command == "create":
@@ -423,6 +469,10 @@ def main():
             phase_name = PHASE_NAMES.get(args.phase, f"Phase {args.phase}")
             print(f"Updated to phase {args.phase} ({phase_name})")
         else:
+            sys.exit(1)
+
+    elif args.command == "enable-worktree":
+        if not enable_worktree():
             sys.exit(1)
 
     else:
