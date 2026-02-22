@@ -3,7 +3,11 @@ setlocal enabledelayedexpansion
 
 set "EXIT_CODE=0"
 set "REPO=cexll/myclaude"
-set "VERSION=latest"
+if defined CODEAGENT_WRAPPER_VERSION (
+    set "VERSION=%CODEAGENT_WRAPPER_VERSION%"
+) else if not defined VERSION (
+    set "VERSION=latest"
+)
 set "OS=windows"
 
 call :detect_arch
@@ -11,40 +15,70 @@ if errorlevel 1 goto :fail
 
 set "BINARY_NAME=codeagent-wrapper-%OS%-%ARCH%.exe"
 set "URL=https://github.com/%REPO%/releases/%VERSION%/download/%BINARY_NAME%"
+set "API_URL=https://api.github.com/repos/%REPO%/releases/latest"
 set "TEMP_FILE=%TEMP%\codeagent-wrapper-%ARCH%-%RANDOM%.exe"
 set "DEST_DIR=%USERPROFILE%\bin"
 set "DEST=%DEST_DIR%\codeagent-wrapper.exe"
 
-echo Downloading codeagent-wrapper for %ARCH% ...
-echo   %URL%
-call :download
-if errorlevel 1 goto :fail
+set "SHOULD_DOWNLOAD=1"
+set "LOCAL_VER="
+set "REMOTE_VER="
 
-if not exist "%TEMP_FILE%" (
-    echo ERROR: download failed to produce "%TEMP_FILE%".
-    goto :fail
+if exist "%DEST%" (
+    call :get_local_version "%DEST%"
+    if not errorlevel 1 (
+        if /I "%VERSION%"=="latest" (
+            call :get_latest_version
+            if errorlevel 1 (
+                echo WARNING: failed to query latest release version; continuing with download.
+                set "REMOTE_VER="
+            )
+        ) else (
+            set "REMOTE_VER=%VERSION%"
+            call :trim_var REMOTE_VER
+        )
+
+        if defined LOCAL_VER if defined REMOTE_VER (
+            if "!LOCAL_VER!"=="!REMOTE_VER!" (
+                echo codeagent-wrapper is already up to date (!LOCAL_VER!), skipping download.
+                set "SHOULD_DOWNLOAD=0"
+            )
+        )
+    )
 )
 
-echo Installing to "%DEST%" ...
-if not exist "%DEST_DIR%" (
-    mkdir "%DEST_DIR%" >nul 2>nul || goto :fail
-)
+if "!SHOULD_DOWNLOAD!"=="1" (
+    echo Downloading codeagent-wrapper for %ARCH% ...
+    echo   %URL%
+    call :download
+    if errorlevel 1 goto :fail
 
-move /y "%TEMP_FILE%" "%DEST%" >nul 2>nul
-if errorlevel 1 (
-    echo ERROR: unable to place file in "%DEST%".
-    goto :fail
-)
+    if not exist "%TEMP_FILE%" (
+        echo ERROR: download failed to produce "%TEMP_FILE%".
+        goto :fail
+    )
 
-"%DEST%" --version >nul 2>nul
-if errorlevel 1 (
-    echo ERROR: installation verification failed.
-    goto :fail
-)
+    echo Installing to "%DEST%" ...
+    if not exist "%DEST_DIR%" (
+        mkdir "%DEST_DIR%" >nul 2>nul || goto :fail
+    )
 
-echo.
-echo codeagent-wrapper installed successfully at:
-echo   %DEST%
+    move /y "%TEMP_FILE%" "%DEST%" >nul 2>nul
+    if errorlevel 1 (
+        echo ERROR: unable to place file in "%DEST%".
+        goto :fail
+    )
+
+    "%DEST%" --version >nul 2>nul
+    if errorlevel 1 (
+        echo ERROR: installation verification failed.
+        goto :fail
+    )
+
+    echo.
+    echo codeagent-wrapper installed successfully at:
+    echo   %DEST%
+)
 
 rem Ensure %USERPROFILE%\bin is in PATH without duplicating entries
 rem 1) Read current user PATH from registry (REG_SZ or REG_EXPAND_SZ)
@@ -156,6 +190,62 @@ if /I "%ARCH%"=="AMD64" (
     set "EXIT_CODE=1"
     exit /b 1
 )
+
+:get_local_version
+set "LOCAL_VER="
+set "LOCAL_VER_RAW="
+for /f "usebackq delims=" %%V in (`"%~1" --version 2^>nul`) do (
+    if not defined LOCAL_VER_RAW set "LOCAL_VER_RAW=%%V"
+)
+if not defined LOCAL_VER_RAW exit /b 1
+for %%T in (!LOCAL_VER_RAW!) do set "LOCAL_VER=%%T"
+call :trim_var LOCAL_VER
+if not defined LOCAL_VER exit /b 1
+exit /b 0
+
+:get_latest_version
+set "REMOTE_VER="
+set "TAG_LINE="
+
+where curl >nul 2>nul
+if %errorlevel%==0 (
+    for /f "usebackq delims=" %%L in (`curl -fsSL "%API_URL%" 2^>nul ^| findstr /I /C:"tag_name"`) do (
+        if not defined TAG_LINE set "TAG_LINE=%%L"
+    )
+    if defined TAG_LINE (
+        set "REMOTE_VER=!TAG_LINE:*:=!"
+        set "REMOTE_VER=!REMOTE_VER:,=!"
+        call :trim_var REMOTE_VER
+        if defined REMOTE_VER exit /b 0
+    )
+)
+
+where powershell >nul 2>nul
+if %errorlevel%==0 (
+    for /f "usebackq delims=" %%V in (`powershell -NoLogo -NoProfile -Command "$ErrorActionPreference='Stop'; try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072 -bor 768 -bor 192 } catch {} ; $tag = (Invoke-RestMethod '%API_URL%').tag_name; if ($tag) { $tag }" 2^>nul`) do (
+        if not defined REMOTE_VER set "REMOTE_VER=%%V"
+    )
+    call :trim_var REMOTE_VER
+    if defined REMOTE_VER exit /b 0
+)
+
+exit /b 1
+
+:trim_var
+setlocal enabledelayedexpansion
+set "VAL=!%~1!"
+if not defined VAL (
+    endlocal & set "%~1=" & exit /b 0
+)
+for /f "tokens=* delims= " %%A in ("!VAL!") do set "VAL=%%A"
+:trim_var_tail
+if defined VAL if "!VAL:~-1!"==" " (
+    set "VAL=!VAL:~0,-1!"
+    goto :trim_var_tail
+)
+set "VAL=!VAL:"=!"
+endlocal & set "%~1=%VAL%"
+exit /b 0
 
 :download
 where curl >nul 2>nul

@@ -24,7 +24,7 @@ esac
 
 # Build download URL
 REPO="cexll/myclaude"
-VERSION="${CODEAGENT_WRAPPER_VERSION:-latest}"
+VERSION="${CODEAGENT_WRAPPER_VERSION:-${VERSION:-latest}}"
 BINARY_NAME="codeagent-wrapper-${OS}-${ARCH}"
 if [ "$VERSION" = "latest" ]; then
     URL="https://github.com/${REPO}/releases/latest/download/${BINARY_NAME}"
@@ -32,24 +32,57 @@ else
     URL="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_NAME}"
 fi
 
-echo "Downloading codeagent-wrapper from ${URL}..."
-if ! curl -fsSL "$URL" -o /tmp/codeagent-wrapper; then
-    echo "ERROR: failed to download binary" >&2
-    exit 1
-fi
-
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.claude}"
 BIN_DIR="${INSTALL_DIR}/bin"
 mkdir -p "$BIN_DIR"
 
-mv /tmp/codeagent-wrapper "${BIN_DIR}/codeagent-wrapper"
-chmod +x "${BIN_DIR}/codeagent-wrapper"
+WRAPPER_PATH="${BIN_DIR}/codeagent-wrapper"
+SHOULD_DOWNLOAD=1
 
-if "${BIN_DIR}/codeagent-wrapper" --version >/dev/null 2>&1; then
-    echo "codeagent-wrapper installed successfully to ${BIN_DIR}/codeagent-wrapper"
-else
-    echo "ERROR: installation verification failed" >&2
-    exit 1
+if [ -x "${WRAPPER_PATH}" ]; then
+    LOCAL_VER_RAW=$("${WRAPPER_PATH}" --version 2>/dev/null || true)
+    LOCAL_VER=$(printf '%s\n' "${LOCAL_VER_RAW}" | sed -n 's/.* version[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p' | head -n 1)
+    if [ -z "${LOCAL_VER}" ]; then
+        LOCAL_VER=$(printf '%s\n' "${LOCAL_VER_RAW}" | awk 'NF{print $NF; exit}')
+    fi
+    LOCAL_VER=$(printf '%s' "${LOCAL_VER}" | tr -d '\r\n[:space:]')
+
+    REMOTE_VER=""
+    if [ "$VERSION" = "latest" ]; then
+        RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null || true)
+        if [ -n "${RELEASE_JSON}" ]; then
+            REMOTE_VER=$(printf '%s\n' "${RELEASE_JSON}" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]\{1,\}\)".*/\1/p' | head -n 1)
+            REMOTE_VER=$(printf '%s' "${REMOTE_VER}" | tr -d '\r\n[:space:]')
+        fi
+        if [ -z "${REMOTE_VER}" ]; then
+            echo "WARNING: failed to query latest release version; continuing with download."
+        fi
+    else
+        REMOTE_VER=$(printf '%s' "${VERSION}" | tr -d '\r\n[:space:]')
+    fi
+
+    if [ -n "${LOCAL_VER}" ] && [ -n "${REMOTE_VER}" ] && [ "${LOCAL_VER}" = "${REMOTE_VER}" ]; then
+        echo "codeagent-wrapper is already up to date (${LOCAL_VER}), skipping download."
+        SHOULD_DOWNLOAD=0
+    fi
+fi
+
+if [ "${SHOULD_DOWNLOAD}" -eq 1 ]; then
+    echo "Downloading codeagent-wrapper from ${URL}..."
+    if ! curl -fsSL "$URL" -o /tmp/codeagent-wrapper; then
+        echo "ERROR: failed to download binary" >&2
+        exit 1
+    fi
+
+    mv /tmp/codeagent-wrapper "${WRAPPER_PATH}"
+    chmod +x "${WRAPPER_PATH}"
+
+    if "${WRAPPER_PATH}" --version >/dev/null 2>&1; then
+        echo "codeagent-wrapper installed successfully to ${WRAPPER_PATH}"
+    else
+        echo "ERROR: installation verification failed" >&2
+        exit 1
+    fi
 fi
 
 # Auto-add to shell config files with idempotency
