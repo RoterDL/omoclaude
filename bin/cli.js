@@ -65,7 +65,7 @@ function printHelp() {
       "  npx github:cexll/myclaude --update",
       "  npx github:cexll/myclaude --install-dir ~/.claude --force",
       "  npx github:cexll/myclaude uninstall",
-      "  npx github:cexll/myclaude uninstall --module omo,do -y",
+      "  npx github:cexll/myclaude uninstall --module bmad,do -y",
       "",
       "Options:",
       "  --install-dir <path>   Default: ~/.claude",

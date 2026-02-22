@@ -10,13 +10,16 @@
   "files": [
     "bin/",
     ".claude-plugin/",
+    "agents/",
     "skills/",
-    "hooks/",
     "memorys/",
     "templates/",
     "codeagent-wrapper/",
     "config.json",
     "install.py",
+    "install.sh",
+    "install.bat",
+    "PLUGIN_README.md",
     "README.md",
     "README_CN.md",
     "LICENSE"
