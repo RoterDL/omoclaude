@@ -11,6 +11,7 @@ python install.py --module do
 Installs:
 - `~/.claude/skills/do/` - skill files
 - hooks auto-merged into `~/.claude/settings.json`
+- agent presets merged into `~/.codeagent/models.json` (for `--agent` / parallel tasks)
 
 ## Usage
 
@@ -52,7 +53,8 @@ Phase 3 outputs `task_type` to determine agent selection in Phase 4:
 | `develop` | Implement backend code, run tests | **Yes** (if worktree enabled) |
 | `frontend-ui-ux-engineer` | Frontend implementation and UI/UX | **Yes** (if worktree enabled) |
 
-To customize agents, create same-named files in `~/.codeagent/agents/` to override.
+Prompts are shipped under `~/.claude/skills/do/prompts/` and referenced via `agents.<name>.prompt_file` in `~/.codeagent/models.json`.
+To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or point `prompt_file` to a file under `~/.codeagent/agents/<name>.md`.
 
 ## Hard Constraints
 
@@ -163,7 +165,7 @@ Implement the feature
 
 ## ~/.codeagent/models.json Configuration
 
-Required when using `agent:` in parallel tasks or `--agent`. Create `~/.codeagent/models.json` to configure agent → backend/model mappings:
+Required when using `agent:` in parallel tasks or `--agent`. The installer writes module defaults into `~/.codeagent/models.json`; you can edit it to match your environment.
 
 ```json
 {
@@ -179,6 +181,16 @@ Required when using `agent:` in parallel tasks or `--agent`. Create `~/.codeagen
     "code-reviewer": {
       "backend": "claude",
       "model": "claude-sonnet-4-5-20250929"
+    },
+    "develop": {
+      "backend": "codex",
+      "model": "gpt-4.1",
+      "prompt_file": "~/.claude/skills/do/prompts/develop.md"
+    },
+    "frontend-ui-ux-engineer": {
+      "backend": "gemini",
+      "model": "gemini-3-pro-preview",
+      "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
     }
   }
 }

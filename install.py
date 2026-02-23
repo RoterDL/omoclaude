@@ -273,6 +273,9 @@ def unmerge_hooks_from_settings(module_name: str, ctx: Dict[str, Any]) -> None:
 
 def merge_agents_to_models(module_name: str, agents: Dict[str, Any], ctx: Dict[str, Any]) -> None:
     """Merge module agent configs into ~/.codeagent/models.json."""
+    prompt_marker_module = "__prompt_file_module__"
+    prompt_marker_value = "__prompt_file_module_value__"
+
     models_path = Path.home() / ".codeagent" / "models.json"
     models_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -295,13 +298,31 @@ def merge_agents_to_models(module_name: str, agents: Dict[str, Any], ctx: Dict[s
             }
 
     models.setdefault("agents", {})
+    prompt_files_backfilled = 0
     for agent_name, agent_cfg in agents.items():
         entry = dict(agent_cfg)
         entry["__module__"] = module_name
 
         existing = models["agents"].get(agent_name, {})
-        if not existing or existing.get("__module__"):
+        if not existing or (isinstance(existing, dict) and existing.get("__module__")):
             models["agents"][agent_name] = entry
+            continue
+
+        # Do not overwrite user-owned agent configs (no __module__). However, we can
+        # safely backfill missing prompt_file so skills ship self-contained prompts.
+        if not isinstance(existing, dict):
+            models["agents"][agent_name] = entry
+            continue
+
+        desired_prompt = str(entry.get("prompt_file", "")).strip()
+        existing_prompt = str(existing.get("prompt_file", "")).strip()
+        if desired_prompt and not existing_prompt:
+            updated = dict(existing)
+            updated["prompt_file"] = desired_prompt
+            updated[prompt_marker_module] = module_name
+            updated[prompt_marker_value] = desired_prompt
+            models["agents"][agent_name] = updated
+            prompt_files_backfilled += 1
 
     with models_path.open("w", encoding="utf-8") as fh:
         json.dump(models, fh, indent=2, ensure_ascii=False)
@@ -316,6 +337,17 @@ def merge_agents_to_models(module_name: str, agents: Dict[str, Any], ctx: Dict[s
         },
         ctx,
     )
+    if prompt_files_backfilled:
+        write_log(
+            {
+                "level": "INFO",
+                "message": (
+                    f"Backfilled prompt_file for {prompt_files_backfilled} agent(s) "
+                    f"from {module_name} in models.json"
+                ),
+            },
+            ctx,
+        )
 
 
 def unmerge_agents_from_models(module_name: str, ctx: Dict[str, Any]) -> None:
@@ -324,6 +356,9 @@ def unmerge_agents_from_models(module_name: str, ctx: Dict[str, Any]) -> None:
     If another installed module also declares a removed agent, restore that
     module's version so shared agents (e.g. 'develop') are not lost.
     """
+    prompt_marker_module = "__prompt_file_module__"
+    prompt_marker_value = "__prompt_file_module_value__"
+
     models_path = Path.home() / ".codeagent" / "models.json"
     if not models_path.exists():
         return
@@ -332,14 +367,14 @@ def unmerge_agents_from_models(module_name: str, ctx: Dict[str, Any]) -> None:
         models = json.load(fh)
 
     agents = models.get("agents", {})
+    if not isinstance(agents, dict):
+        return
+
     to_remove = [
         name
         for name, cfg in agents.items()
         if isinstance(cfg, dict) and cfg.get("__module__") == module_name
     ]
-
-    if not to_remove:
-        return
 
     # Load config to find other modules that declare the same agents
     config_path = ctx["config_dir"] / "config.json"
@@ -362,6 +397,21 @@ def unmerge_agents_from_models(module_name: str, ctx: Dict[str, Any]) -> None:
                 agents[name] = restored
                 break
 
+    # Also rollback prompt_file backfills applied to user-owned agents.
+    prompt_files_rolled_back = 0
+    for agent_name, cfg in list(agents.items()):
+        if not isinstance(cfg, dict):
+            continue
+        if cfg.get(prompt_marker_module) != module_name:
+            continue
+        expected = str(cfg.get(prompt_marker_value, "")).strip()
+        actual = str(cfg.get("prompt_file", "")).strip()
+        if expected and actual == expected:
+            cfg.pop("prompt_file", None)
+            prompt_files_rolled_back += 1
+        cfg.pop(prompt_marker_module, None)
+        cfg.pop(prompt_marker_value, None)
+
     with models_path.open("w", encoding="utf-8") as fh:
         json.dump(models, fh, indent=2, ensure_ascii=False)
 
@@ -375,6 +425,17 @@ def unmerge_agents_from_models(module_name: str, ctx: Dict[str, Any]) -> None:
         },
         ctx,
     )
+    if prompt_files_rolled_back:
+        write_log(
+            {
+                "level": "INFO",
+                "message": (
+                    f"Rolled back prompt_file for {prompt_files_rolled_back} agent(s) "
+                    f"from {module_name} in models.json"
+                ),
+            },
+            ctx,
+        )
 
 
 def _hooks_equal(hook1: Dict[str, Any], hook2: Dict[str, Any]) -> bool:

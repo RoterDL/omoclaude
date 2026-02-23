@@ -214,6 +214,9 @@ def unmerge_agents_from_models(
     config: Dict[str, Any],
 ) -> bool:
     """Remove module agents from ~/.codeagent/models.json and restore shared ones."""
+    prompt_marker_module = "__prompt_file_module__"
+    prompt_marker_value = "__prompt_file_module_value__"
+
     models_path = Path.home() / ".codeagent" / "models.json"
     if not models_path.exists():
         return False
@@ -228,17 +231,18 @@ def unmerge_agents_from_models(
     if not isinstance(agents, dict):
         return False
 
+    modified = False
+
     to_remove = [
         name
         for name, cfg in agents.items()
         if isinstance(cfg, dict) and cfg.get("__module__") == module_name
     ]
-    if not to_remove:
-        return False
 
     modules_cfg = config.get("modules", {})
     for name in to_remove:
         agents.pop(name, None)
+        modified = True
         for other_mod in remaining_modules:
             other_status = installed_modules.get(other_mod, {})
             if isinstance(other_status, dict):
@@ -253,6 +257,25 @@ def unmerge_agents_from_models(
                 restored["__module__"] = other_mod
                 agents[name] = restored
                 break
+
+    # Rollback prompt_file backfills applied to user-owned agents.
+    for _, cfg in agents.items():
+        if not isinstance(cfg, dict):
+            continue
+        if cfg.get(prompt_marker_module) != module_name:
+            continue
+        expected = str(cfg.get(prompt_marker_value, "")).strip()
+        actual = str(cfg.get("prompt_file", "")).strip()
+        if expected and actual == expected:
+            cfg.pop("prompt_file", None)
+            modified = True
+        if prompt_marker_module in cfg or prompt_marker_value in cfg:
+            cfg.pop(prompt_marker_module, None)
+            cfg.pop(prompt_marker_value, None)
+            modified = True
+
+    if not modified:
+        return False
 
     try:
         with models_path.open("w", encoding="utf-8") as fh:

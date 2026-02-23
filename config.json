@@ -4,32 +4,34 @@
   "log_file": "install.log",
   "modules": {
     "omo": {
-      "enabled": false,
+      "enabled": true,
       "description": "OmO multi-agent orchestration with Sisyphus coordinator",
       "agents": {
         "oracle": {
           "backend": "claude",
-          "model": "claude-opus-4-5-20251101",
+          "model": "claude-opus-4-6",
           "yolo": true
         },
         "librarian": {
           "backend": "claude",
-          "model": "claude-sonnet-4-5-20250929",
+          "model": "claude-opus-4-6",
           "yolo": true
         },
         "explore": {
-          "backend": "opencode",
-          "model": "opencode/grok-code"
+          "backend": "claude",
+          "model": "claude-opus-4-6"
         },
         "develop": {
           "backend": "codex",
-          "model": "gpt-5.2",
+          "model": "gpt-5.3-codex",
+          "prompt_file": "~/.claude/skills/do/prompts/develop.md",
           "reasoning": "xhigh",
           "yolo": true
         },
         "frontend-ui-ux-engineer": {
           "backend": "gemini",
-          "model": "gemini-3-pro-preview"
+          "model": "gemini-3-pro-preview",
+          "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
           "backend": "gemini",
@@ -51,21 +53,27 @@
       "agents": {
         "develop": {
           "backend": "codex",
-          "model": "gpt-4.1",
-          "reasoning": "high",
+          "model": "gpt-5.3-codex",
+          "prompt_file": "~/.claude/skills/do/prompts/develop.md",
+          "reasoning": "xhigh",
           "yolo": true
         },
         "code-explorer": {
-          "backend": "opencode",
-          "model": ""
+          "backend": "claude",
+          "model": "claude-sonnet-4-6"
         },
         "code-architect": {
           "backend": "claude",
-          "model": ""
+          "model": "claude-opus-4-6"
         },
         "code-reviewer": {
-          "backend": "claude",
-          "model": ""
+          "backend": "codex",
+          "model": "gpt-5.3-codex"
+        },
+        "frontend-ui-ux-engineer": {
+          "backend": "gemini",
+          "model": "gemini-3-pro-preview",
+          "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
         }
       },
       "operations": [
@@ -78,7 +86,7 @@
       ]
     },
     "codeagent": {
-      "enabled": false,
+      "enabled": true,
       "description": "codeagent skill for focused implementation with codeagent-wrapper",
       "operations": [
         {

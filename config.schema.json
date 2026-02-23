@@ -50,6 +50,7 @@
             "properties": {
               "backend": { "type": "string" },
               "model": { "type": "string" },
+              "prompt_file": { "type": "string" },
               "reasoning": { "type": "string" },
               "yolo": { "type": "boolean" }
             },
