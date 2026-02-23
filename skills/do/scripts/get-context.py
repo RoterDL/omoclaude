@@ -11,9 +11,11 @@ import os
 import sys
 from pathlib import Path
 
+from task import read_task_md
+
 DIR_TASKS = ".claude/do-tasks"
 FILE_CURRENT_TASK = ".current-task"
-FILE_TASK_JSON = "task.json"
+FILE_TASK_MD = "task.md"
 
 
 def get_project_root() -> str:
@@ -90,15 +92,10 @@ def get_agent_context(project_root: str, task_dir: str, agent_type: str) -> str:
 
 
 def get_task_info(project_root: str, task_dir: str) -> dict | None:
-    """Get task.json data."""
-    task_json_path = os.path.join(project_root, task_dir, FILE_TASK_JSON)
-    if not os.path.exists(task_json_path):
-        return None
-    try:
-        with open(task_json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return None
+    """Get task metadata from task.md frontmatter."""
+    task_md_path = os.path.join(project_root, task_dir, FILE_TASK_MD)
+    parsed = read_task_md(task_md_path)
+    return parsed["frontmatter"] if parsed else None
 
 
 def main():

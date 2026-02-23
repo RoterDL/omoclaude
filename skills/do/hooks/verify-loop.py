@@ -21,12 +21,16 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Import shared task.md parser from scripts/
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+from task import read_task_md
+
 # Configuration
 MAX_ITERATIONS = 5
 STATE_TIMEOUT_MINUTES = 30
 DIR_TASKS = ".claude/do-tasks"
 FILE_CURRENT_TASK = ".current-task"
-FILE_TASK_JSON = "task.json"
+FILE_TASK_MD = "task.md"
 STATE_FILE = ".claude/do-tasks/.verify-state.json"
 
 # Only control loop for code-reviewer agent
@@ -57,15 +61,10 @@ def get_current_task(project_root: str) -> str | None:
 
 
 def get_task_info(project_root: str, task_dir: str) -> dict | None:
-    """Read task.json data."""
-    task_json_path = os.path.join(project_root, task_dir, FILE_TASK_JSON)
-    if not os.path.exists(task_json_path):
-        return None
-    try:
-        with open(task_json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return None
+    """Read task metadata from task.md frontmatter."""
+    task_md_path = os.path.join(project_root, task_dir, FILE_TASK_MD)
+    parsed = read_task_md(task_md_path)
+    return parsed["frontmatter"] if parsed else None
 
 
 def get_verify_commands(task_info: dict) -> list[str]:

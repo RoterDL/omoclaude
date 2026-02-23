@@ -10,10 +10,15 @@ import glob
 import json
 import os
 import sys
+from pathlib import Path
+
+# Import shared task.md parser from scripts/
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+from task import read_task_md
 
 DIR_TASKS = ".claude/do-tasks"
 FILE_CURRENT_TASK = ".current-task"
-FILE_TASK_JSON = "task.json"
+FILE_TASK_MD = "task.md"
 
 PHASE_NAMES = {
     1: "Understand",
@@ -42,15 +47,10 @@ def get_current_task(project_dir: str) -> str | None:
 
 
 def get_task_info(project_dir: str, task_dir: str) -> dict | None:
-    """Read task.json data."""
-    task_json_path = os.path.join(project_dir, task_dir, FILE_TASK_JSON)
-    if not os.path.exists(task_json_path):
-        return None
-    try:
-        with open(task_json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return None
+    """Read task metadata from task.md frontmatter."""
+    task_md_path = os.path.join(project_dir, task_dir, FILE_TASK_MD)
+    parsed = read_task_md(task_md_path)
+    return parsed["frontmatter"] if parsed else None
 
 
 def check_task_complete(project_dir: str, task_dir: str) -> str:
@@ -76,7 +76,7 @@ def check_task_complete(project_dir: str, task_dir: str) -> str:
         f"do loop incomplete: current phase {current_phase}/{max_phases} ({phase_name}). "
         f"Continue with remaining phases; use 'task.py update-phase <N>' after each phase. "
         f"Include completion_promise in final output when done: {completion_promise}. "
-        f"To exit early, set status to 'completed' in task.json."
+        f"To exit early, set status to 'completed' in task.md frontmatter."
     )
 
 
