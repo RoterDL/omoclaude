@@ -181,7 +181,7 @@ EOF
 2. **IF blocking questions exist** → Use AskUserQuestion
 3. **IF no blocking questions (completeness >= 8)** → Skip to Phase 3
 
-### Phase 3: Design (No Interaction)
+### Phase 3: Design (User Confirmation Required)
 
 **Goal:** Produce minimal-change implementation plan with task classification.
 
@@ -204,6 +204,19 @@ Include a `## Task Classification` section:
 - `frontend_tasks`: list frontend implementation tasks (if any)
 EOF
 ```
+
+**After code-architect completes, present the design to the user for confirmation:**
+
+1. Display the full design output from code-architect, including:
+   - File touch list with specific changes
+   - Build sequence
+   - Test plan
+   - Risks and mitigations
+   - Task classification
+2. Use `AskUserQuestion` to get explicit approval:
+   - "Approve design and proceed to implementation" — continue to Phase 4
+   - "Revise design" — adjust based on user feedback and re-run code-architect
+3. **Do NOT enter Phase 4 until the user explicitly approves the design.**
 
 ### Phase 4: Implement + Review
 

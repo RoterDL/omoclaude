@@ -14,12 +14,12 @@
         },
         "librarian": {
           "backend": "claude",
-          "model": "claude-opus-4-6",
+          "model": "claude-sonnet-4-6",
           "yolo": true
         },
         "explore": {
           "backend": "claude",
-          "model": "claude-opus-4-6"
+          "model": "claude-sonnet-4-6"
         },
         "develop": {
           "backend": "codex",
@@ -30,7 +30,7 @@
         },
         "frontend-ui-ux-engineer": {
           "backend": "gemini",
-          "model": "gemini-3-pro-preview",
+          "model": "gemini-3.1-pro-preview",
           "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
@@ -68,11 +68,11 @@
         },
         "code-reviewer": {
           "backend": "codex",
-          "model": "gpt-5.3-codex"
+          "model": "claude-sonnet-4-6"
         },
         "frontend-ui-ux-engineer": {
           "backend": "gemini",
-          "model": "gemini-3-pro-preview",
+          "model": "gemini-3.1-pro-preview",
           "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
         }
       },
