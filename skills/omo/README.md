@@ -18,12 +18,12 @@ python install.py --module omo
 
 | Agent | Role | Backend | Model |
 |-------|------|---------|-------|
-| `oracle` | Technical advisor | claude | claude-opus-4-5 |
-| `librarian` | External research | claude | claude-sonnet-4-5 |
-| `explore` | Codebase search | opencode | grok-code |
-| `develop` | Code implementation | codex | gpt-5.2 |
-| `frontend-ui-ux-engineer` | UI/UX specialist | gemini | gemini-3-pro |
-| `document-writer` | Documentation | gemini | gemini-3-flash |
+| `oracle` | Technical advisor | claude | claude-opus-4-6 |
+| `librarian` | External research | claude | claude-sonnet-4-6 |
+| `explore` | Codebase search | claude | claude-sonnet-4-6 |
+| `develop` | Code implementation | codex | gpt-5.3-codex |
+| `frontend-ui-ux-engineer` | UI/UX specialist | gemini | gemini-3.1-pro-preview |
+| `document-writer` | Documentation | gemini | gemini-3-flash-preview |
 
 ## Routing Signals (Not Fixed Pipeline)
 
@@ -123,25 +123,25 @@ Agent-model mappings in `~/.codeagent/models.json`:
 ```json
 {
   "default_backend": "codex",
-  "default_model": "gpt-5.2",
+  "default_model": "gpt-5.3-codex",
   "agents": {
     "oracle": {
       "backend": "claude",
-      "model": "claude-opus-4-5-20251101",
+      "model": "claude-opus-4-6",
       "yolo": true
     },
     "librarian": {
       "backend": "claude",
-      "model": "claude-sonnet-4-5-20250929",
+      "model": "claude-sonnet-4-6",
       "yolo": true
     },
     "explore": {
-      "backend": "opencode",
-      "model": "opencode/grok-code"
+      "backend": "claude",
+      "model": "claude-sonnet-4-6"
     },
     "frontend-ui-ux-engineer": {
       "backend": "gemini",
-      "model": "gemini-3-pro-preview"
+      "model": "gemini-3.1-pro-preview"
     },
     "document-writer": {
       "backend": "gemini",
@@ -149,7 +149,7 @@ Agent-model mappings in `~/.codeagent/models.json`:
     },
     "develop": {
       "backend": "codex",
-      "model": "gpt-5.2",
+      "model": "gpt-5.3-codex",
       "yolo": true,
       "reasoning": "xhigh"
     }
@@ -168,4 +168,4 @@ Agent-model mappings in `~/.codeagent/models.json`:
 ## Requirements
 
 - codeagent-wrapper with `--agent` support
-- Backend CLIs: claude, opencode, codex, gemini
+- Backend CLIs: claude, codex, gemini

@@ -9,6 +9,7 @@ python install.py --module do
 ```
 
 Installs:
+
 - `~/.claude/skills/do/` - skill files
 - hooks auto-merged into `~/.claude/settings.json`
 - agent presets merged into `~/.codeagent/models.json` (for `--agent` / parallel tasks)
@@ -20,6 +21,7 @@ Installs:
 ```
 
 Examples:
+
 ```
 /do add user login feature
 /do implement order export to CSV
@@ -27,17 +29,18 @@ Examples:
 
 ## 5-Phase Workflow
 
-| Phase | Name | Goal | Key Actions |
-|-------|------|------|-------------|
-| 1 | Understand | Gather requirements + map codebase | Parallel code-architect + code-explorer |
-| 2 | Clarify | Resolve blocking ambiguities | Conditional - only if blocking questions exist |
-| 3 | Design | Plan implementation with task classification | code-architect blueprint + task_type |
-| 4 | Implement | Build the feature | develop / frontend-ui-ux-engineer based on task_type |
-| 5 | Complete | Finalize and document | code-reviewer summary |
+| Phase | Name       | Goal                                         | Key Actions                                          |
+| ----- | ---------- | -------------------------------------------- | ---------------------------------------------------- |
+| 1     | Understand | Gather requirements + map codebase           | Parallel code-architect + code-explorer              |
+| 2     | Clarify    | Resolve blocking ambiguities                 | Conditional - only if blocking questions exist       |
+| 3     | Design     | Plan implementation with task classification | code-architect blueprint + task_type                 |
+| 4     | Implement  | Build the feature                            | develop / frontend-ui-ux-engineer based on task_type |
+| 5     | Complete   | Finalize and document                        | code-reviewer summary                                |
 
 ## Task Classification
 
 Phase 3 outputs `task_type` to determine agent selection in Phase 4:
+
 - `backend_only`: invoke only `develop` agent
 - `frontend_only`: invoke only `frontend-ui-ux-engineer` agent
 - `fullstack`: invoke both agents in parallel
@@ -45,13 +48,13 @@ Phase 3 outputs `task_type` to determine agent selection in Phase 4:
 
 ## Agents
 
-| Agent | Purpose | Needs --worktree |
-|-------|---------|------------------|
-| `code-explorer` | Code tracing, architecture mapping | No (read-only) |
-| `code-architect` | Design approaches, file planning | No (read-only) |
-| `code-reviewer` | Code review, simplification | No (read-only) |
-| `develop` | Implement backend code, run tests | **Yes** (if worktree enabled) |
-| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX | **Yes** (if worktree enabled) |
+| Agent                       | Purpose                            | Needs --worktree                    |
+| --------------------------- | ---------------------------------- | ----------------------------------- |
+| `code-explorer`           | Code tracing, architecture mapping | No (read-only)                      |
+| `code-architect`          | Design approaches, file planning   | No (read-only)                      |
+| `code-reviewer`           | Code review, simplification        | No (read-only)                      |
+| `develop`                 | Implement backend code, run tests  | **Yes** (if worktree enabled) |
+| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX  | **Yes** (if worktree enabled) |
 
 Prompts are shipped under `~/.claude/skills/do/prompts/` and referenced via `agents.<name>.prompt_file` in `~/.codeagent/models.json`.
 To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or point `prompt_file` to a file under `~/.codeagent/agents/<name>.md`.
@@ -91,6 +94,7 @@ To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or po
 ## Loop State Management
 
 When triggered via `/do <task>`, initializes `.claude/do-tasks/{task_id}/task.md` with YAML frontmatter:
+
 ```yaml
 ---
 id: "<task_id>"
@@ -116,11 +120,13 @@ completion_promise: "<promise>DO_COMPLETE</promise>"
 The current task is tracked in `.claude/do-tasks/.current-task`.
 
 After each phase, update `task.md` frontmatter via:
+
 ```bash
 python3 ".claude/skills/do/scripts/task.py" update-phase <N>
 ```
 
 When all 5 phases complete, output:
+
 ```
 <promise>DO_COMPLETE</promise>
 ```
@@ -130,6 +136,7 @@ To abort early, manually edit `task.md` and set `status: "cancelled"` in the fro
 ## Stop Hook
 
 A Stop hook is registered after installation:
+
 1. Creates `.claude/do-tasks/{task_id}/task.md` state file
 2. Updates `current_phase` in frontmatter after each phase
 3. Stop hook checks state, blocks exit if incomplete
@@ -146,6 +153,7 @@ codeagent-wrapper --worktree --agent develop "implement feature X" .
 ```
 
 This automatically:
+
 1. Generates a unique task ID (format: `YYYYMMDD-xxxxxx`)
 2. Creates a new worktree at `.worktrees/do-{task_id}/`
 3. Creates a new branch `do/{task_id}`
@@ -154,6 +162,7 @@ This automatically:
 Output includes: `Using worktree: .worktrees/do-{task_id}/ (task_id: {id}, branch: do/{id})`
 
 In parallel mode, add `worktree: true` to task blocks:
+
 ```
 ---TASK---
 id: feature_impl
@@ -172,24 +181,24 @@ Required when using `agent:` in parallel tasks or `--agent`. The installer write
   "agents": {
     "code-explorer": {
       "backend": "claude",
-      "model": "claude-sonnet-4-5-20250929"
+      "model": "claude-sonnet-4-6"
     },
     "code-architect": {
       "backend": "claude",
-      "model": "claude-sonnet-4-5-20250929"
+      "model": "claude-opus-4-6"
     },
     "code-reviewer": {
-      "backend": "claude",
-      "model": "claude-sonnet-4-5-20250929"
+      "backend": "codex",
+      "model": "claude-sonnet-4-6"
     },
     "develop": {
       "backend": "codex",
-      "model": "gpt-4.1",
+      "model": "gpt-5.3-codex",
       "prompt_file": "~/.claude/skills/do/prompts/develop.md"
     },
     "frontend-ui-ux-engineer": {
       "backend": "gemini",
-      "model": "gemini-3-pro-preview",
+      "model": "gemini-3.1-pro-preview",
       "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
     }
   }
