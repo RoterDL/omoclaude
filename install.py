@@ -848,6 +848,9 @@ def uninstall_module(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dic
                             break
                         parent = parent.parent
         except Exception as exc:
+            result.setdefault("warnings", []).append(
+                f"Failed to remove {op.get('target', 'unknown')}: {exc}"
+            )
             write_log({"level": "WARNING", "message": f"Failed to remove {op.get('target', 'unknown')}: {exc}"}, ctx)
 
     # Remove module hooks from settings.json
@@ -1146,8 +1149,11 @@ def op_copy_dir(op: Dict[str, Any], ctx: Dict[str, Any]) -> None:
 
     existed_before = dst.exists()
     if existed_before and not ctx.get("force", False):
-        write_log({"level": "INFO", "message": f"Skip existing dir: {dst}"}, ctx)
-        return
+        # Only skip if directory exists AND is non-empty (consistent with check_module_installed)
+        if dst.is_dir() and any(dst.iterdir()):
+            write_log({"level": "INFO", "message": f"Skip existing dir: {dst}"}, ctx)
+            return
+        write_log({"level": "INFO", "message": f"Re-populating empty dir: {dst}"}, ctx)
 
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(src, dst, dirs_exist_ok=True)
