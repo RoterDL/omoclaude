@@ -27,6 +27,14 @@ SETTINGS_FILE = "settings.json"
 WRAPPER_REQUIRED_MODULES = {"do", "omo", "codeagent"}
 
 
+def _remove_readonly(func, path, _exc_info):
+    """Handle read-only files on Windows during shutil.rmtree."""
+    import stat
+
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 def _ensure_list(ctx: Dict[str, Any], key: str) -> List[Any]:
     ctx.setdefault(key, [])
     return ctx[key]
@@ -785,7 +793,7 @@ def uninstall_module(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dic
                 target = (install_dir / op["target"]).expanduser().resolve()
                 if target.exists():
                     if target.is_dir():
-                        shutil.rmtree(target)
+                        shutil.rmtree(target, onerror=_remove_readonly)
                     else:
                         target.unlink()
                     removed_paths.append(str(target))
@@ -834,7 +842,7 @@ def uninstall_module(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dic
 
                     if target.exists():
                         if target.is_dir():
-                            shutil.rmtree(target)
+                            shutil.rmtree(target, onerror=_remove_readonly)
                         else:
                             target.unlink()
                         removed_paths.append(str(target))
