@@ -303,6 +303,10 @@ def merge_agents_to_models(module_name: str, agents: Dict[str, Any], ctx: Dict[s
         entry = dict(agent_cfg)
         entry["__module__"] = module_name
 
+        # On Windows, expand ~ and normalize path separators for prompt_file
+        if sys.platform == "win32" and "prompt_file" in entry and entry["prompt_file"]:
+            entry["prompt_file"] = str(Path(entry["prompt_file"]).expanduser())
+
         existing = models["agents"].get(agent_name, {})
         if not existing or (isinstance(existing, dict) and existing.get("__module__")):
             models["agents"][agent_name] = entry

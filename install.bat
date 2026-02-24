@@ -40,7 +40,7 @@ if exist "%DEST%" (
 
         if defined LOCAL_VER if defined REMOTE_VER (
             if "!LOCAL_VER!"=="!REMOTE_VER!" (
-                echo codeagent-wrapper is already up to date (!LOCAL_VER!), skipping download.
+                echo codeagent-wrapper is already up to date ^(!LOCAL_VER!^), skipping download.
                 set "SHOULD_DOWNLOAD=0"
             )
         )
