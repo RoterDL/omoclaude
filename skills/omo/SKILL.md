@@ -26,11 +26,13 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 | External library/API usage unclear | `librarian` |
 | Risky change: multi-file/module, public API, data format/config, concurrency, security/perf, or unclear tradeoffs | `oracle` |
 | Implementation required | `develop` (or `frontend-ui-ux-engineer` / `document-writer`) |
+| Post-implementation quality check requested, or implementation touched multiple files / public API | `code-reviewer` |
 
 ### Skipping Heuristics (Prefer Explicit Risk Signals)
 
 - Skip `explore` when the user already provided exact file path + line number, or you already have it from context.
 - Skip `oracle` when the change is **local + low-risk** (single area, clear fix, no tradeoffs). Line count is a weak signal; risk is the real gate.
+- Skip `code-reviewer` when the change is trivial (single-line fix, comment-only, config tweak) and the user did not request review.
 - Skip implementation agents when the user only wants analysis/answers (stop after `explore`/`librarian`).
 
 ### Common Recipes (Examples, Not Rules)
@@ -42,6 +44,8 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 - External API integration: `explore` + `librarian` (can run in parallel) → `oracle` (if risk) → **confirm** → implementation agent
 - UI-only change: `explore` → **confirm** → `frontend-ui-ux-engineer` (split logic to `develop` if needed)
 - Docs-only change: `explore` → **confirm** → `document-writer`
+- Post-implementation review: `code-reviewer` (after `develop` / `frontend-ui-ux-engineer`)
+- Review + fix: `code-reviewer` → **confirm** → `develop` (fix reported issues)
 
 ## User Confirmation Gate (Mandatory)
 
@@ -317,3 +321,4 @@ Correct approach:
 | `frontend-ui-ux-engineer` | UI/styling/frontend component implementation |
 | `document-writer` | Documentation/README writing |
 | `librarian` | Need to lookup external library docs or OSS examples |
+| `code-reviewer` | Post-implementation review, or user explicitly requests code review |

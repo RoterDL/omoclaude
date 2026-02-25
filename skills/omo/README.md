@@ -24,6 +24,7 @@ python install.py --module omo
 | `develop` | Code implementation | codex | gpt-5.3-codex |
 | `frontend-ui-ux-engineer` | UI/UX specialist | gemini | gemini-3.1-pro-preview |
 | `document-writer` | Documentation | gemini | gemini-3-flash-preview |
+| `code-reviewer` | Code review | claude | claude-sonnet-4-6 |
 
 ## Routing Signals (Not Fixed Pipeline)
 
@@ -36,6 +37,7 @@ This skill is **routing-first**, not a mandatory conveyor belt.
 | Risky change (multi-file, public API, security, perf) | `oracle` |
 | Implementation required | `develop` / `frontend-ui-ux-engineer` |
 | Documentation needed | `document-writer` |
+| Post-implementation quality check or user requests review | `code-reviewer` |
 
 ### Skipping Heuristics
 
@@ -54,6 +56,8 @@ This skill is **routing-first**, not a mandatory conveyor belt.
 | External API integration | `explore + librarian → oracle → develop` |
 | UI-only change | `explore → frontend-ui-ux-engineer` |
 | Docs-only change | `explore → document-writer` |
+| Post-implementation review | `code-reviewer` |
+| Review + fix | `code-reviewer → develop` |
 
 ## Context Pack Template
 
@@ -146,6 +150,10 @@ Agent-model mappings in `~/.codeagent/models.json`:
     "document-writer": {
       "backend": "gemini",
       "model": "gemini-3-flash-preview"
+    },
+    "code-reviewer": {
+      "backend": "claude",
+      "model": "claude-sonnet-4-6"
     },
     "develop": {
       "backend": "codex",

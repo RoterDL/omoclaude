@@ -36,6 +36,10 @@
         "document-writer": {
           "backend": "gemini",
           "model": "gemini-3-flash-preview"
+        },
+        "code-reviewer": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6"
         }
       },
       "operations": [
@@ -44,6 +48,12 @@
           "source": "skills/omo",
           "target": "skills/omo",
           "description": "Install omo skill"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/cr",
+          "target": "skills/cr",
+          "description": "Install cr skill (checklists used by code-reviewer)"
         }
       ]
     },
@@ -67,7 +77,7 @@
           "model": "claude-opus-4-6"
         },
         "code-reviewer": {
-          "backend": "codex",
+          "backend": "claude",
           "model": "claude-sonnet-4-6"
         },
         "frontend-ui-ux-engineer": {
@@ -82,6 +92,12 @@
           "source": "skills/do",
           "target": "skills/do",
           "description": "Install do skill with hooks"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/cr",
+          "target": "skills/cr",
+          "description": "Install cr skill (checklists used by code-reviewer)"
         }
       ]
     },
