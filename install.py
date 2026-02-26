@@ -648,9 +648,24 @@ def get_modules_to_uninstall(config: Dict[str, Any], ctx: Dict[str, Any]) -> Dic
 def add_required_modules_for_install(
     selected: Dict[str, Any], config: Dict[str, Any]
 ) -> tuple[Dict[str, Any], List[str]]:
-    """Return selected modules unchanged (no implicit module injection)."""
-    _ = config
-    return dict(selected), []
+    """Add dependency modules required by selected modules."""
+    all_modules = config.get("modules", {})
+    auto_added: List[str] = []
+
+    for cfg in selected.values():
+        for dep in cfg.get("dependencies", []):
+            if dep not in selected and dep in all_modules:
+                auto_added.append(dep)
+
+    if not auto_added:
+        return dict(selected), []
+
+    # Dependencies first, then selected modules
+    result: Dict[str, Any] = {}
+    for dep in auto_added:
+        result[dep] = all_modules[dep]
+    result.update(selected)
+    return result, auto_added
 
 
 def list_modules_with_status(config: Dict[str, Any], ctx: Dict[str, Any]) -> None:

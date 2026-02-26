@@ -6,6 +6,7 @@
     "omo": {
       "enabled": true,
       "description": "OmO multi-agent orchestration with Sisyphus coordinator",
+      "dependencies": ["cr"],
       "agents": {
         "oracle": {
           "backend": "claude",
@@ -48,18 +49,13 @@
           "source": "skills/omo",
           "target": "skills/omo",
           "description": "Install omo skill"
-        },
-        {
-          "type": "copy_dir",
-          "source": "skills/cr",
-          "target": "skills/cr",
-          "description": "Install cr skill (checklists used by code-reviewer)"
         }
       ]
     },
     "do": {
       "enabled": true,
       "description": "5-phase feature development workflow with codeagent orchestration",
+      "dependencies": ["cr"],
       "agents": {
         "develop": {
           "backend": "codex",
@@ -92,12 +88,18 @@
           "source": "skills/do",
           "target": "skills/do",
           "description": "Install do skill with hooks"
-        },
+        }
+      ]
+    },
+    "cr": {
+      "enabled": true,
+      "description": "Code review checklists and reference materials for code-reviewer agent",
+      "operations": [
         {
           "type": "copy_dir",
           "source": "skills/cr",
           "target": "skills/cr",
-          "description": "Install cr skill (checklists used by code-reviewer)"
+          "description": "Install cr skill"
         }
       ]
     },
