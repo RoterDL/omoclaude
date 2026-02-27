@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover
 
 DEFAULT_INSTALL_DIR = "~/.claude"
 SETTINGS_FILE = "settings.json"
-WRAPPER_REQUIRED_MODULES = {"do", "omo", "codeagent"}
+WRAPPER_REQUIRED_MODULES = {"do", "omo", "codeagent", "research-pro"}
 
 
 def _remove_readonly(func, path, _exc_info):

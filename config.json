@@ -114,6 +114,39 @@
           "description": "Install codeagent skill"
         }
       ]
+    },
+    "research-pro": {
+      "enabled": true,
+      "description": "Multi-agent academic paper reading, review, literature search, and structured output",
+      "agents": {
+        "content-extractor": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6"
+        },
+        "paper-reviewer": {
+          "backend": "codex",
+          "model": "gpt-5.2",
+          "prompt_file": "~/.claude/skills/research-pro/prompts/paper-reviewer.md",
+          "reasoning": "xhigh"
+        },
+        "literature-scout": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
+          "yolo": true
+        },
+        "format-writer": {
+          "backend": "gemini",
+          "model": "gemini-3-flash-preview"
+        }
+      },
+      "operations": [
+        {
+          "type": "copy_dir",
+          "source": "skills/research-pro",
+          "target": "skills/research-pro",
+          "description": "Install research-pro skill"
+        }
+      ]
     }
   }
 }
