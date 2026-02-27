@@ -47,8 +47,11 @@ Before invoking `format-writer`, Athena must:
 
 ## Agent Invocation Format
 
-```bash
-codeagent-wrapper --agent <agent_name> - <workdir> <<'EOF'
+**Step 1**: Use the **Write** tool to save the prompt to a temp file:
+- Linux/macOS: `/tmp/.agent_prompt.md`
+- Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`
+
+```markdown
 ## Original User Request
 <original request>
 
@@ -64,8 +67,14 @@ codeagent-wrapper --agent <agent_name> - <workdir> <<'EOF'
 
 ## Acceptance Criteria
 <clear completion conditions>
-EOF
 ```
+
+**Step 2**: Pipe the file to codeagent-wrapper:
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent <agent_name> - <workdir>
+```
+Note: On Windows (Git Bash), `/tmp/` automatically maps to the Windows temp directory.
 
 Execute in shell tool, timeout 2h.
 
@@ -75,8 +84,9 @@ Execute in shell tool, timeout 2h.
 User: /research-pro read this PDF paper and produce notes
 
 **Step 1: content-extractor**
-```bash
-codeagent-wrapper --agent content-extractor - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 read this PDF paper and produce notes
 
@@ -92,14 +102,18 @@ Extract structured paper content without evaluation.
 
 ## Acceptance Criteria
 7-dimension extraction with evidence and summary.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent content-extractor - /path/to/project
 ```
 
 **Step 2: confirm with user**
 
 **Step 3: format-writer** (after approval)
-```bash
-codeagent-wrapper --agent format-writer - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 read this PDF paper and produce notes
 
@@ -115,7 +129,10 @@ Generate a formatted Paper Reading Note in Markdown.
 
 ## Acceptance Criteria
 Well-structured document preserving all extracted evidence.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -123,8 +140,9 @@ EOF
 User: /research-pro review my draft and include responses to reviewer comments
 
 **Step 1: paper-reviewer** (with Reviewer Comments in Context Pack)
-```bash
-codeagent-wrapper --agent paper-reviewer - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 review my draft and include responses to reviewer comments
 
@@ -140,14 +158,18 @@ Provide rigorous paper review and point-by-point reviewer response guidance.
 
 ## Acceptance Criteria
 Severity-grouped issues + Reviewer Response Guide.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent paper-reviewer - /path/to/project
 ```
 
 **Step 2: confirm with user**
 
 **Step 3: format-writer** (after approval)
-```bash
-codeagent-wrapper --agent format-writer - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 review my draft and include responses to reviewer comments
 
@@ -163,7 +185,10 @@ Generate a formal Review Report + Reviewer Response document.
 
 ## Acceptance Criteria
 Formatted report with severity grouping, action items, and response drafts.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -171,8 +196,9 @@ EOF
 User: /research-pro search recent literature on multimodal LLM safety
 
 **Step 1: literature-scout**
-```bash
-codeagent-wrapper --agent literature-scout - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 search recent literature on multimodal LLM safety
 
@@ -188,14 +214,18 @@ Find as many relevant papers as possible with real, verified links.
 
 ## Acceptance Criteria
 Deduplicated literature list with metadata and valid URLs.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent literature-scout - /path/to/project
 ```
 
 **Step 2: confirm with user**
 
 **Step 3: format-writer** (after approval)
-```bash
-codeagent-wrapper --agent format-writer - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 search recent literature on multimodal LLM safety
 
@@ -211,7 +241,10 @@ Generate a Literature Survey document in Markdown.
 
 ## Acceptance Criteria
 Subtopic-grouped bibliography with summary statistics.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -219,8 +252,9 @@ EOF
 User: /research-pro read this paper and also find related work
 
 **Step 1a: content-extractor** and **Step 1b: literature-scout** (parallel)
-```bash
-codeagent-wrapper --agent content-extractor - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt_a.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_a.md`):
+
+```markdown
 ## Original User Request
 read this paper and also find related work
 
@@ -236,11 +270,15 @@ Extract structured content from target paper without evaluation.
 
 ## Acceptance Criteria
 7-dimension extraction with evidence and summary.
-EOF
 ```
 
 ```bash
-codeagent-wrapper --agent literature-scout - /path/to/project <<'EOF'
+cat /tmp/.agent_prompt_a.md | codeagent-wrapper --agent content-extractor - /path/to/project
+```
+
+Use the **Write** tool to save the following to `/tmp/.agent_prompt_b.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_b.md`):
+
+```markdown
 ## Original User Request
 read this paper and also find related work
 
@@ -256,14 +294,18 @@ Find related literature with real verified links.
 
 ## Acceptance Criteria
 Deduplicated relevant paper list with metadata and URLs.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt_b.md | codeagent-wrapper --agent literature-scout - /path/to/project
 ```
 
 **Step 2: confirm with user**
 
 **Step 3: format-writer** (after approval)
-```bash
-codeagent-wrapper --agent format-writer - /path/to/project <<'EOF'
+Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+
+```markdown
 ## Original User Request
 read this paper and also find related work
 
@@ -279,7 +321,10 @@ Generate a combined Reading Note + Literature Survey output.
 
 ## Acceptance Criteria
 Single structured document preserving all evidence and links.
-EOF
+```
+
+```bash
+cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
