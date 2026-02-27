@@ -34,11 +34,12 @@ Create multiple search queries covering different angles:
 
 ### Step 3: Execute Parallel Searches
 
-Use ALL available search tools simultaneously:
-- WebSearch for Google Scholar results
-- `mcp__exa__web_search_exa` for academic content
+Use ALL available search tools simultaneously (priority order):
+- `mcp__grok-search__web_search` for general academic search (priority; use `mcp__grok-search__get_sources` for source tracing)
+- `mcp__grok-search__web_fetch` for fetching full page content from found URLs
+- `mcp__exa__web_search_exa` for academic content (second priority)
 - `mcp__exa__get_code_context_exa` for papers with code
-- Any other web tools available
+- WebSearch as fallback
 
 Search targets (prioritize):
 - Google Scholar (`scholar.google.com`)

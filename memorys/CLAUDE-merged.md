@@ -52,7 +52,8 @@ The following actions must be performed before modifying any code (in either mod
 
 When encountering unfamiliar knowledge, search the web -- guessing is strictly forbidden:
 
-* **General Search**: `WebSearch` or `mcp__exa__web_search_exa`.
+* **General Search**: `mcp__grok-search__web_search` (priority; supports deep search + source tracing via `mcp__grok-search__get_sources`). Fallbacks: `mcp__exa__web_search_exa`, then `WebSearch`.
+* **URL Content Fetching**: `mcp__grok-search__web_fetch` (priority) or `WebFetch`.
 * **Library Documentation**: `mcp__context7__resolve-library-id` -> `mcp__context7__query-docs`.
 * **Open Source Projects**: `mcp__deepwiki__ask_question`.
 
