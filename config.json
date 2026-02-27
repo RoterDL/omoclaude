@@ -11,36 +11,41 @@
         "oracle": {
           "backend": "claude",
           "model": "claude-opus-4-6",
+          "prompt_file": "~/.claude/skills/omo/references/oracle.md",
           "yolo": true
         },
         "librarian": {
           "backend": "claude",
           "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/omo/references/librarian.md",
           "yolo": true
         },
         "explore": {
           "backend": "claude",
-          "model": "claude-sonnet-4-6"
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/omo/references/explore.md"
         },
         "develop": {
           "backend": "codex",
           "model": "gpt-5.3-codex",
-          "prompt_file": "~/.claude/skills/do/prompts/develop.md",
+          "prompt_file": "~/.claude/skills/omo/references/develop.md",
           "reasoning": "xhigh",
           "yolo": true
         },
         "frontend-ui-ux-engineer": {
           "backend": "gemini",
           "model": "gemini-3.1-pro-preview",
-          "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
+          "prompt_file": "~/.claude/skills/omo/references/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
           "backend": "gemini",
-          "model": "gemini-3-flash-preview"
+          "model": "gemini-3-flash-preview",
+          "prompt_file": "~/.claude/skills/omo/references/document-writer.md"
         },
         "code-reviewer": {
           "backend": "claude",
-          "model": "claude-sonnet-4-6"
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/omo/references/code-reviewer.md"
         }
       },
       "operations": [
@@ -66,15 +71,18 @@
         },
         "code-explorer": {
           "backend": "claude",
-          "model": "claude-sonnet-4-6"
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/do/agents/code-explorer.md"
         },
         "code-architect": {
           "backend": "claude",
-          "model": "claude-opus-4-6"
+          "model": "claude-opus-4-6",
+          "prompt_file": "~/.claude/skills/do/agents/code-architect.md"
         },
         "code-reviewer": {
           "backend": "claude",
-          "model": "claude-sonnet-4-6"
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/do/agents/code-reviewer.md"
         },
         "frontend-ui-ux-engineer": {
           "backend": "gemini",
@@ -120,23 +128,28 @@
       "description": "Multi-agent academic paper reading, review, literature search, and structured output",
       "agents": {
         "content-extractor": {
-          "backend": "claude",
-          "model": "claude-sonnet-4-6"
+          "backend": "codex",
+          "model": "gpt-5.2",
+          "prompt_file": "~/.claude/skills/research-pro/references/content-extractor.md",
+          "reasoning": "high"
         },
         "paper-reviewer": {
           "backend": "codex",
           "model": "gpt-5.2",
-          "prompt_file": "~/.claude/skills/research-pro/prompts/paper-reviewer.md",
+          "prompt_file": "~/.claude/skills/research-pro/references/paper-reviewer.md",
           "reasoning": "xhigh"
         },
         "literature-scout": {
-          "backend": "claude",
-          "model": "claude-sonnet-4-6",
-          "yolo": true
+          "backend": "codex",
+          "model": "gpt-5.2",
+          "prompt_file": "~/.claude/skills/research-pro/references/literature-scout.md",
+          "yolo": true,
+          "reasoning": "high"
         },
         "format-writer": {
           "backend": "gemini",
-          "model": "gemini-3-flash-preview"
+          "model": "gemini-3-flash-preview",
+          "prompt_file": "~/.claude/skills/research-pro/references/format-writer.md"
         }
       },
       "operations": [
