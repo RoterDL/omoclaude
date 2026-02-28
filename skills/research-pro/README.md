@@ -36,6 +36,7 @@ Examples:
 | Review own paper (with/without reviewer comments) | `paper-reviewer` -> confirm -> `format-writer` |
 | Search related literature | `literature-scout` -> `literature-filter` -> confirm -> `format-writer` |
 | Combined (read + search) | `content-extractor` + `literature-scout` (parallel) -> `literature-filter` -> confirm -> `format-writer` |
+| Download filtered papers (PDF) | `literature-filter` -> confirm -> `paper-downloader` |
 | Analysis only (no output file needed) | Stop after analysis agent(s), present results directly |
 
 ## Input Source Handling
@@ -49,7 +50,7 @@ Examples:
 
 ## User Confirmation Gate
 
-Before invoking `format-writer`, the orchestrator must:
+Before invoking `format-writer` or `paper-downloader`, the orchestrator must:
 
 1. Present analysis outputs from prior agent(s) to the user.
 2. Ask for explicit confirmation to proceed.
@@ -63,6 +64,7 @@ Before invoking `format-writer`, the orchestrator must:
 | `paper-reviewer` | Paper review + reviewer response guidance | codex | gpt-5.2 |
 | `literature-scout` | Online literature search with verified links | codex | gpt-5.2 |
 | `literature-filter` | Screen and rank search results with tiered recommendations | codex | gpt-5.2 |
+| `paper-downloader` | Batch download paper PDFs from open-access sources | codex | gpt-5.2 |
 | `format-writer` | Generate formatted output documents | gemini | gemini-3-flash-preview |
 
 ## Hard Constraints
@@ -71,7 +73,7 @@ Before invoking `format-writer`, the orchestrator must:
 2. **No direct web search for literature**; delegate to `literature-scout`.
 3. **Always pass context forward**: original user request + relevant prior outputs.
 4. **Use the fewest agents possible** to satisfy the user goal.
-5. **Mandatory user confirmation before invoking `format-writer`.**
+5. **Mandatory user confirmation before invoking `format-writer` or `paper-downloader`.**
 
 ## Context Pack Template
 
@@ -84,6 +86,7 @@ Before invoking `format-writer`, the orchestrator must:
 - Paper Reviewer output: <...>
 - Literature Scout output: <...>
 - Literature Filter output: <...>
+- Paper Downloader output: <...>
 - Reviewer Comments: <external reviewer feedback or "None">
 - Paper Source: <file path / Zotero query / URL>
 
@@ -101,6 +104,7 @@ Before invoking `format-writer`, the orchestrator must:
 | Read a paper and produce notes | `content-extractor` -> confirm -> `format-writer` |
 | Review draft and respond to reviewer comments | `paper-reviewer` -> confirm -> `format-writer` |
 | Search recent literature and produce survey output | `literature-scout` -> `literature-filter` -> confirm -> `format-writer` |
+| Search and download filtered papers | `literature-scout` -> `literature-filter` -> confirm -> `paper-downloader` |
 | Read target paper and find related work | `content-extractor` + `literature-scout` (parallel) -> `literature-filter` -> confirm -> `format-writer` |
 
 ## Configuration
@@ -133,6 +137,13 @@ Agent-model mappings in `~/.codeagent/models.json`:
       "backend": "codex",
       "model": "gpt-5.2",
       "prompt_file": "~/.claude/skills/research-pro/references/literature-filter.md",
+      "reasoning": "high"
+    },
+    "paper-downloader": {
+      "backend": "codex",
+      "model": "gpt-5.2",
+      "prompt_file": "~/.claude/skills/research-pro/references/paper-downloader.md",
+      "yolo": true,
       "reasoning": "high"
     },
     "format-writer": {
