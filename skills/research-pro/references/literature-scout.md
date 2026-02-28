@@ -67,6 +67,8 @@ For each paper found:
 | Year | Publication year |
 | Venue | Journal/conference name |
 | Link | Real, accessible URL (DOI preferred) |
+| Abstract | Paper abstract (required; typically available from search result snippets) |
+| Citation Count | Number of citations if available; note source (e.g., Semantic Scholar). Write "N/A" if unavailable |
 | Relevance | 1-2 sentence relevance note |
 
 Group papers by subtopic when results exceed 10.
@@ -77,6 +79,7 @@ End with: total count, coverage assessment, suggested additional search directio
 - ALL links must be real; zero tolerance for hallucinated URLs
 - Prefer DOI links (`https://doi.org/...`) when available
 - Include arXiv IDs where applicable
+- Abstract must be included for every paper; if search API does not return it, use web_fetch to retrieve from paper page
 - Maximize quantity within relevance bounds
 - Recent papers (last 3 years) should be prioritized but do not exclude seminal older work
 
