@@ -939,9 +939,10 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
         print(f"\nInstalled: {installed_count}/{total} | Dir: {ctx['install_dir']}")
 
         print("\nCommands:")
-        print("  i <num/name>  - Install module(s)")
-        print("  u <num/name>  - Uninstall module(s)")
+        print("  i <num/name>  - Install module(s)  (e.g. i 1 2 3)")
+        print("  u <num/name>  - Uninstall module(s)  (e.g. u 1 2 3)")
         print("  ia            - Install all missing modules")
+        print("  ua            - Uninstall all installed modules")
         print("  ri            - Reinstall all installed modules")
         print("  q             - Quit")
         print()
@@ -1059,6 +1060,27 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
             with Path(ctx["status_file"]).open("w", encoding="utf-8") as fh:
                 json.dump(current_status, fh, indent=2, ensure_ascii=False)
 
+        elif cmd == "ua":
+            # Uninstall all installed modules
+            to_uninstall = {k: v for k, v in modules.items() if installed_status.get(k, False)}
+            if not to_uninstall:
+                print("No installed modules to uninstall.")
+                continue
+
+            print(f"\nUninstalling all installed modules: {', '.join(to_uninstall.keys())}")
+            confirm = input("Confirm? (y/N): ").strip().lower()
+            if confirm != "y":
+                print("Cancelled.")
+                continue
+
+            for name, cfg in to_uninstall.items():
+                try:
+                    uninstall_module(name, cfg, ctx)
+                    print(f"  [+] {name} uninstalled")
+                except Exception as exc:
+                    print(f"  [X] {name} failed: {exc}")
+            update_status_after_uninstall(list(to_uninstall.keys()), ctx)
+
         elif cmd == "ri":
             # Reinstall all installed modules
             to_reinstall = {k: v for k, v in modules.items() if installed_status.get(k, False)}
@@ -1100,7 +1122,7 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
                 ctx["force"] = old_force
 
         else:
-            print(f"Unknown command: {cmd}. Use 'i', 'u', 'ia', 'ri', or 'q'.")
+            print(f"Unknown command: {cmd}. Use 'i', 'u', 'ia', 'ua', 'ri', or 'q'.")
 
 
 def _parse_module_selection(
