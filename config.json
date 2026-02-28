@@ -152,6 +152,13 @@
           "prompt_file": "~/.claude/skills/research-pro/references/literature-filter.md",
           "reasoning": "high"
         },
+        "paper-downloader": {
+          "backend": "codex",
+          "model": "gpt-5.2",
+          "prompt_file": "~/.claude/skills/research-pro/references/paper-downloader.md",
+          "yolo": true,
+          "reasoning": "high"
+        },
         "format-writer": {
           "backend": "gemini",
           "model": "gemini-3-flash-preview",
