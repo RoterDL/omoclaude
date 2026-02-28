@@ -146,6 +146,12 @@
           "yolo": true,
           "reasoning": "high"
         },
+        "literature-filter": {
+          "backend": "codex",
+          "model": "gpt-5.2",
+          "prompt_file": "~/.claude/skills/research-pro/references/literature-filter.md",
+          "reasoning": "high"
+        },
         "format-writer": {
           "backend": "gemini",
           "model": "gemini-3-flash-preview",

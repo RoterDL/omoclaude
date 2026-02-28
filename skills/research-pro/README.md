@@ -34,8 +34,8 @@ Examples:
 |-------------|-------|
 | Read/extract paper content (no evaluation) | `content-extractor` -> confirm -> `format-writer` |
 | Review own paper (with/without reviewer comments) | `paper-reviewer` -> confirm -> `format-writer` |
-| Search related literature | `literature-scout` -> confirm -> `format-writer` |
-| Combined (read + search) | `content-extractor` + `literature-scout` (parallel) -> confirm -> `format-writer` |
+| Search related literature | `literature-scout` -> `literature-filter` -> confirm -> `format-writer` |
+| Combined (read + search) | `content-extractor` + `literature-scout` (parallel) -> `literature-filter` -> confirm -> `format-writer` |
 | Analysis only (no output file needed) | Stop after analysis agent(s), present results directly |
 
 ## Input Source Handling
@@ -62,6 +62,7 @@ Before invoking `format-writer`, the orchestrator must:
 | `content-extractor` | Structured paper extraction (no evaluation) | codex | gpt-5.2 |
 | `paper-reviewer` | Paper review + reviewer response guidance | codex | gpt-5.2 |
 | `literature-scout` | Online literature search with verified links | codex | gpt-5.2 |
+| `literature-filter` | Screen and rank search results with tiered recommendations | codex | gpt-5.2 |
 | `format-writer` | Generate formatted output documents | gemini | gemini-3-flash-preview |
 
 ## Hard Constraints
@@ -82,6 +83,7 @@ Before invoking `format-writer`, the orchestrator must:
 - Content Extractor output: <...>
 - Paper Reviewer output: <...>
 - Literature Scout output: <...>
+- Literature Filter output: <...>
 - Reviewer Comments: <external reviewer feedback or "None">
 - Paper Source: <file path / Zotero query / URL>
 
@@ -98,8 +100,8 @@ Before invoking `format-writer`, the orchestrator must:
 |----------|---------------|
 | Read a paper and produce notes | `content-extractor` -> confirm -> `format-writer` |
 | Review draft and respond to reviewer comments | `paper-reviewer` -> confirm -> `format-writer` |
-| Search recent literature and produce survey output | `literature-scout` -> confirm -> `format-writer` |
-| Read target paper and find related work | `content-extractor` + `literature-scout` (parallel) -> confirm -> `format-writer` |
+| Search recent literature and produce survey output | `literature-scout` -> `literature-filter` -> confirm -> `format-writer` |
+| Read target paper and find related work | `content-extractor` + `literature-scout` (parallel) -> `literature-filter` -> confirm -> `format-writer` |
 
 ## Configuration
 
@@ -125,6 +127,12 @@ Agent-model mappings in `~/.codeagent/models.json`:
       "model": "gpt-5.2",
       "prompt_file": "~/.claude/skills/research-pro/references/literature-scout.md",
       "yolo": true,
+      "reasoning": "high"
+    },
+    "literature-filter": {
+      "backend": "codex",
+      "model": "gpt-5.2",
+      "prompt_file": "~/.claude/skills/research-pro/references/literature-filter.md",
       "reasoning": "high"
     },
     "format-writer": {

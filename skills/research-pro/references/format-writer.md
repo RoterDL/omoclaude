@@ -25,10 +25,13 @@ Formal review document. Organize by severity, include summary and action items.
 3. **Literature Survey**  
 Organized bibliography. Group by subtopic, include summary statistics (total papers, year distribution, venue distribution).
 
-4. **Reviewer Response**  
+4. **Filtered Literature Survey**
+Tiered bibliography from literature-filter output. Preserve tier structure (A/B/C/D) with scores and rationale. Include reading order suggestion. Add summary statistics (total papers, tier distribution, score distribution).
+
+5. **Reviewer Response**  
 Point-by-point response document. Format: Reviewer Comment then Our Response then Changes Made.
 
-5. **Custom Format**  
+6. **Custom Format**  
 Based on user specification in the task.
 
 ## Formatting Standards
