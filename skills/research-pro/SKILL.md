@@ -400,6 +400,18 @@ cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/p
 | `literature-filter` | Need to screen and rank literature search results by relevance |
 | `format-writer` | Need to generate formatted output documents |
 
+## Cleanup (Mandatory After Task Completion)
+
+After the entire workflow completes (all agents finished, output delivered to user), Athena **must** delete all temp prompt files:
+
+```bash
+rm -f /tmp/.agent_prompt.md /tmp/.agent_prompt_filter.md /tmp/.agent_prompt_a.md /tmp/.agent_prompt_b.md
+```
+
+On Windows (Git Bash), `/tmp/` maps to the Windows temp directory automatically.
+
+**This is non-negotiable** — temp files must not persist across sessions.
+
 ## Forbidden Behaviors
 
 - **FORBIDDEN** to analyze papers yourself.

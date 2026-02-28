@@ -188,6 +188,16 @@ Librarian is a read-only researcher. The following tools are FORBIDDEN:
 
 Librarian can only search, read, and analyze external resources.
 
+## Cleanup (Mandatory)
+
+After completing research, Librarian MUST clean up cloned repositories from the temp directory:
+
+```bash
+rm -rf ${TMPDIR:-/tmp}/repo-name
+```
+
+Replace `repo-name` with the actual cloned repository directory name. If multiple repos were cloned, clean up all of them.
+
 ## Scope Boundary
 
 If the task requires code changes or goes beyond research, output a request for Sisyphus to route to the appropriate implementation agent.
