@@ -941,6 +941,8 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
         print("\nCommands:")
         print("  i <num/name>  - Install module(s)")
         print("  u <num/name>  - Uninstall module(s)")
+        print("  ia            - Install all missing modules")
+        print("  ri            - Reinstall all installed modules")
         print("  q             - Quit")
         print()
 
@@ -1014,8 +1016,91 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
                         print(f"  [X] {name} failed: {exc}")
                 update_status_after_uninstall(list(to_uninstall.keys()), ctx)
 
+        elif cmd == "ia":
+            # Install all missing modules
+            to_install = {k: v for k, v in modules.items() if not installed_status.get(k, False)}
+            if not to_install:
+                print("All modules already installed.")
+                continue
+
+            to_install, auto_added = add_required_modules_for_install(to_install, config)
+            if auto_added:
+                print(f"Auto-added dependencies: {', '.join(auto_added)}")
+
+            # Re-filter in case auto-added dependencies are already installed
+            to_install = {k: v for k, v in to_install.items() if not installed_status.get(k, False)}
+            if not to_install:
+                print("All modules already installed.")
+                continue
+
+            print(f"\nInstalling all missing modules: {', '.join(to_install.keys())}")
+            confirm = input("Confirm? (y/N): ").strip().lower()
+            if confirm != "y":
+                print("Cancelled.")
+                continue
+
+            ctx["selected_modules"] = set(to_install.keys())
+            total = len(to_install)
+            results = []
+            for idx, (name, cfg) in enumerate(to_install.items(), 1):
+                print(f"[{idx}/{total}] Installing module: {name}...")
+                try:
+                    results.append(execute_module(name, cfg, ctx))
+                    print(f"  [+] {name} installed")
+                except Exception as exc:
+                    print(f"  [X] {name} failed: {exc}")
+
+            current_status = load_installed_status(ctx)
+            for r in results:
+                if r.get("status") == "success":
+                    current_status.setdefault("modules", {})[r["module"]] = r
+                    ctx["_did_install"] = True
+            current_status["updated_at"] = datetime.now().isoformat()
+            with Path(ctx["status_file"]).open("w", encoding="utf-8") as fh:
+                json.dump(current_status, fh, indent=2, ensure_ascii=False)
+
+        elif cmd == "ri":
+            # Reinstall all installed modules
+            to_reinstall = {k: v for k, v in modules.items() if installed_status.get(k, False)}
+            if not to_reinstall:
+                print("No installed modules to reinstall.")
+                continue
+
+            print(f"\nReinstalling all installed modules: {', '.join(to_reinstall.keys())}")
+            confirm = input("Confirm? (y/N): ").strip().lower()
+            if confirm != "y":
+                print("Cancelled.")
+                continue
+
+            old_force = ctx.get("force", False)
+            try:
+                ctx["force"] = True
+                prepare_status_backup(ctx)
+                ctx["selected_modules"] = set(to_reinstall.keys())
+
+                total = len(to_reinstall)
+                results = []
+                for idx, (name, cfg) in enumerate(to_reinstall.items(), 1):
+                    print(f"[{idx}/{total}] Reinstalling module: {name}...")
+                    try:
+                        results.append(execute_module(name, cfg, ctx))
+                        print(f"  [+] {name} reinstalled")
+                    except Exception as exc:
+                        print(f"  [X] {name} failed: {exc}")
+
+                current_status = load_installed_status(ctx)
+                for r in results:
+                    if r.get("status") == "success":
+                        current_status.setdefault("modules", {})[r["module"]] = r
+                        ctx["_did_install"] = True
+                current_status["updated_at"] = datetime.now().isoformat()
+                with Path(ctx["status_file"]).open("w", encoding="utf-8") as fh:
+                    json.dump(current_status, fh, indent=2, ensure_ascii=False)
+            finally:
+                ctx["force"] = old_force
+
         else:
-            print(f"Unknown command: {cmd}. Use 'i', 'u', or 'q'.")
+            print(f"Unknown command: {cmd}. Use 'i', 'u', 'ia', 'ri', or 'q'.")
 
 
 def _parse_module_selection(
