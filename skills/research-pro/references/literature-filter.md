@@ -30,6 +30,8 @@ For every paper in the Literature Scout output, score on these 5 dimensions (eac
 
 **Information Basis**: Score each paper using ALL available data from Literature Scout output: title, abstract, authors, year, venue, citation count, and relevance note. The abstract is your primary evidence for Topic Relevance, Methodological Alignment, and Contribution Uniqueness dimensions.
 
+**Research Direction**: For each paper, assign a concise research direction tag (2-5 words, e.g., "multimodal alignment", "safety benchmarking", "efficient inference"). Primary source: inherit from Literature Scout's subtopic grouping if available. Fallback: derive from the paper's title and abstract.
+
 | Dimension | What to Assess |
 |-----------|----------------|
 | Topic Relevance | How directly does the paper address the core research question? |
@@ -79,6 +81,7 @@ For each paper:
 | Authors | [authors] |
 | Year | [year] |
 | Venue | [venue] |
+| Research Direction | [2-5 word topic tag, e.g., "multimodal alignment"] |
 | Link | [link] |
 | Composite Score | [score]/10 |
 | Dimension Scores | Topic: [n] | Method: [n] | Venue: [n] | Recency: [n] | Unique: [n] |
@@ -94,7 +97,7 @@ For each paper:
 
 ## Tier D - Skip
 
-(Compact list: Title | Year | Score | One-line reason for low ranking)
+(Compact list: Title | Year | Research Direction | Score | One-line reason for low ranking)
 
 ## Reading Order Suggestion
 
