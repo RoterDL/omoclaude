@@ -5,6 +5,7 @@ This repository currently includes only these skills:
 - `codeagent`
 - `do`
 - `omo`
+- `research-pro`
 
 ## Install with `install.py` (recommended)
 

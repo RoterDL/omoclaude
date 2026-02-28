@@ -24,6 +24,7 @@ python3 install.py
 | [do](skills/do/README.md) | 推荐：5 阶段功能开发 + codeagent 编排 | `/do` 命令 |
 | [omo](skills/omo/README.md) | 多智能体编排 + 智能路由 | `/omo` 命令 |
 | [codeagent](skills/codeagent/SKILL.md) | 面向实现任务的精简技能，依赖 codeagent-wrapper | `skill:codeagent` 或 `module:codeagent` |
+| [research-pro](skills/research-pro/README.md) | 多智能体学术研究编排 | `/research-pro` 命令 |
 
 ## 可用技能
 
@@ -34,6 +35,7 @@ python3 install.py
 | do | 5 阶段功能开发工作流 |
 | omo | 多智能体编排工作流 |
 | codeagent | 基于 codeagent-wrapper 的实现型技能 |
+| research-pro | 多智能体学术研究编排 |
 
 ## 安装
 
@@ -68,7 +70,8 @@ python3 uninstall.py --module do,omo
   "modules": {
     "do": { "enabled": true },
     "omo": { "enabled": false },
-    "codeagent": { "enabled": false }
+    "codeagent": { "enabled": false },
+    "research-pro": { "enabled": true }
   }
 }
 ```
@@ -79,6 +82,7 @@ python3 uninstall.py --module do,omo
 |------|------|
 | 功能开发（默认） | `/do` |
 | Bug 调查与修复 | `/omo` |
+| 论文阅读 / 论文审查 / 文献检索 | `/research-pro` |
 | 单轨实现任务 | `skill:codeagent` |
 
 ## 核心架构
@@ -106,6 +110,7 @@ python3 uninstall.py --module do,omo
 ├── skills/
 │   ├── do/
 │   ├── omo/
+│   ├── research-pro/
 │   └── codeagent/
 ├── settings.json          (自动生成，hooks 配置)
 └── installed_modules.json (自动生成，记录已装模块)

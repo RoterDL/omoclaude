@@ -25,6 +25,7 @@ Original upstream project: https://github.com/cexll/myclaude
 | [do](skills/do/README.md) | **Recommended** - 5-phase feature development with codeagent orchestration | `/do` command |
 | [omo](skills/omo/README.md) | Multi-agent orchestration with intelligent routing | `/omo` command |
 | [codeagent](skills/codeagent/SKILL.md) | Focused implementation skill using codeagent-wrapper | `skill:codeagent` or `module:codeagent` |
+| [research-pro](skills/research-pro/README.md) | Multi-agent academic research orchestration | `/research-pro` command |
 
 ## Available Skills
 
@@ -35,6 +36,7 @@ Installable skills in this repository:
 | do | 5-phase feature development workflow |
 | omo | Multi-agent orchestration workflow |
 | codeagent | Focused implementation with codeagent-wrapper |
+| research-pro | Multi-agent academic research orchestration |
 
 ## Installation
 
@@ -69,7 +71,8 @@ Edit `config.json` to enable/disable modules:
   "modules": {
     "do": { "enabled": true },
     "omo": { "enabled": false },
-    "codeagent": { "enabled": false }
+    "codeagent": { "enabled": false },
+    "research-pro": { "enabled": true }
   }
 }
 ```
@@ -80,6 +83,7 @@ Edit `config.json` to enable/disable modules:
 |----------|-------------|
 | Feature development (default) | `/do` |
 | Bug investigation + fix | `/omo` |
+| Academic paper reading / review / literature search | `/research-pro` |
 | Focused single-track implementation | `skill:codeagent` |
 
 ## Core Architecture
@@ -107,6 +111,7 @@ Edit `config.json` to enable/disable modules:
 ├── skills/
 │   ├── do/
 │   ├── omo/
+│   ├── research-pro/
 │   └── codeagent/
 ├── settings.json          (auto-generated, hooks config)
 └── installed_modules.json (auto-generated, tracks modules)
