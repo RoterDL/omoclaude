@@ -53,9 +53,11 @@ Before invoking `format-writer` or `paper-downloader`, Athena must:
 
 ## Agent Invocation Format
 
-**Step 1**: Use the **Write** tool to save the prompt to a temp file:
-- Linux/macOS: `/tmp/.agent_prompt.md`
-- Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`
+**Step 1**: Ensure the temp directory exists, then use the **Write** tool to save the prompt:
+```bash
+mkdir -p <workdir>/tmp
+```
+- Temp file path: `<workdir>/tmp/.agent_prompt.md`
 
 ```markdown
 ## Original User Request
@@ -80,9 +82,8 @@ Before invoking `format-writer` or `paper-downloader`, Athena must:
 **Step 2**: Pipe the file to codeagent-wrapper:
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent <agent_name> - <workdir>
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent <agent_name> - <workdir>
 ```
-Note: On Windows (Git Bash), `/tmp/` automatically maps to the Windows temp directory.
 
 Execute in shell tool, timeout 2h.
 
@@ -92,7 +93,10 @@ Execute in shell tool, timeout 2h.
 User: /research-pro read this PDF paper and produce notes
 
 **Step 1: content-extractor**
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+```bash
+mkdir -p <workdir>/tmp
+```
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -113,13 +117,13 @@ Extract structured paper content without evaluation.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent content-extractor - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent content-extractor - /path/to/project
 ```
 
 **Step 2: confirm with user**
 
 **Step 3: format-writer** (after approval)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -140,7 +144,7 @@ Well-structured document preserving all extracted evidence.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -148,7 +152,10 @@ cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/p
 User: /research-pro review my draft and include responses to reviewer comments
 
 **Step 1: paper-reviewer** (with Reviewer Comments in Context Pack)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+```bash
+mkdir -p <workdir>/tmp
+```
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -169,13 +176,13 @@ Severity-grouped issues + Reviewer Response Guide.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent paper-reviewer - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent paper-reviewer - /path/to/project
 ```
 
 **Step 2: confirm with user**
 
 **Step 3: format-writer** (after approval)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -196,7 +203,7 @@ Formatted report with severity grouping, action items, and response drafts.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -204,7 +211,10 @@ cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/p
 User: /research-pro search recent literature on multimodal LLM safety
 
 **Step 1: literature-scout**
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+```bash
+mkdir -p <workdir>/tmp
+```
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -226,11 +236,11 @@ Deduplicated literature list with metadata and valid URLs.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent literature-scout - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent literature-scout - /path/to/project
 ```
 
 **Step 2: literature-filter**
-Use the **Write** tool to save the following to `/tmp/.agent_prompt_filter.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_filter.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt_filter.md`:
 
 ```markdown
 ## Original User Request
@@ -252,13 +262,13 @@ Tiered (A/B/C/D) recommendations with scores, rationale, and reading order.
 ```
 
 ```bash
-cat /tmp/.agent_prompt_filter.md | codeagent-wrapper --agent literature-filter - /path/to/project
+cat <workdir>/tmp/.agent_prompt_filter.md | codeagent-wrapper --agent literature-filter - /path/to/project
 ```
 
 **Step 3: confirm with user**
 
 **Step 4: format-writer** (after approval)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -280,7 +290,7 @@ Tiered bibliography with rationale and summary statistics.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -288,7 +298,10 @@ cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/p
 User: /research-pro read this paper and also find related work
 
 **Step 1a: content-extractor** and **Step 1b: literature-scout** (parallel)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt_a.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_a.md`):
+```bash
+mkdir -p <workdir>/tmp
+```
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt_a.md`:
 
 ```markdown
 ## Original User Request
@@ -310,10 +323,10 @@ Extract structured content from target paper without evaluation.
 ```
 
 ```bash
-cat /tmp/.agent_prompt_a.md | codeagent-wrapper --agent content-extractor - /path/to/project
+cat <workdir>/tmp/.agent_prompt_a.md | codeagent-wrapper --agent content-extractor - /path/to/project
 ```
 
-Use the **Write** tool to save the following to `/tmp/.agent_prompt_b.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_b.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt_b.md`:
 
 ```markdown
 ## Original User Request
@@ -335,11 +348,11 @@ Deduplicated relevant paper list with metadata and URLs.
 ```
 
 ```bash
-cat /tmp/.agent_prompt_b.md | codeagent-wrapper --agent literature-scout - /path/to/project
+cat <workdir>/tmp/.agent_prompt_b.md | codeagent-wrapper --agent literature-scout - /path/to/project
 ```
 
 **Step 2: literature-filter**
-Use the **Write** tool to save the following to `/tmp/.agent_prompt_filter.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_filter.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt_filter.md`:
 
 ```markdown
 ## Original User Request
@@ -361,13 +374,13 @@ Tiered recommendations with composite scores and reading order.
 ```
 
 ```bash
-cat /tmp/.agent_prompt_filter.md | codeagent-wrapper --agent literature-filter - /path/to/project
+cat <workdir>/tmp/.agent_prompt_filter.md | codeagent-wrapper --agent literature-filter - /path/to/project
 ```
 
 **Step 3: confirm with user**
 
 **Step 4: format-writer** (after approval)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt.md`):
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt.md`:
 
 ```markdown
 ## Original User Request
@@ -389,7 +402,7 @@ Single structured document preserving all evidence and links.
 ```
 
 ```bash
-cat /tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
+cat <workdir>/tmp/.agent_prompt.md | codeagent-wrapper --agent format-writer - /path/to/project
 ```
 </example>
 
@@ -402,7 +415,10 @@ Use Zotero MCP `search_library` to get item keys/titles ONLY (no full content re
 - MM-OR -> item key: DEF456
 
 **Step 2: content-extractor** (pass identifiers, NOT content)
-Use the **Write** tool to save the following to `/tmp/.agent_prompt_a.md` (Windows: `C:\Users\<username>\AppData\Local\Temp\.agent_prompt_a.md`):
+```bash
+mkdir -p <workdir>/tmp
+```
+Use the **Write** tool to save the following to `<workdir>/tmp/.agent_prompt_a.md`:
 
 ```markdown
 ## Original User Request
@@ -423,7 +439,7 @@ Extract structured content from both papers. Use Zotero MCP to retrieve full con
 ```
 
 ```bash
-cat /tmp/.agent_prompt_a.md | codeagent-wrapper --agent content-extractor - /path/to/project
+cat <workdir>/tmp/.agent_prompt_a.md | codeagent-wrapper --agent content-extractor - /path/to/project
 ```
 
 **Step 3: confirm with user**
@@ -447,10 +463,8 @@ cat /tmp/.agent_prompt_a.md | codeagent-wrapper --agent content-extractor - /pat
 After the entire workflow completes (all agents finished, output delivered to user), Athena **must** delete all temp prompt files:
 
 ```bash
-rm -f /tmp/.agent_prompt.md /tmp/.agent_prompt_filter.md /tmp/.agent_prompt_a.md /tmp/.agent_prompt_b.md
+rm -f <workdir>/tmp/.agent_prompt.md <workdir>/tmp/.agent_prompt_filter.md <workdir>/tmp/.agent_prompt_a.md <workdir>/tmp/.agent_prompt_b.md
 ```
-
-On Windows (Git Bash), `/tmp/` maps to the Windows temp directory automatically.
 
 **This is non-negotiable** — temp files must not persist across sessions.
 
