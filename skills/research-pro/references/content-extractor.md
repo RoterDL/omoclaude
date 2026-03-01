@@ -26,7 +26,7 @@ Step-by-step methodology. Reference figures/diagrams from the paper. Include mod
 What datasets are used? How were they collected? Include specific numbers (sample sizes, time ranges, geographic scope).
 
 4. **Data Distribution**  
-Class distribution, train/val/test splits, statistical properties. Include exact numbers from tables in the paper.
+Class distribution, train/val/test splits, statistical properties. Include exact numbers from tables in the paper. For each task type, include one concrete example quoted verbatim from the paper in Q&A format (e.g., Q: When does the hook first start dissecting the omentum? A: At the 14th second) or Input->Output format; if the paper provides no explicit example, explicitly state `No explicit example provided in the paper`.
 
 5. **Processing Methods**  
 Preprocessing, augmentation, feature engineering, training details. Include specific parameters (learning rate, batch size, etc.).
