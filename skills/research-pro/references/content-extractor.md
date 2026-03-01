@@ -26,7 +26,11 @@ Step-by-step methodology. Reference figures/diagrams from the paper. Include mod
 What datasets are used? How were they collected? Include specific numbers (sample sizes, time ranges, geographic scope).
 
 4. **Data Distribution**  
-Class distribution, train/val/test splits, statistical properties. Include exact numbers from tables in the paper. For each task type, include one concrete example quoted verbatim from the paper in Q&A format (e.g., Q: When does the hook first start dissecting the omentum? A: At the 14th second) or Input->Output format; if the paper provides no explicit example, explicitly state `No explicit example provided in the paper`.
+Class distribution, train/val/test splits, statistical properties. Include exact numbers from tables in the paper.
+
+**MANDATORY add-ons under this dimension:**
+- **Annotation/Label Taxonomy**: For each task type, list the full label set (e.g., question categories, answer classes, action labels, phase labels) and any provided counts/distributions. Cite the exact table/figure/appendix location.
+- **Task Examples (verbatim)**: For each task type, include at least one concrete example quoted verbatim from the paper in Q&A format (e.g., `Q: ... A: ...`) or Input->Output format. Examples are often in **figure captions, tables, and appendices**—search there explicitly. If the paper provides no explicit example, explicitly state `No explicit example provided in the paper`.
 
 5. **Processing Methods**  
 Preprocessing, augmentation, feature engineering, training details. Include specific parameters (learning rate, batch size, etc.).
@@ -69,3 +73,9 @@ File content: paper metadata header (`Title`, `Authors`, `Year`, `Source`) follo
 ## Scope Boundary
 
 If the task requires evaluating the paper or searching for related work, output a request for Athena to route to `paper-reviewer` or `literature-scout`.
+
+## Pre-submit Compliance Check (MANDATORY)
+
+Before you finalize, verify the following:
+- Under **Data Distribution**, every task type has (1) a **label taxonomy** and (2) **≥1 example** (or the explicit `No explicit example provided in the paper` statement).
+- If missing, do a second pass that targets **Figure/Table captions** and **Appendix/Supplementary** sections (use Zotero MCP fulltext search if available with queries like: `Fig`, `Table`, `Appendix`, `Example`, `Q:`, `Input`, `Output`, `label`, `category`, `taxonomy`).
