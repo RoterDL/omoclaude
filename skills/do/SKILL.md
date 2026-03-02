@@ -64,7 +64,10 @@ DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 EOF
 ```
 
-Read-only agents (code-explorer, code-architect, do-reviewer) do NOT need `DO_WORKTREE_DIR`.
+Phases 1-3 are read-only and do not require `DO_WORKTREE_DIR` (e.g. `code-explorer`, `code-architect`).
+Once worktree is enabled in Phase 4, prefix any agent invocation that must read diffs/files from the
+changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with
+`DO_WORKTREE_DIR=<worktree_dir>`.
 
 ## Hard Constraints
 
@@ -74,7 +77,7 @@ Read-only agents (code-explorer, code-architect, do-reviewer) do NOT need `DO_WO
 4. **Update phase after each phase.** Use `task.py update-phase <N>`.
 5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; stay in the orchestrator role and wait for agents to complete.
 6. **Timeouts are not an escape hatch.** If a `codeagent-wrapper` invocation times out/errors, retry (split/narrow the task if needed); never switch to direct implementation.
-7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix do-develop/do-frontend agent calls with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
+7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix any Phase 4-5 agent call that depends on repo state (`do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
 
 ## Agents
 
@@ -82,7 +85,8 @@ Read-only agents (code-explorer, code-architect, do-reviewer) do NOT need `DO_WO
 |-------|---------|------------------|
 | `code-explorer` | Trace code, map architecture, find patterns | No (read-only) |
 | `code-architect` | Design approaches, file plans, build sequences | No (read-only) |
-| `do-reviewer` | Review for bugs, simplicity, conventions | No (read-only) |
+| `do-reviewer` | Review for bugs, simplicity, conventions | **Yes** — when worktree is enabled, use `DO_WORKTREE_DIR` |
+| `do-summarizer` | Completion summary (Phase 5) | **Yes** — when worktree is enabled, use `DO_WORKTREE_DIR` |
 | `do-develop` | Implement backend code, run tests | **Yes** — use `DO_WORKTREE_DIR` env prefix |
 | `do-frontend` | Frontend implementation and UI/UX interactions | **Yes** — use `DO_WORKTREE_DIR` env prefix |
 
@@ -305,7 +309,8 @@ Note: Choose which skills to inject based on Phase 3 design output. Only inject 
 Run parallel reviews:
 
 ```bash
-codeagent-wrapper --parallel --full-output <<'EOF'
+# With worktree: keep the DO_WORKTREE_DIR prefix; without worktree: remove it.
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel --full-output <<'EOF'
 ---TASK---
 id: p4_correctness
 agent: do-reviewer
@@ -334,7 +339,8 @@ EOF
 **Goal:** Document what was built.
 
 ```bash
-codeagent-wrapper --agent do-reviewer - . <<'EOF'
+# With worktree: keep the DO_WORKTREE_DIR prefix; without worktree: remove it.
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-summarizer - . <<'EOF'
 Write completion summary:
 - What was built
 - Key decisions/tradeoffs

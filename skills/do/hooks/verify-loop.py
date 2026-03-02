@@ -38,7 +38,20 @@ TARGET_AGENTS = {"do-reviewer"}
 
 
 def get_project_root(cwd: str) -> str | None:
-    """Find project root (directory with .claude folder)."""
+    """Find project root (directory with .claude folder).
+
+    Prefer CLAUDE_PROJECT_DIR when available since worktree directories may not contain
+    the untracked `.claude/` folder.
+    """
+    env_root = os.environ.get("CLAUDE_PROJECT_DIR", "")
+    if env_root:
+        try:
+            root = Path(env_root).resolve()
+            if (root / ".claude").exists():
+                return str(root)
+        except Exception:
+            pass
+
     current = Path(cwd).resolve()
     while current != current.parent:
         if (current / ".claude").exists():
@@ -68,18 +81,18 @@ def get_task_info(project_root: str, task_dir: str) -> dict | None:
 
 
 def get_verify_commands(task_info: dict) -> list[str]:
-    """Get verify commands from task.json."""
+    """Get verify commands from task.md frontmatter."""
     return task_info.get("verify_commands", [])
 
 
-def run_verify_commands(project_root: str, commands: list[str]) -> tuple[bool, str]:
+def run_verify_commands(cwd: str, commands: list[str]) -> tuple[bool, str]:
     """Run verify commands and return (success, message)."""
     for cmd in commands:
         try:
             result = subprocess.run(
                 cmd,
                 shell=True,
-                cwd=project_root,
+                cwd=cwd,
                 capture_output=True,
                 timeout=120,
             )
@@ -154,6 +167,16 @@ def main():
         # No verify commands configured, allow exit
         sys.exit(0)
 
+    # Choose verification working directory.
+    verify_cwd = project_root
+    verify_cwd_note = ""
+    if task_info.get("use_worktree") and task_info.get("worktree_dir"):
+        wt = str(task_info.get("worktree_dir") or "")
+        if wt and os.path.isdir(wt):
+            verify_cwd = wt
+        else:
+            verify_cwd_note = f" (worktree_dir not found, fallback to project_root: {wt})"
+
     # Load state
     state = load_state(project_root)
 
@@ -193,21 +216,21 @@ def main():
         sys.exit(0)
 
     # Run verify commands
-    passed, message = run_verify_commands(project_root, verify_commands)
+    passed, message = run_verify_commands(verify_cwd, verify_commands)
 
     if passed:
         state["iteration"] = 0
         save_state(project_root, state)
         output = {
             "decision": "allow",
-            "reason": "All verify commands passed. Review phase complete.",
+            "reason": f"All verify commands passed (cwd: {verify_cwd}){verify_cwd_note}. Review phase complete.",
         }
         print(json.dumps(output, ensure_ascii=False))
         sys.exit(0)
     else:
         output = {
             "decision": "block",
-            "reason": f"Iteration {current_iteration}/{MAX_ITERATIONS}. Verification failed:\n{message}\n\nPlease fix the issues and try again.",
+            "reason": f"Iteration {current_iteration}/{MAX_ITERATIONS}. Verification failed (cwd: {verify_cwd}){verify_cwd_note}:\n{message}\n\nPlease fix the issues and try again.",
         }
         print(json.dumps(output, ensure_ascii=False))
         sys.exit(0)

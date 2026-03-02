@@ -60,7 +60,7 @@ def check_task_complete(project_dir: str, task_dir: str) -> str:
         return ""
 
     status = task_info.get("status", "")
-    if status == "completed":
+    if status in {"completed", "cancelled", "canceled"}:
         return ""
 
     current_phase = task_info.get("current_phase", 1)
@@ -76,7 +76,7 @@ def check_task_complete(project_dir: str, task_dir: str) -> str:
         f"do loop incomplete: current phase {current_phase}/{max_phases} ({phase_name}). "
         f"Continue with remaining phases; use 'task.py update-phase <N>' after each phase. "
         f"Include completion_promise in final output when done: {completion_promise}. "
-        f"To exit early, set status to 'completed' in task.md frontmatter."
+        f"To exit early, set status to 'completed' or 'cancelled' in task.md frontmatter."
     )
 
 

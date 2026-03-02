@@ -35,7 +35,7 @@ Examples:
 | 2     | Clarify    | Resolve blocking ambiguities                 | Conditional - only if blocking questions exist       |
 | 3     | Design     | Plan implementation with task classification | code-architect blueprint + task_type                 |
 | 4     | Implement  | Build the feature                            | do-develop / do-frontend based on task_type          |
-| 5     | Complete   | Finalize and document                        | do-reviewer summary                                |
+| 5     | Complete   | Finalize and document                        | do-summarizer summary                                |
 
 ## Task Classification
 
@@ -48,11 +48,12 @@ Phase 3 outputs `task_type` to determine agent selection in Phase 4:
 
 ## Agents
 
-| Agent                       | Purpose                            | Needs --worktree                    |
+| Agent                       | Purpose                            | Needs DO_WORKTREE_DIR               |
 | --------------------------- | ---------------------------------- | ----------------------------------- |
 | `code-explorer`           | Code tracing, architecture mapping | No (read-only)                      |
 | `code-architect`          | Design approaches, file planning   | No (read-only)                      |
-| `do-reviewer`           | Code review, simplification        | No (read-only)                      |
+| `do-reviewer`           | Code review, simplification        | **Yes** (if worktree enabled)       |
+| `do-summarizer`         | Completion summary (Phase 5)       | **Yes** (if worktree enabled)       |
 | `do-develop`              | Implement backend code, run tests  | **Yes** (if worktree enabled) |
 | `do-frontend`             | Frontend implementation and UI/UX  | **Yes** (if worktree enabled) |
 
@@ -66,7 +67,7 @@ To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or po
 3. **Pass complete context forward** - every agent gets the Context Pack
 4. **Parallel-first** - run independent tasks via `codeagent-wrapper --parallel`
 5. **Update state after each phase** - use `task.py update-phase <N>`
-6. **Respect worktree setting** - if `use_worktree: true`, pass `--worktree` to do-develop/do-frontend agents
+6. **Respect worktree setting** - if `use_worktree: true`, prefix Phase 4-5 agent calls with `DO_WORKTREE_DIR=<worktree_dir>` (from `task.py enable-worktree` output)
 
 ## Context Pack Template
 
@@ -122,7 +123,7 @@ The current task is tracked in `.claude/do-tasks/.current-task`.
 After each phase, update `task.md` frontmatter via:
 
 ```bash
-python3 ".claude/skills/do/scripts/task.py" update-phase <N>
+python3 "$HOME/.claude/skills/do/scripts/task.py" update-phase <N>
 ```
 
 When all 5 phases complete, output:
@@ -146,7 +147,11 @@ Manual exit: Edit `task.md` and set `status: "cancelled"` in the frontmatter.
 
 ## Worktree Mode
 
-Use `--worktree` to execute tasks in an isolated git worktree, preventing changes to your main branch:
+Use a git worktree to isolate changes from your main branch.
+
+**Recommended for `/do`:** enable worktree via `task.py` and use `DO_WORKTREE_DIR` to pin the repo root for all Phase 4-5 agents (implementation + review + summary).
+
+Alternative (standalone): use `codeagent-wrapper --worktree` to create a new isolated worktree.
 
 ```bash
 codeagent-wrapper --worktree --agent do-develop "implement feature X" .
@@ -188,8 +193,14 @@ Required when using `agent:` in parallel tasks or `--agent`. The installer write
       "model": "claude-opus-4-6"
     },
     "do-reviewer": {
-      "backend": "codex",
-      "model": "claude-sonnet-4-6"
+      "backend": "claude",
+      "model": "claude-sonnet-4-6",
+      "prompt_file": "~/.claude/skills/do/agents/do-reviewer.md"
+    },
+    "do-summarizer": {
+      "backend": "claude",
+      "model": "claude-sonnet-4-6",
+      "prompt_file": "~/.claude/skills/do/agents/do-summarizer.md"
     },
     "do-develop": {
       "backend": "codex",

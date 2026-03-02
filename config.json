@@ -84,6 +84,11 @@
           "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/do/agents/do-reviewer.md"
         },
+        "do-summarizer": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/do/agents/do-summarizer.md"
+        },
         "do-frontend": {
           "backend": "gemini",
           "model": "gemini-3.1-pro-preview",
