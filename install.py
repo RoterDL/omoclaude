@@ -279,6 +279,37 @@ def unmerge_hooks_from_settings(module_name: str, ctx: Dict[str, Any]) -> None:
         write_log({"level": "INFO", "message": f"Removed hooks for module: {module_name}"}, ctx)
 
 
+def cleanup_orphaned_hooks(config: Dict[str, Any], ctx: Dict[str, Any]) -> List[str]:
+    """Remove hooks from modules no longer in config. Returns sorted list of orphaned module names removed."""
+    settings = load_settings(ctx)
+    if "hooks" not in settings:
+        return []
+
+    known_modules = set(config.get("modules", {}).keys())
+    orphaned: set = set()
+
+    for hook_type in list(settings["hooks"].keys()):
+        kept = []
+        for entry in settings["hooks"][hook_type]:
+            mod = entry.get("__module__")
+            if mod is not None and mod not in known_modules:
+                orphaned.add(mod)
+            else:
+                kept.append(entry)
+        settings["hooks"][hook_type] = kept
+        if not kept:
+            del settings["hooks"][hook_type]
+
+    if orphaned:
+        save_settings(ctx, settings)
+        write_log(
+            {"level": "INFO", "message": f"Removed orphaned hooks for: {', '.join(sorted(orphaned))}"},
+            ctx,
+        )
+
+    return sorted(orphaned)
+
+
 def merge_agents_to_models(module_name: str, agents: Dict[str, Any], ctx: Dict[str, Any]) -> None:
     """Merge module agent configs into ~/.codeagent/models.json."""
     prompt_marker_module = "__prompt_file_module__"
@@ -1099,6 +1130,10 @@ def interactive_manage(config: Dict[str, Any], ctx: Dict[str, Any]) -> int:
                 ctx["force"] = True
                 prepare_status_backup(ctx)
                 ctx["selected_modules"] = set(to_reinstall.keys())
+                # Remove hooks from modules no longer in config before reinstalling
+                orphaned = cleanup_orphaned_hooks(config, ctx)
+                if orphaned:
+                    print(f"Cleaned orphaned hooks from removed modules: {', '.join(orphaned)}")
 
                 total = len(to_reinstall)
                 results = []
@@ -1224,6 +1259,11 @@ def execute_module(name: str, cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[
                 ctx,
             )
             raise
+
+    # On force-reinstall, remove stale module hooks first so path normalization
+    # in _replace_hook_variables is applied cleanly without stale duplicates.
+    if ctx.get("force"):
+        unmerge_hooks_from_settings(name, ctx)
 
     # Handle hooks: find and merge module hooks into settings.json
     hooks_results = find_module_hooks(name, cfg, ctx)
