@@ -62,10 +62,10 @@
       "description": "5-phase feature development workflow with codeagent orchestration",
       "dependencies": ["cr"],
       "agents": {
-        "develop": {
+        "do-develop": {
           "backend": "codex",
           "model": "gpt-5.3-codex",
-          "prompt_file": "~/.claude/skills/do/prompts/develop.md",
+          "prompt_file": "~/.claude/skills/do/agents/do-develop.md",
           "reasoning": "xhigh",
           "yolo": true
         },
@@ -79,15 +79,15 @@
           "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/do/agents/code-architect.md"
         },
-        "code-reviewer": {
+        "do-reviewer": {
           "backend": "claude",
           "model": "claude-sonnet-4-6",
-          "prompt_file": "~/.claude/skills/do/agents/code-reviewer.md"
+          "prompt_file": "~/.claude/skills/do/agents/do-reviewer.md"
         },
-        "frontend-ui-ux-engineer": {
+        "do-frontend": {
           "backend": "gemini",
           "model": "gemini-3.1-pro-preview",
-          "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
+          "prompt_file": "~/.claude/skills/do/agents/do-frontend.md"
         }
       },
       "operations": [

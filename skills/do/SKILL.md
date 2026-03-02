@@ -1,6 +1,6 @@
 ---
 name: do
-description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 5-phase workflow (Understand, Clarify, Design, Implement, Complete) using codeagent-wrapper to orchestrate code-explorer, code-architect, code-reviewer, develop, and frontend-ui-ux-engineer agents in parallel.
+description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 5-phase workflow (Understand, Clarify, Design, Implement, Complete) using codeagent-wrapper to orchestrate code-explorer, code-architect, do-reviewer, do-develop, and do-frontend agents in parallel.
 allowed-tools: ["Bash(~/.claude/skills/do/scripts/setup-do.py:*)", "Bash(~/.claude/skills/do/scripts/task.py:*)"]
 ---
 
@@ -55,16 +55,16 @@ The worktree is created **only when needed** (right before Phase 4: Implement). 
    python3 "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
    ```
 
-2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct `codeagent-wrapper` develop agent into the worktree:
+2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct `codeagent-wrapper` do-develop agent into the worktree:
 
 ```bash
-# Prefix all develop/frontend calls with DO_WORKTREE_DIR:
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent develop - . <<'EOF'
+# Prefix all do-develop/do-frontend calls with DO_WORKTREE_DIR:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 ...
 EOF
 ```
 
-Read-only agents (code-explorer, code-architect, code-reviewer) do NOT need `DO_WORKTREE_DIR`.
+Read-only agents (code-explorer, code-architect, do-reviewer) do NOT need `DO_WORKTREE_DIR`.
 
 ## Hard Constraints
 
@@ -74,7 +74,7 @@ Read-only agents (code-explorer, code-architect, code-reviewer) do NOT need `DO_
 4. **Update phase after each phase.** Use `task.py update-phase <N>`.
 5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; stay in the orchestrator role and wait for agents to complete.
 6. **Timeouts are not an escape hatch.** If a `codeagent-wrapper` invocation times out/errors, retry (split/narrow the task if needed); never switch to direct implementation.
-7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix develop/frontend agent calls with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
+7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix do-develop/do-frontend agent calls with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
 
 ## Agents
 
@@ -82,9 +82,9 @@ Read-only agents (code-explorer, code-architect, code-reviewer) do NOT need `DO_
 |-------|---------|------------------|
 | `code-explorer` | Trace code, map architecture, find patterns | No (read-only) |
 | `code-architect` | Design approaches, file plans, build sequences | No (read-only) |
-| `code-reviewer` | Review for bugs, simplicity, conventions | No (read-only) |
-| `develop` | Implement backend code, run tests | **Yes** — use `DO_WORKTREE_DIR` env prefix |
-| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX interactions | **Yes** — use `DO_WORKTREE_DIR` env prefix |
+| `do-reviewer` | Review for bugs, simplicity, conventions | No (read-only) |
+| `do-develop` | Implement backend code, run tests | **Yes** — use `DO_WORKTREE_DIR` env prefix |
+| `do-frontend` | Frontend implementation and UI/UX interactions | **Yes** — use `DO_WORKTREE_DIR` env prefix |
 
 ## Issue Severity Definitions
 
@@ -111,8 +111,8 @@ Read-only agents (code-explorer, code-architect, code-reviewer) do NOT need `DO_
 - Decisions: <requirements/constraints/choices>
 - Code-explorer output: <paste or "None">
 - Code-architect output: <paste or "None">
-- Code-reviewer output: <paste or "None">
-- Backend (develop) output: <paste or "None">
+- Do-reviewer output: <paste or "None">
+- Backend (do-develop) output: <paste or "None">
 - Frontend (UI/UX) output: <paste or "None">
 - Open questions: <list or "None">
 
@@ -244,10 +244,10 @@ python3 "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
 **Step 2: Invoke implementation agent(s)**
 
 **Execution Rules (based on Phase 3 `task_type`):**
-- `backend_only`: invoke only `develop` agent
-- `frontend_only`: invoke only `frontend-ui-ux-engineer` agent
+- `backend_only`: invoke only `do-develop` agent
+- `frontend_only`: invoke only `do-frontend` agent
 - `fullstack`: invoke both agents in parallel
-- Missing `task_type`: default to `develop` agent only
+- Missing `task_type`: default to `do-develop` agent only
 
 For full-stack projects, split into backend/frontend tasks with per-task `skills:` injection. Use `--parallel` when tasks can be split; use single agent when the change is small or single-domain.
 
@@ -255,7 +255,7 @@ For full-stack projects, split into backend/frontend tasks with per-task `skills
 
 ```bash
 # With worktree:
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent develop - . <<'EOF'
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
@@ -263,7 +263,7 @@ Implement with minimal change set following the Phase 3 blueprint.
 EOF
 
 # Without worktree:
-codeagent-wrapper --agent develop - . <<'EOF'
+codeagent-wrapper --agent do-develop - . <<'EOF'
 Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
@@ -278,7 +278,7 @@ EOF
 DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel --full-output <<'EOF'
 ---TASK---
 id: p4_backend
-agent: develop
+agent: do-develop
 workdir: .
 ---CONTENT---
 Implement backend changes following Phase 3 blueprint.
@@ -287,7 +287,7 @@ Implement backend changes following Phase 3 blueprint.
 
 ---TASK---
 id: p4_frontend
-agent: frontend-ui-ux-engineer
+agent: do-frontend
 workdir: .
 ---CONTENT---
 Implement frontend changes following Phase 3 blueprint.
@@ -308,7 +308,7 @@ Run parallel reviews:
 codeagent-wrapper --parallel --full-output <<'EOF'
 ---TASK---
 id: p4_correctness
-agent: code-reviewer
+agent: do-reviewer
 workdir: .
 ---CONTENT---
 Review for correctness, edge cases, failure modes.
@@ -316,7 +316,7 @@ Classify each issue as BLOCKING or MINOR.
 
 ---TASK---
 id: p4_simplicity
-agent: code-reviewer
+agent: do-reviewer
 workdir: .
 ---CONTENT---
 Review for KISS: remove bloat, collapse needless abstractions.
@@ -326,7 +326,7 @@ EOF
 
 **Step 4: Handle review results**
 
-- **MINOR issues only** → Auto-fix via `develop`/`frontend-ui-ux-engineer` (with `DO_WORKTREE_DIR` if enabled), no user interaction
+- **MINOR issues only** → Auto-fix via `do-develop`/`do-frontend` (with `DO_WORKTREE_DIR` if enabled), no user interaction
 - **BLOCKING issues** → Use AskUserQuestion: "Fix now / Proceed as-is"
 
 ### Phase 5: Complete (No Interaction)
@@ -334,7 +334,7 @@ EOF
 **Goal:** Document what was built.
 
 ```bash
-codeagent-wrapper --agent code-reviewer - . <<'EOF'
+codeagent-wrapper --agent do-reviewer - . <<'EOF'
 Write completion summary:
 - What was built
 - Key decisions/tradeoffs

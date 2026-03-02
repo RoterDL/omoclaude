@@ -2,11 +2,11 @@
 """
 Verify Loop Hook for do skill workflow.
 
-SubagentStop hook that intercepts when code-reviewer agent tries to stop.
+SubagentStop hook that intercepts when do-reviewer agent tries to stop.
 Runs verification commands to ensure code quality before allowing exit.
 
 Mechanism:
-- Intercepts SubagentStop event for code-reviewer agent
+- Intercepts SubagentStop event for do-reviewer agent
 - Runs verify commands from task.json if configured
 - Blocks stopping until verification passes
 - Has max iterations as safety limit (MAX_ITERATIONS=5)
@@ -33,8 +33,8 @@ FILE_CURRENT_TASK = ".current-task"
 FILE_TASK_MD = "task.md"
 STATE_FILE = ".claude/do-tasks/.verify-state.json"
 
-# Only control loop for code-reviewer agent
-TARGET_AGENTS = {"code-reviewer"}
+# Only control loop for do-reviewer agent
+TARGET_AGENTS = {"do-reviewer"}
 
 
 def get_project_root(cwd: str) -> str | None:

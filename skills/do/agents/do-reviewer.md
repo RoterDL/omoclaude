@@ -1,5 +1,5 @@
 ---
-name: code-reviewer
+name: do-reviewer
 description: Reviews code for bugs, logic errors, security vulnerabilities, code quality issues, and adherence to project conventions using structured checklists and risk-based filtering
 tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput
 model: sonnet

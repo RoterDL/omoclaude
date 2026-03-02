@@ -13,7 +13,7 @@
     ],
     "SubagentStop": [
       {
-        "matcher": "code-reviewer",
+        "matcher": "do-reviewer",
         "hooks": [
           {
             "type": "command",

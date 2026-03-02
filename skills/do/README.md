@@ -34,17 +34,17 @@ Examples:
 | 1     | Understand | Gather requirements + map codebase           | Parallel code-architect + code-explorer              |
 | 2     | Clarify    | Resolve blocking ambiguities                 | Conditional - only if blocking questions exist       |
 | 3     | Design     | Plan implementation with task classification | code-architect blueprint + task_type                 |
-| 4     | Implement  | Build the feature                            | develop / frontend-ui-ux-engineer based on task_type |
-| 5     | Complete   | Finalize and document                        | code-reviewer summary                                |
+| 4     | Implement  | Build the feature                            | do-develop / do-frontend based on task_type          |
+| 5     | Complete   | Finalize and document                        | do-reviewer summary                                |
 
 ## Task Classification
 
 Phase 3 outputs `task_type` to determine agent selection in Phase 4:
 
-- `backend_only`: invoke only `develop` agent
-- `frontend_only`: invoke only `frontend-ui-ux-engineer` agent
+- `backend_only`: invoke only `do-develop` agent
+- `frontend_only`: invoke only `do-frontend` agent
 - `fullstack`: invoke both agents in parallel
-- Missing `task_type`: default to `develop` agent only
+- Missing `task_type`: default to `do-develop` agent only
 
 ## Agents
 
@@ -52,11 +52,11 @@ Phase 3 outputs `task_type` to determine agent selection in Phase 4:
 | --------------------------- | ---------------------------------- | ----------------------------------- |
 | `code-explorer`           | Code tracing, architecture mapping | No (read-only)                      |
 | `code-architect`          | Design approaches, file planning   | No (read-only)                      |
-| `code-reviewer`           | Code review, simplification        | No (read-only)                      |
-| `develop`                 | Implement backend code, run tests  | **Yes** (if worktree enabled) |
-| `frontend-ui-ux-engineer` | Frontend implementation and UI/UX  | **Yes** (if worktree enabled) |
+| `do-reviewer`           | Code review, simplification        | No (read-only)                      |
+| `do-develop`              | Implement backend code, run tests  | **Yes** (if worktree enabled) |
+| `do-frontend`             | Frontend implementation and UI/UX  | **Yes** (if worktree enabled) |
 
-Prompts are shipped under `~/.claude/skills/do/prompts/` and referenced via `agents.<name>.prompt_file` in `~/.codeagent/models.json`.
+Prompts are shipped under `~/.claude/skills/do/agents/` and referenced via `agents.<name>.prompt_file` in `~/.codeagent/models.json`.
 To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or point `prompt_file` to a file under `~/.codeagent/agents/<name>.md`.
 
 ## Hard Constraints
@@ -66,7 +66,7 @@ To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or po
 3. **Pass complete context forward** - every agent gets the Context Pack
 4. **Parallel-first** - run independent tasks via `codeagent-wrapper --parallel`
 5. **Update state after each phase** - use `task.py update-phase <N>`
-6. **Respect worktree setting** - if `use_worktree: true`, pass `--worktree` to develop/frontend agents
+6. **Respect worktree setting** - if `use_worktree: true`, pass `--worktree` to do-develop/do-frontend agents
 
 ## Context Pack Template
 
@@ -79,8 +79,8 @@ To customize, edit `~/.codeagent/models.json` (backend/model/prompt_file), or po
 - Decisions: <requirements/constraints/choices>
 - Code-explorer output: <paste or "None">
 - Code-architect output: <paste or "None">
-- Code-reviewer output: <paste or "None">
-- Backend (develop) output: <paste or "None">
+- Do-reviewer output: <paste or "None">
+- Backend (do-develop) output: <paste or "None">
 - Frontend (UI/UX) output: <paste or "None">
 - Open questions: <list or "None">
 
@@ -149,7 +149,7 @@ Manual exit: Edit `task.md` and set `status: "cancelled"` in the frontmatter.
 Use `--worktree` to execute tasks in an isolated git worktree, preventing changes to your main branch:
 
 ```bash
-codeagent-wrapper --worktree --agent develop "implement feature X" .
+codeagent-wrapper --worktree --agent do-develop "implement feature X" .
 ```
 
 This automatically:
@@ -166,7 +166,7 @@ In parallel mode, add `worktree: true` to task blocks:
 ```
 ---TASK---
 id: feature_impl
-agent: develop
+agent: do-develop
 worktree: true
 ---CONTENT---
 Implement the feature
@@ -187,19 +187,19 @@ Required when using `agent:` in parallel tasks or `--agent`. The installer write
       "backend": "claude",
       "model": "claude-opus-4-6"
     },
-    "code-reviewer": {
+    "do-reviewer": {
       "backend": "codex",
       "model": "claude-sonnet-4-6"
     },
-    "develop": {
+    "do-develop": {
       "backend": "codex",
       "model": "gpt-5.3-codex",
-      "prompt_file": "~/.claude/skills/do/prompts/develop.md"
+      "prompt_file": "~/.claude/skills/do/agents/do-develop.md"
     },
-    "frontend-ui-ux-engineer": {
+    "do-frontend": {
       "backend": "gemini",
       "model": "gemini-3.1-pro-preview",
-      "prompt_file": "~/.claude/skills/do/prompts/frontend-ui-ux-engineer.md"
+      "prompt_file": "~/.claude/skills/do/agents/do-frontend.md"
     }
   }
 }
