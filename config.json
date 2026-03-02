@@ -173,6 +173,18 @@
           "description": "Install research-pro skill"
         }
       ]
+    },
+    "claudekit": {
+      "enabled": true,
+      "description": "Global hooks: dangerous command blocker and spec injection",
+      "operations": [
+        {
+          "type": "copy_dir",
+          "source": "hooks",
+          "target": "hooks",
+          "description": "Install global hooks (pre-bash, inject-spec)"
+        }
+      ]
     }
   }
 }
