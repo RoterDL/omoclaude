@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 set "EXIT_CODE=0"
-set "REPO=cexll/myclaude"
+set "REPO=stellarlinkco/myclaude"
 if defined CODEAGENT_WRAPPER_VERSION (
     set "VERSION=%CODEAGENT_WRAPPER_VERSION%"
 ) else if not defined VERSION (
