@@ -9,9 +9,12 @@ Commands:
   list                        - List active tasks
   status                      - Show current task status
   update-phase <N>            - Update current phase
+  enable-worktree             - Enable worktree for current task
+  set-verify                  - Set verify commands for verify-loop hook
 """
 
 import argparse
+import json
 import os
 import random
 import re
@@ -57,6 +60,69 @@ def generate_task_id() -> str:
     return f"{date_part}-{random_part}"
 
 
+def _strip_optional_quotes(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    return value
+
+
+def coerce_verify_commands(value: object) -> list[str]:
+    """Normalize verify_commands into a list of non-empty strings.
+
+    Supported formats:
+    - list[str]
+    - JSON array string: ["cmd1", "cmd2"]
+    - plain string: "pytest -q" (treated as a single command)
+    """
+    if value is None:
+        return []
+
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+
+    if isinstance(value, str):
+        raw = _strip_optional_quotes(value).strip()
+        if not raw:
+            return []
+
+        if raw.startswith("[") and raw.endswith("]"):
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    return [str(item) for item in parsed if str(item).strip()]
+            except Exception:
+                pass
+
+        return [raw]
+
+    return [str(value)]
+
+
+def _parse_frontmatter_value(key: str, raw_value: str) -> object:
+    raw_value = raw_value.strip()
+
+    if key == "verify_commands":
+        return coerce_verify_commands(raw_value)
+
+    if raw_value.startswith('"') and raw_value.endswith('"'):
+        return raw_value[1:-1]
+
+    if raw_value.startswith("'") and raw_value.endswith("'"):
+        return raw_value[1:-1]
+
+    if raw_value == "true":
+        return True
+
+    if raw_value == "false":
+        return False
+
+    if raw_value.isdigit():
+        return int(raw_value)
+
+    return raw_value
+
+
 def read_task_md(task_md_path: str) -> dict | None:
     """Read task.md and parse YAML frontmatter + body."""
     if not os.path.exists(task_md_path):
@@ -79,20 +145,13 @@ def read_task_md(task_md_path: str) -> dict | None:
     # Simple YAML parsing (no external deps)
     frontmatter = {}
     for line in frontmatter_str.split('\n'):
-        if ':' in line:
-            key, value = line.split(':', 1)
-            key = key.strip()
-            value = value.strip()
-            # Handle quoted strings
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            elif value == 'true':
-                value = True
-            elif value == 'false':
-                value = False
-            elif value.isdigit():
-                value = int(value)
-            frontmatter[key] = value
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if ":" not in line:
+            continue
+        key, raw_value = line.split(":", 1)
+        key = key.strip()
+        frontmatter[key] = _parse_frontmatter_value(key, raw_value)
 
     return {"frontmatter": frontmatter, "body": body}
 
@@ -102,10 +161,16 @@ def write_task_md(task_md_path: str, frontmatter: dict, body: str) -> bool:
     try:
         lines = ["---"]
         for key, value in frontmatter.items():
+            if key == "verify_commands":
+                commands = coerce_verify_commands(value)
+                lines.append(f"{key}: {json.dumps(commands, ensure_ascii=False)}")
+                continue
             if isinstance(value, bool):
                 lines.append(f"{key}: {str(value).lower()}")
             elif isinstance(value, int):
                 lines.append(f"{key}: {value}")
+            elif isinstance(value, list):
+                lines.append(f"{key}: {json.dumps(value, ensure_ascii=False)}")
             elif isinstance(value, str) and ('<' in value or '>' in value or ':' in value):
                 lines.append(f'{key}: "{value}"')
             else:
@@ -178,6 +243,7 @@ def create_task(title: str, use_worktree: bool = False) -> dict:
         "max_phases": 5,
         "use_worktree": use_worktree,
         "worktree_dir": worktree_dir,
+        "verify_commands": [],
         "created_at": datetime.now().isoformat(),
         "completion_promise": "<promise>DO_COMPLETE</promise>",
     }
@@ -358,6 +424,48 @@ def enable_worktree() -> bool:
     return True
 
 
+def set_verify_commands(commands: list[str], append: bool, clear: bool) -> bool:
+    """Set verify_commands for the current task."""
+    project_root = get_project_root()
+    current_task = get_current_task(project_root)
+
+    if not current_task:
+        print("Error: No active task.", file=sys.stderr)
+        return False
+
+    task_dir = os.path.join(project_root, current_task)
+    task_md_path = os.path.join(task_dir, FILE_TASK_MD)
+
+    parsed = read_task_md(task_md_path)
+    if not parsed:
+        print("Error: task.md not found or invalid.", file=sys.stderr)
+        return False
+
+    frontmatter = parsed["frontmatter"]
+    existing = coerce_verify_commands(frontmatter.get("verify_commands"))
+
+    if clear:
+        if commands:
+            print("Error: --clear cannot be combined with --cmd.", file=sys.stderr)
+            return False
+        new_commands: list[str] = []
+    else:
+        normalized = [cmd.strip() for cmd in commands if cmd and cmd.strip()]
+        if not normalized:
+            print("Error: At least one --cmd is required (or use --clear).", file=sys.stderr)
+            return False
+        new_commands = existing + normalized if append else normalized
+
+    frontmatter["verify_commands"] = new_commands
+
+    if not write_task_md(task_md_path, frontmatter, parsed["body"]):
+        print("Error: Failed to write task.md.", file=sys.stderr)
+        return False
+
+    print(f"verify_commands: {json.dumps(new_commands, ensure_ascii=False)}")
+    return True
+
+
 def update_phase(phase: int) -> bool:
     """Update current task phase."""
     project_root = get_project_root()
@@ -417,6 +525,19 @@ def main():
     # enable-worktree command
     subparsers.add_parser("enable-worktree", help="Enable worktree for current task")
 
+    # set-verify command
+    verify_parser = subparsers.add_parser(
+        "set-verify", help="Set verify_commands for verify-loop hook"
+    )
+    verify_parser.add_argument(
+        "--cmd", action="append", default=[], help="Verify command (repeatable)"
+    )
+    verify_mode = verify_parser.add_mutually_exclusive_group()
+    verify_mode.add_argument(
+        "--append", action="store_true", help="Append to existing verify_commands"
+    )
+    verify_mode.add_argument("--clear", action="store_true", help="Clear verify_commands")
+
     args = parser.parse_args()
 
     if args.command == "create":
@@ -473,6 +594,10 @@ def main():
 
     elif args.command == "enable-worktree":
         if not enable_worktree():
+            sys.exit(1)
+
+    elif args.command == "set-verify":
+        if not set_verify_commands(args.cmd, append=args.append, clear=args.clear):
             sys.exit(1)
 
     else:

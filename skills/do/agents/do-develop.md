@@ -12,6 +12,23 @@ Your input MUST contain:
 
 **Context Pack takes priority over guessing.** Use provided context before searching yourself.
 
+If any section is missing, proceed anyway:
+- Determine scope from the available task text plus git state (prefer `git diff HEAD`)
+- Be explicit about what you inferred vs. what was given
+
+## Worktree Rule (Repo Root)
+
+If `DO_WORKTREE_DIR` is set and points to a valid directory, treat it as the repo root:
+- Run shell commands from `"$DO_WORKTREE_DIR"` (e.g., `cd "$DO_WORKTREE_DIR"`)
+- Run git commands as `git -C "$DO_WORKTREE_DIR" ...`
+
+Otherwise, use the current working directory as the repo root.
+
+## Output Requirements
+
+- Do not claim tests passed unless you actually ran them and saw success in logs.
+- List the exact commands you ran (tests/linters/build) and any key outputs/errors.
+
 ---
 
 <Role>
@@ -93,4 +110,3 @@ Claude Code and codeagent-wrapper run in a bash shell environment, even on Windo
 | `cat` | `type` |
 | `ls` | `dir` |
 | `pwd` | `cd` (no args) |
-

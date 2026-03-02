@@ -304,7 +304,23 @@ EOF
 
 Note: Choose which skills to inject based on Phase 3 design output. Only inject skills relevant to each task's domain.
 
-**Step 3: Review**
+**Step 3: Configure verification commands (Recommended)**
+
+If you want the `verify-loop` hook to block the review from completing until verification passes,
+set `verify_commands` for the current task:
+
+```bash
+# Windows:
+python "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "<command>" --cmd "<command2>"
+# Linux/macOS:
+python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "<command>" --cmd "<command2>"
+```
+
+Notes:
+- Commands run in the worktree directory if worktree is enabled; otherwise in the project root.
+- Use `--append` to add commands; use `--clear` to disable the gate.
+
+**Step 4: Review**
 
 Run parallel reviews:
 
@@ -329,7 +345,7 @@ Classify each issue as BLOCKING or MINOR.
 EOF
 ```
 
-**Step 4: Handle review results**
+**Step 5: Handle review results**
 
 - **MINOR issues only** → Auto-fix via `do-develop`/`do-frontend` (with `DO_WORKTREE_DIR` if enabled), no user interaction
 - **BLOCKING issues** → Use AskUserQuestion: "Fix now / Proceed as-is"

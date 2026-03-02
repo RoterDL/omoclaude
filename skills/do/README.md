@@ -105,6 +105,7 @@ current_phase: 1
 phase_name: "Understand"
 max_phases: 5
 use_worktree: false
+verify_commands: []
 created_at: "<ISO timestamp>"
 completion_promise: "<promise>DO_COMPLETE</promise>"
 ---
@@ -144,6 +145,26 @@ A Stop hook is registered after installation:
 4. Outputs `<promise>DO_COMPLETE</promise>` when finished
 
 Manual exit: Edit `task.md` and set `status: "cancelled"` in the frontmatter.
+
+## Verification Loop (verify_commands)
+
+If `verify_commands` is set in the task's `task.md` frontmatter, a SubagentStop hook will run those
+commands when `do-reviewer` attempts to stop, and block completion until they pass.
+
+Configure via `task.py`:
+
+```bash
+# Replace verify commands:
+python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "pytest -q" --cmd "npm test"
+
+# Append:
+python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --append --cmd "ruff check ."
+
+# Disable gate:
+python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --clear
+```
+
+When worktree is enabled, commands run in `worktree_dir`; otherwise they run in the project root.
 
 ## Worktree Mode
 

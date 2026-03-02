@@ -7,7 +7,7 @@ Runs verification commands to ensure code quality before allowing exit.
 
 Mechanism:
 - Intercepts SubagentStop event for do-reviewer agent
-- Runs verify commands from task.json if configured
+- Runs verify commands from task.md frontmatter if configured
 - Blocks stopping until verification passes
 - Has max iterations as safety limit (MAX_ITERATIONS=5)
 
@@ -23,7 +23,7 @@ from pathlib import Path
 
 # Import shared task.md parser from scripts/
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from task import read_task_md
+from task import coerce_verify_commands, read_task_md
 
 # Configuration
 MAX_ITERATIONS = 5
@@ -82,7 +82,7 @@ def get_task_info(project_root: str, task_dir: str) -> dict | None:
 
 def get_verify_commands(task_info: dict) -> list[str]:
     """Get verify commands from task.md frontmatter."""
-    return task_info.get("verify_commands", [])
+    return coerce_verify_commands(task_info.get("verify_commands"))
 
 
 def run_verify_commands(cwd: str, commands: list[str]) -> tuple[bool, str]:
