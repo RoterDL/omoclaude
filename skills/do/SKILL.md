@@ -132,7 +132,7 @@ Read-only agents (code-explorer, code-architect, code-reviewer) do NOT need `DO_
 **Actions:** Run `code-architect` and 2-3 `code-explorer` tasks in parallel.
 
 ```bash
-codeagent-wrapper --parallel <<'EOF'
+codeagent-wrapper --parallel --full-output <<'EOF'
 ---TASK---
 id: p1_requirements
 agent: code-architect
@@ -275,7 +275,7 @@ EOF
 
 ```bash
 # With worktree:
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel <<'EOF'
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel --full-output <<'EOF'
 ---TASK---
 id: p4_backend
 agent: develop
@@ -305,7 +305,7 @@ Note: Choose which skills to inject based on Phase 3 design output. Only inject 
 Run parallel reviews:
 
 ```bash
-codeagent-wrapper --parallel <<'EOF'
+codeagent-wrapper --parallel --full-output <<'EOF'
 ---TASK---
 id: p4_correctness
 agent: code-reviewer
