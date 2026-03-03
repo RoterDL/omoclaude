@@ -480,8 +480,20 @@ func extractNumberBefore(s string, idx int) int {
 
 // extractKeyOutputFromLines extracts key output from pre-split lines.
 func extractKeyOutputFromLines(lines []string, maxLen int) string {
-	if len(lines) == 0 || maxLen <= 0 {
+	if len(lines) == 0 || maxLen < 0 {
 		return ""
+	}
+
+	applyLimit := func(s string) string {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return ""
+		}
+		// maxLen=0 means "unlimited" (no truncation).
+		if maxLen == 0 {
+			return s
+		}
+		return safeTruncate(s, maxLen)
 	}
 
 	// Priority 1: Look for explicit summary lines
@@ -496,9 +508,8 @@ func extractKeyOutputFromLines(lines []string, maxLen int) string {
 				"summary:", "completed:", "implemented:", "added:", "created:", "fixed:"} {
 				content = strings.TrimPrefix(content, prefix)
 			}
-			content = strings.TrimSpace(content)
-			if len(content) > 0 {
-				return safeTruncate(content, maxLen)
+			if content = applyLimit(content); content != "" {
+				return content
 			}
 		}
 	}
@@ -514,10 +525,23 @@ func extractKeyOutputFromLines(lines []string, maxLen int) string {
 		if len(line) < 20 {
 			continue
 		}
-		return safeTruncate(line, maxLen)
+		return applyLimit(line)
 	}
 
 	// Fallback: truncate entire message
+	// Note: in unlimited mode, avoid returning the full message body as "key output" to keep summary output compact.
+	if maxLen == 0 {
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "```") || strings.HasPrefix(line, "---") ||
+				strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+				continue
+			}
+			return line
+		}
+		return ""
+	}
+
 	clean := strings.TrimSpace(strings.Join(lines, "\n"))
 	return safeTruncate(clean, maxLen)
 }

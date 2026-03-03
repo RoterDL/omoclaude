@@ -141,3 +141,47 @@ func TestSanitizeOutput(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractKeyOutputFromLines(t *testing.T) {
+	t.Run("summary unlimited", func(t *testing.T) {
+		long := "this is a very long summary line that should not be truncated"
+		lines := []string{"Summary: " + long}
+		if got := extractKeyOutputFromLines(lines, 0); got != long {
+			t.Fatalf("extractKeyOutputFromLines(unlimited) = %q, want %q", got, long)
+		}
+	})
+
+	t.Run("summary truncated", func(t *testing.T) {
+		long := "this is a very long summary line that should be truncated"
+		lines := []string{"Summary: " + long}
+		want := safeTruncate(long, 10)
+		if got := extractKeyOutputFromLines(lines, 10); got != want {
+			t.Fatalf("extractKeyOutputFromLines(truncated) = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("first meaningful line unlimited", func(t *testing.T) {
+		lines := []string{
+			"## Header",
+			"- bullet line is definitely long enough to count",
+		}
+		want := "- bullet line is definitely long enough to count"
+		if got := extractKeyOutputFromLines(lines, 0); got != want {
+			t.Fatalf("extractKeyOutputFromLines(unlimited) = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("short line fallback unlimited", func(t *testing.T) {
+		lines := []string{"ok"}
+		if got := extractKeyOutputFromLines(lines, 0); got != "ok" {
+			t.Fatalf("extractKeyOutputFromLines(unlimited short) = %q, want %q", got, "ok")
+		}
+	})
+
+	t.Run("negative maxLen disables key output", func(t *testing.T) {
+		lines := []string{"Summary: hello"}
+		if got := extractKeyOutputFromLines(lines, -1); got != "" {
+			t.Fatalf("extractKeyOutputFromLines(disabled) = %q, want empty", got)
+		}
+	})
+}
