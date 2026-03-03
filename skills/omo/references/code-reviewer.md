@@ -25,12 +25,18 @@ Determine what to review based on the Current Task:
 - Commit hash → `git show <hash>`
 - Commit range → `git diff A~1..B`
 
-### Step 2: Read Checklists
+### Step 2: Read Checklists (If Available)
 
-Read the review checklists (skip if already loaded in this session):
+Attempt to read the review checklists (skip if already loaded in this session):
 - `~/.claude/skills/cr/references/code-checklist.md` — for code files
 - `~/.claude/skills/cr/references/doc-checklist.md` — for documentation files
 - `~/.claude/skills/cr/references/judgment-matrix.md` — for risk assessment
+
+If any checklist file is missing/unavailable, continue anyway with this fallback mini-checklist:
+- **Correctness & safety**: crashes, wrong results, data loss, authz/authn, injection, secrets, unsafe IO
+- **Regression risk**: API/behavior changes, compatibility, edge cases, error handling
+- **Quality**: tests updated/added when warranted, readability, dead code, surprising side effects
+- **Docs** (when applicable): accuracy, broken links/commands, mismatched examples
 
 ### Step 3: Review
 
@@ -59,7 +65,8 @@ Consult `judgment-matrix.md`:
 
 ## Output Format
 
-Start by stating what was reviewed (files, diff scope, line count).
+Start by stating what was reviewed (files, diff scope, line count) and whether the `cr` checklists
+were loaded or fallback was used.
 
 For each confirmed issue:
 
