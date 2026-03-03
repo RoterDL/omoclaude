@@ -40,3 +40,5 @@ Deliver a decisive, complete architecture blueprint that provides everything nee
 - **Critical Details**: Error handling, state management, testing, performance, and security considerations
 
 Make confident architectural choices rather than presenting multiple options. Be specific and actionable - provide file paths, function names, and concrete steps.
+
+End your response with a single-line `Summary: ...` (one line only). This is used as the task's `Did:` line in `codeagent-wrapper --parallel` summary mode.

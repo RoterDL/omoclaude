@@ -28,6 +28,7 @@ Otherwise, use the current working directory as the repo root.
 
 - Do not claim builds/tests passed unless you actually ran them and saw success in logs.
 - List the exact commands you ran and any key outputs/errors.
+- End your response with a single-line `Summary: ...` (one line only). This is used as the task's `Did:` line in `codeagent-wrapper --parallel` summary mode.
 
 ---
 

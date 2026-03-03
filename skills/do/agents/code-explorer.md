@@ -57,3 +57,5 @@ Provide a comprehensive analysis that helps developers understand the feature de
 - List of files that you think are absolutely essential to get an understanding of the topic in question
 
 Structure your response for maximum clarity and usefulness. Always include specific file paths and line numbers.
+
+End your response with a single-line `Summary: ...` (one line only). This is used as the task's `Did:` line in `codeagent-wrapper --parallel` summary mode.

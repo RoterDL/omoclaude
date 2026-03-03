@@ -136,7 +136,7 @@ changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) 
 **Actions:** Run `code-architect` and 2-3 `code-explorer` tasks in parallel.
 
 ```bash
-codeagent-wrapper --parallel --full-output <<'EOF'
+codeagent-wrapper --parallel <<'EOF'
 ---TASK---
 id: p1_requirements
 agent: code-architect
@@ -153,12 +153,16 @@ Output format:
 - Non-goals: [list]
 - Blocking questions: [list, if any]
 
+End with: Summary: <one sentence>
+
 ---TASK---
 id: p1_similar_features
 agent: code-explorer
 workdir: .
 ---CONTENT---
 Find 1-3 similar features, trace end-to-end. Return: key files with line numbers, call flow, extension points.
+
+End with: Summary: <one sentence>
 
 ---TASK---
 id: p1_architecture
@@ -167,14 +171,20 @@ workdir: .
 ---CONTENT---
 Map architecture for relevant subsystem. Return: module map + 5-10 key files.
 
+End with: Summary: <one sentence>
+
 ---TASK---
 id: p1_conventions
 agent: code-explorer
 workdir: .
 ---CONTENT---
 Identify testing patterns, conventions, config. Return: test commands + file locations.
+
+End with: Summary: <one sentence>
 EOF
 ```
+
+Note: `codeagent-wrapper --parallel` defaults to structured summary output. Avoid `--full-output` unless debugging a specific failure; it switches to legacy full-stdout output and can bloat context. If you need deeper details, use the `Log:` paths from the report.
 
 ### Phase 2: Clarify (Conditional)
 
@@ -279,7 +289,7 @@ EOF
 
 ```bash
 # With worktree:
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel --full-output <<'EOF'
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel <<'EOF'
 ---TASK---
 id: p4_backend
 agent: do-develop
@@ -288,6 +298,7 @@ workdir: .
 Implement backend changes following Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
+End with: Summary: <one sentence>
 
 ---TASK---
 id: p4_frontend
@@ -297,6 +308,7 @@ workdir: .
 Implement frontend changes following Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
+End with: Summary: <one sentence>
 EOF
 
 # Without worktree: remove DO_WORKTREE_DIR prefix
@@ -326,7 +338,7 @@ Run parallel reviews:
 
 ```bash
 # With worktree: keep the DO_WORKTREE_DIR prefix; without worktree: remove it.
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel --full-output <<'EOF'
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel <<'EOF'
 ---TASK---
 id: p4_correctness
 agent: do-reviewer
@@ -334,6 +346,7 @@ workdir: .
 ---CONTENT---
 Review for correctness, edge cases, failure modes.
 Classify each issue as BLOCKING or MINOR.
+End with: Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>
 
 ---TASK---
 id: p4_simplicity
@@ -342,6 +355,7 @@ workdir: .
 ---CONTENT---
 Review for KISS: remove bloat, collapse needless abstractions.
 Classify each issue as BLOCKING or MINOR.
+End with: Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>
 EOF
 ```
 

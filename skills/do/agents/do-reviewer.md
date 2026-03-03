@@ -77,6 +77,8 @@ Consult `judgment-matrix.md`:
 
 Start by clearly stating what you're reviewing (repo root, scope, and what diff you used).
 
+End your response with a single-line `Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>` (one line only). This is used as the task's `Did:` line in `codeagent-wrapper --parallel` summary mode.
+
 For each confirmed issue:
 
 ```
