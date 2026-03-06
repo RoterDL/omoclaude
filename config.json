@@ -9,8 +9,8 @@
       "dependencies": ["cr"],
       "agents": {
         "oracle": {
-          "backend": "claude",
-          "model": "claude-opus-4-6",
+          "backend": "codex",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/omo/references/oracle.md",
           "yolo": true
         },
@@ -27,14 +27,14 @@
         },
         "develop": {
           "backend": "codex",
-          "model": "gpt-5.3-codex",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/omo/references/develop.md",
           "reasoning": "xhigh",
           "yolo": true
         },
         "frontend-ui-ux-engineer": {
-          "backend": "gemini",
-          "model": "gemini-3.1-pro-preview",
+          "backend": "claude",
+          "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/omo/references/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
@@ -64,7 +64,7 @@
       "agents": {
         "do-develop": {
           "backend": "codex",
-          "model": "gpt-5.3-codex",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/do/agents/do-develop.md",
           "reasoning": "xhigh",
           "yolo": true
@@ -75,8 +75,8 @@
           "prompt_file": "~/.claude/skills/do/agents/code-explorer.md"
         },
         "code-architect": {
-          "backend": "claude",
-          "model": "claude-opus-4-6",
+          "backend": "codex",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/do/agents/code-architect.md"
         },
         "do-reviewer": {
@@ -90,8 +90,8 @@
           "prompt_file": "~/.claude/skills/do/agents/do-summarizer.md"
         },
         "do-frontend": {
-          "backend": "gemini",
-          "model": "gemini-3.1-pro-preview",
+          "backend": "claude",
+          "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/do/agents/do-frontend.md"
         }
       },
@@ -134,32 +134,32 @@
       "agents": {
         "content-extractor": {
           "backend": "codex",
-          "model": "gpt-5.2",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/research-pro/references/content-extractor.md",
           "reasoning": "high"
         },
         "paper-reviewer": {
           "backend": "codex",
-          "model": "gpt-5.2",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/research-pro/references/paper-reviewer.md",
           "reasoning": "xhigh"
         },
         "literature-scout": {
           "backend": "codex",
-          "model": "gpt-5.2",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/research-pro/references/literature-scout.md",
           "yolo": true,
           "reasoning": "high"
         },
         "literature-filter": {
           "backend": "codex",
-          "model": "gpt-5.2",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/research-pro/references/literature-filter.md",
           "reasoning": "high"
         },
         "paper-downloader": {
           "backend": "codex",
-          "model": "gpt-5.2",
+          "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/research-pro/references/paper-downloader.md",
           "yolo": true,
           "reasoning": "high"
