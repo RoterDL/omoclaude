@@ -75,7 +75,7 @@ changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) 
 2. **Pass complete context forward.** Every agent invocation includes the Context Pack.
 3. **Parallel-first.** Run independent tasks via `codeagent-wrapper --parallel`.
 4. **Update phase after each phase.** Use `task.py update-phase <N>`.
-5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; stay in the orchestrator role and wait for agents to complete.
+5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; for calls that may exceed the Bash tool timeout, invoke the Bash tool with `run_in_background: true` and fetch the final result via `TaskOutput` instead of relying on the foreground call to stay open. Stay in the orchestrator role and wait for agents to complete.
 6. **Timeouts are not an escape hatch.** If a `codeagent-wrapper` invocation times out/errors, retry (split/narrow the task if needed); never switch to direct implementation.
 7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix any Phase 4-5 agent call that depends on repo state (`do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
 
@@ -134,6 +134,8 @@ changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) 
 **Goal:** Understand requirements and map codebase simultaneously.
 
 **Actions:** Run `code-architect` and 2-3 `code-explorer` tasks in parallel.
+
+Because `codeagent-wrapper --parallel` can run for a long time, prefer invoking this Bash tool call with `run_in_background: true`, then use `TaskOutput` to wait for and retrieve the final report.
 
 ```bash
 codeagent-wrapper --parallel <<'EOF'
@@ -198,6 +200,8 @@ Note: `codeagent-wrapper --parallel` defaults to structured summary output. Avoi
 ### Phase 3: Design (User Confirmation Required)
 
 **Goal:** Produce minimal-change implementation plan with task classification.
+
+This `code-architect` invocation must use the Bash tool's `run_in_background: true` parameter. After starting it, use `TaskOutput` to wait for completion and read back the design result. Example Bash tool usage around this command: set `run_in_background: true` on the Bash call, then read the completed output via `TaskOutput` before presenting the design to the user.
 
 ```bash
 codeagent-wrapper --agent code-architect - . <<'EOF'
