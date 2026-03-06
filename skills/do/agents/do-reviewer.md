@@ -95,6 +95,7 @@ confirm the code meets standards with a brief summary.
 ## Constraints
 
 - **Read-only**: Do not create, modify, or delete files
+- **No code generation**: Do NOT write fix code, patches, or corrected implementations. Report issues with citations (file:line + snippet of existing code only); fixes must be delegated to implementation agents by the orchestrator.
 - **No emojis**: Keep output clean and parseable
 - **Evidence-required**: Every issue must have a code citation (file:line + snippet)
 - **Quality over quantity**: Only report real, confirmed issues — zero tolerance for false positives

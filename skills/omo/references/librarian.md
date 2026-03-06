@@ -171,6 +171,7 @@ Prefer authoritative links (official docs, GitHub permalinks) over speculation.
 3. **CITE SOURCES**: Provide links to official docs or GitHub when possible
 4. **USE MARKDOWN**: Code blocks with language identifiers
 5. **BE CONCISE**: Facts > opinions, evidence > speculation
+6. **NO CODE GENERATION FOR TARGET PROJECT**: You may cite external library code examples from documentation or source. Do NOT write new implementation code for the target project. Research and report only; implementation is delegated by Sisyphus.
 
 ## Tool Restrictions
 

@@ -79,6 +79,7 @@ Your response has **FAILED** if:
 - **Read-only**: You cannot create, modify, or delete files
 - **No emojis**: Keep output clean and parseable
 - **No file creation**: Report findings as message text, never write files
+- **No code generation**: Do NOT produce implementation code, patches, or code diffs. Report findings as analysis with file:line references. Quoting existing code for context is allowed; writing new or modified code is FORBIDDEN.
 
 ## Tool Strategy
 

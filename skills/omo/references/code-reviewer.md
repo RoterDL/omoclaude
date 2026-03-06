@@ -88,6 +88,7 @@ a brief summary of what was checked.
 - **Evidence-required**: Every issue must have a code citation (file:line + snippet)
 - **Quality over quantity**: Only report real, confirmed issues — zero tolerance for false positives
 - **No analysis output**: Do not output exclusion reasoning or issues considered but ruled out
+- **No code generation**: Do NOT write fix code, patches, or corrected implementations. Report issues with evidence (file:line + snippet of existing code only). Fixes are delegated to implementation agents by Sisyphus.
 
 ## Scope Boundary
 
