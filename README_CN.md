@@ -11,7 +11,7 @@
 ## 快速开始
 
 ```bash
-python3 install.py
+python install.py
 ```
 
 本项目仓库：https://github.com/RoterDL/omoclaude  
@@ -41,22 +41,22 @@ python3 install.py
 
 ```bash
 # 交互式安装器（推荐）
-python3 install.py
+python install.py
 
 # 列出可用模块
-python3 install.py --list-modules
+python install.py --list-modules
 
 # 安装指定模块
-python3 install.py --module do,omo,codeagent
+python install.py --module do,omo,codeagent
 
 # 指定安装目录 / 强制覆盖
-python3 install.py --install-dir ~/.claude --module do --force
+python install.py --install-dir ~/.claude --module do --force
 
 # 更新已安装模块
-python3 install.py --update
+python install.py --update
 
 # 卸载指定模块
-python3 uninstall.py --module do,omo
+python uninstall.py --module do,omo
 ```
 
 `--update` 会在目标安装目录（默认 `~/.claude`，优先读取 `installed_modules.json`）检测已安装 modules，并覆盖更新模块文件。
@@ -127,7 +127,7 @@ python3 uninstall.py --module do,omo
 **模块未生效：**
 ```bash
 cat ~/.claude/installed_modules.json
-python3 install.py --module do --force
+python install.py --module do --force
 ```
 
 **后端 CLI 异常：**

@@ -124,7 +124,7 @@ The current task is tracked in `.claude/do-tasks/.current-task`.
 After each phase, update `task.md` frontmatter via:
 
 ```bash
-python3 "$HOME/.claude/skills/do/scripts/task.py" update-phase <N>
+python "$HOME/.claude/skills/do/scripts/task.py" update-phase <N>
 ```
 
 When all 5 phases complete, output:
@@ -155,13 +155,13 @@ Configure via `task.py`:
 
 ```bash
 # Replace verify commands:
-python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "pytest -q" --cmd "npm test"
+python "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "pytest -q" --cmd "npm test"
 
 # Append:
-python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --append --cmd "ruff check ."
+python "$HOME/.claude/skills/do/scripts/task.py" set-verify --append --cmd "ruff check ."
 
 # Disable gate:
-python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --clear
+python "$HOME/.claude/skills/do/scripts/task.py" set-verify --clear
 ```
 
 When worktree is enabled, commands run in `worktree_dir`; otherwise they run in the project root.

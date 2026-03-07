@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Log Prompt Hook - Record user prompts to session-specific log files.
 Used for review on Stop.

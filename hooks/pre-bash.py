@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Pre-Bash Hook - Block dangerous commands before execution.
 """

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """JSON-driven modular installer.
 
 Keep it simple: validate config, expand paths, run three operation types,
@@ -195,8 +195,6 @@ def _replace_hook_variables(obj: Any, plugin_root: str) -> Any:
         if sys.platform == "win32":
             if value.endswith(".sh"):
                 value = value[:-3] + ".bat"
-            if value.startswith("python3 "):
-                value = "python " + value[len("python3 "):]
             # Normalize path separators on Windows
             value = value.replace("\\", "/")
         return value
@@ -501,7 +499,7 @@ def load_config(path: str) -> Dict[str, Any]:
         print(
             "WARNING: python package 'jsonschema' is not installed; "
             "skipping config validation. To enable validation run:\n"
-            "  python3 -m pip install jsonschema\n",
+            "  python -m pip install jsonschema\n",
             file=sys.stderr,
         )
 
@@ -518,7 +516,7 @@ def load_config(path: str) -> Dict[str, Any]:
             raise ValueError(
                 f"Config missing required keys: {missing_str}. "
                 "Install jsonschema for better validation: "
-                "python3 -m pip install jsonschema"
+                "python -m pip install jsonschema"
             )
 
         return config

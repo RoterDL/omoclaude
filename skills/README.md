@@ -12,23 +12,23 @@ This repository currently includes only these skills:
 List available modules:
 
 ```bash
-python3 install.py --list-modules
+python install.py --list-modules
 ```
 
 Install interactively:
 
 ```bash
-python3 install.py
+python install.py
 ```
 
 Force overwrite / custom install directory:
 
 ```bash
-python3 install.py --install-dir ~/.claude --module do --force
+python install.py --install-dir ~/.claude --module do --force
 ```
 
 Uninstall modules:
 
 ```bash
-python3 uninstall.py --module do,omo
+python uninstall.py --module do,omo
 ```

@@ -12,15 +12,10 @@ An orchestrator for systematic feature development. Invoke agents via `codeagent
 
 When triggered via `/do <task>`, initialize the task directory immediately without asking about worktree:
 
-Check the `Platform:` field in the environment info to determine the correct command:
-- **Windows (Platform: win32):** use `python` and `$HOME` for home directory
-- **Linux/macOS:** use `python3` and `$HOME` for home directory
+Use `python` and `$HOME` for home directory:
 
 ```bash
-# Windows:
 python "$HOME/.claude/skills/do/scripts/setup-do.py" "<task description>"
-# Linux/macOS:
-python3 "$HOME/.claude/skills/do/scripts/setup-do.py" "<task description>"
 ```
 
 This creates a task directory under `.claude/do-tasks/` with:
@@ -30,17 +25,17 @@ This creates a task directory under `.claude/do-tasks/` with:
 
 ## Task Directory Management
 
-Use `task.py` to manage task state (use `python` on Windows, `python3` on Linux/macOS):
+Use `task.py` to manage task state:
 
 ```bash
-# Update phase (Linux/macOS)
-python3 "$HOME/.claude/skills/do/scripts/task.py" update-phase 2
+# Update phase
+python "$HOME/.claude/skills/do/scripts/task.py" update-phase 2
 
 # Check status
-python3 "$HOME/.claude/skills/do/scripts/task.py" status
+python "$HOME/.claude/skills/do/scripts/task.py" status
 
 # List all tasks
-python3 "$HOME/.claude/skills/do/scripts/task.py" list
+python "$HOME/.claude/skills/do/scripts/task.py" list
 ```
 
 ## Worktree Mode
@@ -49,10 +44,7 @@ The worktree is created **only when needed** (right before Phase 4: Implement). 
 
 1. Enable worktree for the current task (creates worktree without resetting task context):
    ```bash
-   # Windows:
    python "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
-   # Linux/macOS:
-   python3 "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
    ```
 
 2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct `codeagent-wrapper` do-develop agent into the worktree:
@@ -252,10 +244,7 @@ Develop in a separate worktree? (Isolates changes from main branch)
 
 If user chooses worktree:
 ```bash
-# Windows:
 python "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
-# Linux/macOS:
-python3 "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
 # Save the DO_WORKTREE_DIR from output
 ```
 
@@ -326,10 +315,7 @@ If you want the `verify-loop` hook to block the review from completing until ver
 set `verify_commands` for the current task:
 
 ```bash
-# Windows:
 python "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "<command>" --cmd "<command2>"
-# Linux/macOS:
-python3 "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "<command>" --cmd "<command2>"
 ```
 
 Notes:

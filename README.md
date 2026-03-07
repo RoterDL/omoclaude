@@ -12,7 +12,7 @@
 ## Quick Start
 
 ```bash
-python3 install.py
+python install.py
 ```
 
 Project repository: https://github.com/RoterDL/omoclaude  
@@ -42,22 +42,22 @@ Installable skills in this repository:
 
 ```bash
 # Interactive installer (recommended)
-python3 install.py
+python install.py
 
 # List available modules
-python3 install.py --list-modules
+python install.py --list-modules
 
 # Install selected modules
-python3 install.py --module do,omo,codeagent
+python install.py --module do,omo,codeagent
 
 # Custom install directory / overwrite
-python3 install.py --install-dir ~/.claude --module do --force
+python install.py --install-dir ~/.claude --module do --force
 
 # Update installed modules
-python3 install.py --update
+python install.py --update
 
 # Uninstall selected modules
-python3 uninstall.py --module do,omo
+python uninstall.py --module do,omo
 ```
 
 `--update` detects already installed modules in the target install dir (defaults to `~/.claude`, via `installed_modules.json` when present) and updates module files.
@@ -128,7 +128,7 @@ Edit `config.json` to enable/disable modules:
 **Module not loading:**
 ```bash
 cat ~/.claude/installed_modules.json
-python3 install.py --module do --force
+python install.py --module do --force
 ```
 
 **Backend CLI errors:**

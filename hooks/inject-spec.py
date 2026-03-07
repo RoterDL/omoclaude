@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Global Spec Injection Hook (DEPRECATED).
 
