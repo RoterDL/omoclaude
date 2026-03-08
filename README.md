@@ -26,6 +26,8 @@ Original upstream project: https://github.com/cexll/myclaude
 | [omo](skills/omo/README.md) | Multi-agent orchestration with intelligent routing | `/omo` command |
 | [codeagent](skills/codeagent/SKILL.md) | Focused implementation skill using codeagent-wrapper | `skill:codeagent` or `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | Multi-agent academic research orchestration | `/research-pro` command |
+| [taste](skills/taste/) | Frontend design quality rules (skill injection for `do-frontend`) | Dependency of `do` |
+| [cr](skills/cr/) | Code review checklists | Dependency of `do` / `omo` |
 
 ## Available Skills
 
@@ -37,6 +39,8 @@ Installable skills in this repository:
 | omo | Multi-agent orchestration workflow |
 | codeagent | Focused implementation with codeagent-wrapper |
 | research-pro | Multi-agent academic research orchestration |
+| taste | Frontend design quality rules — 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) |
+| cr | Code review checklists and references |
 
 ## Installation
 
@@ -72,7 +76,8 @@ Edit `config.json` to enable/disable modules:
     "do": { "enabled": true },
     "omo": { "enabled": false },
     "codeagent": { "enabled": false },
-    "research-pro": { "enabled": true }
+    "research-pro": { "enabled": true },
+    "taste": { "enabled": true }
   }
 }
 ```
@@ -112,7 +117,11 @@ Edit `config.json` to enable/disable modules:
 │   ├── do/
 │   ├── omo/
 │   ├── research-pro/
-│   └── codeagent/
+│   ├── codeagent/
+│   ├── taste-core/
+│   ├── taste-output/
+│   ├── taste-creative/
+│   └── taste-redesign/
 ├── settings.json          (auto-generated, hooks config)
 └── installed_modules.json (auto-generated, tracks modules)
 ```

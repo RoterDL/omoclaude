@@ -25,10 +25,12 @@ python install.py
 | [omo](skills/omo/README.md) | 多智能体编排 + 智能路由 | `/omo` 命令 |
 | [codeagent](skills/codeagent/SKILL.md) | 面向实现任务的精简技能，依赖 codeagent-wrapper | `skill:codeagent` 或 `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | 多智能体学术研究编排 | `/research-pro` 命令 |
+| [taste](skills/taste/) | 前端设计质量规则（skill 注入，供 `do-frontend` 使用） | `do` 的依赖 |
+| [cr](skills/cr/) | 代码审查清单 | `do` / `omo` 的依赖 |
 
 ## 可用技能
 
-当前仓库仅包含以下技能：
+当前仓库包含以下技能：
 
 | 技能 | 描述 |
 |------|------|
@@ -36,6 +38,8 @@ python install.py
 | omo | 多智能体编排工作流 |
 | codeagent | 基于 codeagent-wrapper 的实现型技能 |
 | research-pro | 多智能体学术研究编排 |
+| taste | 前端设计质量规则 — 4 个可注入子技能（`taste-core`、`taste-output`、`taste-creative`、`taste-redesign`） |
+| cr | 代码审查清单与参考资料 |
 
 ## 安装
 
@@ -71,7 +75,8 @@ python uninstall.py --module do,omo
     "do": { "enabled": true },
     "omo": { "enabled": false },
     "codeagent": { "enabled": false },
-    "research-pro": { "enabled": true }
+    "research-pro": { "enabled": true },
+    "taste": { "enabled": true }
   }
 }
 ```
@@ -111,7 +116,11 @@ python uninstall.py --module do,omo
 │   ├── do/
 │   ├── omo/
 │   ├── research-pro/
-│   └── codeagent/
+│   ├── codeagent/
+│   ├── taste-core/
+│   ├── taste-output/
+│   ├── taste-creative/
+│   └── taste-redesign/
 ├── settings.json          (自动生成，hooks 配置)
 └── installed_modules.json (自动生成，记录已装模块)
 ```

@@ -73,6 +73,7 @@ Each skill lives under `skills/<name>/` with a `SKILL.md` (the prompt loaded by 
 | `codeagent` | `skill:codeagent` | Thin wrapper for direct `codeagent-wrapper` invocation |
 | `research-pro` | `/research-pro` | Academic paper reading, review, literature search with `content-extractor`, `paper-reviewer`, `literature-scout`, etc. |
 | `cr` | (dependency) | Code review checklists; auto-installed as dependency of `do` and `omo` |
+| `taste` | (dependency) | Frontend design quality rules; 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) injected into `do-frontend` via `--skills` |
 
 ### Agent Prompt Files
 

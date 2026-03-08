@@ -61,7 +61,7 @@
     "do": {
       "enabled": true,
       "description": "5-phase feature development workflow with codeagent orchestration",
-      "dependencies": ["cr"],
+      "dependencies": ["cr", "taste"],
       "agents": {
         "do-develop": {
           "backend": "codex",
@@ -114,6 +114,36 @@
           "source": "skills/cr",
           "target": "skills/cr",
           "description": "Install cr skill"
+        }
+      ]
+    },
+    "taste": {
+      "enabled": true,
+      "description": "Frontend design quality rules for codeagent-wrapper skill injection",
+      "operations": [
+        {
+          "type": "copy_dir",
+          "source": "skills/taste/taste-core",
+          "target": "skills/taste-core",
+          "description": "Install taste-core skill"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/taste/taste-output",
+          "target": "skills/taste-output",
+          "description": "Install taste-output skill"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/taste/taste-creative",
+          "target": "skills/taste-creative",
+          "description": "Install taste-creative skill"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/taste/taste-redesign",
+          "target": "skills/taste-redesign",
+          "description": "Install taste-redesign skill"
         }
       ]
     },

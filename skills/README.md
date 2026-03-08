@@ -1,11 +1,13 @@
 # Skills
 
-This repository currently includes only these skills:
+This repository currently includes these skills:
 
 - `codeagent`
 - `do`
 - `omo`
 - `research-pro`
+- `taste` — Frontend design quality rules (4 injectable sub-skills: `taste-core`, `taste-output`, `taste-creative`, `taste-redesign`)
+- `cr` — Code review checklists (dependency of `do` / `omo`)
 
 ## Install with `install.py` (recommended)
 

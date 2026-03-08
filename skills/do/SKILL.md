@@ -251,17 +251,18 @@ python "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
 **Step 2: Invoke implementation agent(s)**
 
 **Execution Rules (based on Phase 3 `task_type`):**
-- `backend_only`: invoke only `do-develop` agent
-- `frontend_only`: invoke only `do-frontend` agent
-- `fullstack`: invoke both agents in parallel
+- `backend_only`: invoke only `do-develop` agent (no `--skills`; auto-detect handles tech stack)
+- `frontend_only`: invoke only `do-frontend` agent with `--skills taste-core,taste-output`
+- `fullstack`: invoke both agents in parallel; `do-frontend` with `--skills taste-core,taste-output`, `do-develop` without `--skills`
 - Missing `task_type`: default to `do-develop` agent only
+- **Optional add-on:** When the task is explicitly creative/premium UI, append `taste-creative`; when it is a UI redesign/overhaul, append `taste-redesign`
 
 For full-stack projects, split into backend/frontend tasks with per-task `skills:` injection. Use `--parallel` when tasks can be split; use single agent when the change is small or single-domain.
 
 **Single-domain example** (prefix with `DO_WORKTREE_DIR` if worktree enabled):
 
 ```bash
-# With worktree:
+# do-develop (with worktree):
 DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
@@ -269,8 +270,24 @@ Implement with minimal change set following the Phase 3 blueprint.
 - Run narrowest relevant tests
 EOF
 
-# Without worktree:
+# do-develop (without worktree):
 codeagent-wrapper --agent do-develop - . <<'EOF'
+Implement with minimal change set following the Phase 3 blueprint.
+- Follow Phase 1 patterns
+- Add/adjust tests per Phase 3 plan
+- Run narrowest relevant tests
+EOF
+
+# do-frontend (with worktree):
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
+Implement with minimal change set following the Phase 3 blueprint.
+- Follow Phase 1 patterns
+- Add/adjust tests per Phase 3 plan
+- Run narrowest relevant tests
+EOF
+
+# do-frontend (without worktree):
+codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
 Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
@@ -297,6 +314,7 @@ End with: Summary: <one sentence>
 id: p4_frontend
 agent: do-frontend
 workdir: .
+skills: taste-core,taste-output
 ---CONTENT---
 Implement frontend changes following Phase 3 blueprint.
 - Follow Phase 1 patterns
@@ -307,7 +325,9 @@ EOF
 # Without worktree: remove DO_WORKTREE_DIR prefix
 ```
 
-Note: Choose which skills to inject based on Phase 3 design output. Only inject skills relevant to each task's domain.
+Note: `do-frontend` invocations always inject `taste-core,taste-output`.
+Append `taste-creative` for creative/premium UI tasks; append `taste-redesign` for existing UI overhaul tasks.
+`do-develop` does not use `--skills`; auto-detect handles tech stack skills.
 
 **Step 3: Configure verification commands (Recommended)**
 
