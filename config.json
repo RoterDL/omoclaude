@@ -11,6 +11,7 @@
         "oracle": {
           "backend": "codex",
           "model": "gpt-5.4",
+          "reasoning": "xhigh",
           "prompt_file": "~/.claude/skills/omo/references/oracle.md",
           "yolo": true
         },
@@ -75,8 +76,8 @@
           "prompt_file": "~/.claude/skills/do/agents/code-explorer.md"
         },
         "code-architect": {
-          "backend": "codex",
-          "model": "gpt-5.4",
+          "backend": "claude",
+          "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/do/agents/code-architect.md"
         },
         "do-reviewer": {
