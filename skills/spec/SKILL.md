@@ -15,8 +15,8 @@ You are the Spec lifecycle orchestrator. Your job is to manage the full lifecycl
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
 2. **Gate control.** Each phase transition requires user confirmation via `AskUserQuestion`.
 3. **Document everything.** Each phase produces persistent artifacts in the spec directory.
-4. **Reuse existing agents.** Implementation uses `do-develop`, `do-frontend`, `code-architect`, `explore` — only planning and testing use spec-specific agents.
-5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that write code (`do-develop`, `do-frontend`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
+4. **Reuse existing agents.** Implementation uses `do-develop`, `do-frontend`, `do-reviewer`, `code-architect`, `explore` — only planning and testing use spec-specific agents.
+5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that operate in the worktree (`do-develop`, `do-frontend`, `do-reviewer`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
 
 ## Worktree Mode
 
@@ -30,14 +30,14 @@ The worktree is created **only when needed** (right before Phase 3: Implementati
 2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct code-writing agents into the worktree:
 
 ```bash
-# Prefix all do-develop/do-frontend/spec-tester calls with DO_WORKTREE_DIR:
+# Prefix all worktree-dependent agent calls with DO_WORKTREE_DIR:
 DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 ...
 EOF
 ```
 
 Phases 1-2 are read-only and do not require `DO_WORKTREE_DIR` (e.g. `explore`, `spec-planner`, `code-architect`).
-Once worktree is enabled in Phase 3, prefix any agent invocation that writes code (`do-develop`, `do-frontend`, `spec-tester`) with `DO_WORKTREE_DIR=<worktree_dir>`.
+Once worktree is enabled in Phase 3, prefix any agent invocation that operates in the worktree (`do-develop`, `do-frontend`, `do-reviewer`, `spec-tester`) with `DO_WORKTREE_DIR=<worktree_dir>`.
 
 ## Spec Lifecycle (4 Phases)
 
@@ -61,8 +61,10 @@ Phase 3: Implementation
     |     - do-frontend + taste skills (frontend_only)
     |     - both in parallel (fullstack)
     |  -> Generate summary.md
+    |  -> Code review via do-reviewer
+    |  -> BLOCKING issues? fix then re-review
     |  -> Run tests via spec-tester
-    |  -> Gate: user confirms tests pass
+    |  -> Gate: user confirms review & tests pass
     |
 Phase 4: Wrap-up
     |  -> Trigger /exp-reflect for experience capture
@@ -359,7 +361,49 @@ EOF
 
 After implementation, write `summary.md` to the spec directory documenting what was built.
 
-### Step 4: Run tests
+### Step 4: Code review
+
+```bash
+# With worktree:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-reviewer - . <<'EOF'
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md>
+- Summary: <paste summary.md>
+
+## Current Task
+Review implementation against plan.md. Focus on correctness (Priority A), then optimization and conventions (B/C).
+
+## Acceptance Criteria
+Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
+EOF
+
+# Without worktree:
+codeagent-wrapper --agent do-reviewer - . <<'EOF'
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md>
+- Summary: <paste summary.md>
+
+## Current Task
+Review implementation against plan.md. Focus on correctness (Priority A), then optimization and conventions (B/C).
+
+## Acceptance Criteria
+Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+
+**Handle review results:**
+- **BLOCKING=0**: proceed to Step 5 (tests)
+- **BLOCKING>0**: delegate fixes to `do-develop` (or `do-frontend` for UI issues), then re-run do-reviewer. If worktree mode is enabled, keep using the same `DO_WORKTREE_DIR` for fix and re-review invocations.
+
+Save the review output as `review-report.md` in the spec directory.
+
+### Step 5: Run tests
 
 ```bash
 # With worktree:
@@ -389,12 +433,12 @@ Test report with pass/fail counts, coverage info, and any issues found.
 EOF
 ```
 
-### Step 5: Handle test results
+### Step 6: Handle test results
 
 - All tests pass: proceed to Phase 4
 - Tests fail: delegate fix to `codeagent-wrapper --agent do-develop` (or `do-frontend` for UI issues), then re-test
 - If worktree mode is enabled, keep using the same `DO_WORKTREE_DIR` for fix and re-test invocations
-- Use `AskUserQuestion` to confirm test results with user
+- Use `AskUserQuestion` to confirm review & test results with user
 
 Update phase:
 ```bash
@@ -434,6 +478,7 @@ Each spec creates:
   plan.md           # Design specification (Phase 2)
   test-plan.md      # Test plan (Phase 2, optional)
   summary.md        # Implementation summary (Phase 3)
+  review-report.md  # Code review results (Phase 3)
   test-report.md    # Test results (Phase 3)
   debug-*.md        # Debug documents (if issues found)
 ```
@@ -447,6 +492,7 @@ Each spec creates:
 | `code-architect` | Architecture design (complex tasks) | 2 | No (read-only) |
 | `do-develop` | Backend code implementation | 3 | **Yes** — use `DO_WORKTREE_DIR` |
 | `do-frontend` | Frontend implementation (with taste skills) | 3 | **Yes** — use `DO_WORKTREE_DIR` |
+| `do-reviewer` | Code review (cr checklists) | 3 | **Yes** — use `DO_WORKTREE_DIR` |
 | `spec-tester` | Test execution and reporting | 3 | **Yes** — use `DO_WORKTREE_DIR` |
 
 ## Sub-skills
