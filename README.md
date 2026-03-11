@@ -28,6 +28,9 @@ Original upstream project: https://github.com/cexll/myclaude
 | [research-pro](skills/research-pro/README.md) | Multi-agent academic research orchestration | `/research-pro` command |
 | [taste](skills/taste/) | Frontend design quality rules (skill injection for `do-frontend`) | Dependency of `do` |
 | [cr](skills/cr/) | Code review checklists | Dependency of `do` / `omo` |
+| [spec](skills/spec/README.md) | Spec-driven development lifecycle with gate-controlled phases | `/spec` command |
+| [memory](skills/memory/README.md) | Dual-layer structured memory system (experience/knowledge) | `/exp-search`, `/exp-reflect`, `/exp-write` |
+| [project-init](skills/project-init/README.md) | One-time project initialization for `.spec/` directory structure | `/project-init` command |
 
 ## Available Skills
 
@@ -41,6 +44,9 @@ Installable skills in this repository:
 | research-pro | Multi-agent academic research orchestration |
 | taste | Frontend design quality rules — 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) |
 | cr | Code review checklists and references |
+| spec | Spec-driven development lifecycle: Intent -> Plan -> Implement -> End |
+| memory | Dual-layer structured memory — 3 skills (`exp-search`, `exp-reflect`, `exp-write`) |
+| project-init | One-time `.spec/` directory initialization with memory indexes and coding rules |
 
 ## Installation
 
@@ -77,7 +83,10 @@ Edit `config.json` to enable/disable modules:
     "omo": { "enabled": false },
     "codeagent": { "enabled": false },
     "research-pro": { "enabled": true },
-    "taste": { "enabled": true }
+    "taste": { "enabled": true },
+    "spec": { "enabled": true },
+    "memory": { "enabled": true },
+    "project-init": { "enabled": true }
   }
 }
 ```
@@ -90,6 +99,9 @@ Edit `config.json` to enable/disable modules:
 | Bug investigation + fix | `/omo` |
 | Academic paper reading / review / literature search | `/research-pro` |
 | Focused single-track implementation | `skill:codeagent` |
+| Spec-driven feature development | `/spec` |
+| Project initialization (first-time setup) | `/project-init` |
+| Search project memory / capture experience | `/exp-search`, `/exp-reflect` |
 
 ## Core Architecture
 
@@ -118,6 +130,11 @@ Edit `config.json` to enable/disable modules:
 │   ├── omo/
 │   ├── research-pro/
 │   ├── codeagent/
+│   ├── spec/
+│   ├── project-init/
+│   ├── exp-search/
+│   ├── exp-reflect/
+│   ├── exp-write/
 │   ├── taste-core/
 │   ├── taste-output/
 │   ├── taste-creative/

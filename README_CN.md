@@ -27,6 +27,9 @@ python install.py
 | [research-pro](skills/research-pro/README.md) | 多智能体学术研究编排 | `/research-pro` 命令 |
 | [taste](skills/taste/) | 前端设计质量规则（skill 注入，供 `do-frontend` 使用） | `do` 的依赖 |
 | [cr](skills/cr/) | 代码审查清单 | `do` / `omo` 的依赖 |
+| [spec](skills/spec/README.md) | Spec 驱动开发生命周期，4 阶段门控 | `/spec` 命令 |
+| [memory](skills/memory/README.md) | 双层结构化记忆系统（经验/知识） | `/exp-search`、`/exp-reflect`、`/exp-write` |
+| [project-init](skills/project-init/README.md) | 一次性项目初始化，创建 `.spec/` 目录结构 | `/project-init` 命令 |
 
 ## 可用技能
 
@@ -40,6 +43,9 @@ python install.py
 | research-pro | 多智能体学术研究编排 |
 | taste | 前端设计质量规则 — 4 个可注入子技能（`taste-core`、`taste-output`、`taste-creative`、`taste-redesign`） |
 | cr | 代码审查清单与参考资料 |
+| spec | Spec 驱动开发生命周期：意图确认 -> 设计规划 -> 实现 -> 收尾 |
+| memory | 双层结构化记忆 — 3 个技能（`exp-search`、`exp-reflect`、`exp-write`） |
+| project-init | 一次性 `.spec/` 目录初始化，含记忆索引和编码规则模板 |
 
 ## 安装
 
@@ -76,7 +82,10 @@ python uninstall.py --module do,omo
     "omo": { "enabled": false },
     "codeagent": { "enabled": false },
     "research-pro": { "enabled": true },
-    "taste": { "enabled": true }
+    "taste": { "enabled": true },
+    "spec": { "enabled": true },
+    "memory": { "enabled": true },
+    "project-init": { "enabled": true }
   }
 }
 ```
@@ -89,6 +98,9 @@ python uninstall.py --module do,omo
 | Bug 调查与修复 | `/omo` |
 | 论文阅读 / 论文审查 / 文献检索 | `/research-pro` |
 | 单轨实现任务 | `skill:codeagent` |
+| Spec 驱动的功能开发 | `/spec` |
+| 项目初始化（首次设置） | `/project-init` |
+| 搜索项目记忆 / 捕获经验 | `/exp-search`、`/exp-reflect` |
 
 ## 核心架构
 
@@ -117,6 +129,11 @@ python uninstall.py --module do,omo
 │   ├── omo/
 │   ├── research-pro/
 │   ├── codeagent/
+│   ├── spec/
+│   ├── project-init/
+│   ├── exp-search/
+│   ├── exp-reflect/
+│   ├── exp-write/
 │   ├── taste-core/
 │   ├── taste-output/
 │   ├── taste-creative/
