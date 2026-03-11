@@ -74,12 +74,16 @@ Each skill lives under `skills/<name>/` with a `SKILL.md` (the prompt loaded by 
 | `research-pro` | `/research-pro` | Academic paper reading, review, literature search with `content-extractor`, `paper-reviewer`, `literature-scout`, etc. |
 | `cr` | (dependency) | Code review checklists; auto-installed as dependency of `do` and `omo` |
 | `taste` | (dependency) | Frontend design quality rules; 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) injected into `do-frontend` via `--skills` |
+| `project-init` | `/project-init` | One-time project initialization: creates `spec/` directory structure, memory indexes, coding rules templates. Idempotent. |
+| `memory` | `/exp-search`, `/exp-reflect`, `/exp-write` | Dual-layer structured memory system. `exp-search` retrieves across 5 memory layers; `exp-reflect` analyzes conversations to extract memories; `exp-write` persists to `spec/context/`. Independent of spec/do/omo. |
+| `spec` | `/spec` | Spec-driven development lifecycle with 4 gate-controlled phases (Intent -> Plan -> Implement -> End). Manages design documents (`plan.md`), delegates implementation to `codeagent-wrapper` agents or `/do`. Depends on `memory`. |
 
 ### Agent Prompt Files
 
 - `skills/do/agents/*.md` - do skill agent prompts
 - `skills/omo/references/*.md` - omo skill agent prompts
 - `skills/research-pro/references/*.md` - research-pro agent prompts
+- `skills/spec/references/*.md` - spec skill agent prompts (spec-planner, spec-tester)
 
 These are referenced by `config.json` `agents.<name>.prompt_file` and merged into `~/.codeagent/models.json` at install time.
 
@@ -106,6 +110,19 @@ codeagent-wrapper/
 ### do Skill State Management
 
 `/do` creates task state at `.claude/do-tasks/{task_id}/task.md` with YAML frontmatter tracking phase progression. `scripts/task.py` manages state (update-phase, enable-worktree, set-verify). Stop hook blocks session exit until all 5 phases complete or task is cancelled.
+
+### spec Skill Lifecycle
+
+`/spec` manages design document lifecycle with 4 gate-controlled phases (Intent -> Plan -> Implement -> End). Creates spec directories under `spec/{category}/{YYYYMMDD-HHMM-slug}/` with `plan.md`, `summary.md`, `test-report.md`. State tracked via `spec/.current-spec` pointer file. `scripts/spec-manager.py` manages lifecycle (create, list, status, update-phase, archive). Implementation delegates to existing `develop`/`code-architect` agents or `/do` workflow. Depends on `memory` module.
+
+### Memory System
+
+`memory` module provides cross-workflow structured memory via three skills:
+- `exp-search`: 5-layer read-only retrieval (experience, knowledge, SOP, tool memory, auto memory)
+- `exp-reflect`: Conversation analysis, memory classification, weight-based routing
+- `exp-write`: Persistence to `spec/context/experience/` and `spec/context/knowledge/` with index updates
+
+Memory is independent of spec/do/omo and can be used from any workflow. Files use English naming: `exp-001-websocket-timeout.md`, `know-001-project-architecture.md`.
 
 ## Commit Convention
 

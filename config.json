@@ -9,9 +9,8 @@
       "dependencies": ["cr"],
       "agents": {
         "oracle": {
-          "backend": "codex",
-          "model": "gpt-5.4",
-          "reasoning": "xhigh",
+          "backend": "claude",
+          "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/omo/references/oracle.md",
           "yolo": true
         },
@@ -219,6 +218,68 @@
           "source": "hooks",
           "target": "hooks",
           "description": "Install global hooks (pre-bash, inject-spec)"
+        }
+      ]
+    },
+    "project-init": {
+      "enabled": true,
+      "description": "One-time project initialization for spec-driven development",
+      "operations": [
+        {
+          "type": "copy_dir",
+          "source": "skills/project-init",
+          "target": "skills/project-init",
+          "description": "Install project-init skill"
+        }
+      ]
+    },
+    "memory": {
+      "enabled": true,
+      "description": "Dual-layer memory system: structured experience/knowledge persistence",
+      "operations": [
+        {
+          "type": "copy_dir",
+          "source": "skills/memory/exp-search",
+          "target": "skills/exp-search",
+          "description": "Install exp-search skill"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/memory/exp-reflect",
+          "target": "skills/exp-reflect",
+          "description": "Install exp-reflect skill"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/memory/exp-write",
+          "target": "skills/exp-write",
+          "description": "Install exp-write skill"
+        }
+      ]
+    },
+    "spec": {
+      "enabled": true,
+      "description": "Spec-driven development lifecycle with gate-controlled phases",
+      "dependencies": ["memory"],
+      "agents": {
+        "spec-planner": {
+          "backend": "claude",
+          "model": "claude-opus-4-6",
+          "prompt_file": "~/.claude/skills/spec/references/spec-planner.md"
+        },
+        "spec-tester": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/spec/references/spec-tester.md",
+          "yolo": true
+        }
+      },
+      "operations": [
+        {
+          "type": "copy_dir",
+          "source": "skills/spec",
+          "target": "skills/spec",
+          "description": "Install spec skill with sub-skills"
         }
       ]
     }
