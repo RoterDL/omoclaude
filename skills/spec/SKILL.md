@@ -16,6 +16,28 @@ You are the Spec lifecycle orchestrator. Your job is to manage the full lifecycl
 2. **Gate control.** Each phase transition requires user confirmation via `AskUserQuestion`.
 3. **Document everything.** Each phase produces persistent artifacts in the spec directory.
 4. **Reuse existing agents.** Implementation uses `do-develop`, `do-frontend`, `code-architect`, `explore` — only planning and testing use spec-specific agents.
+5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that write code (`do-develop`, `do-frontend`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
+
+## Worktree Mode
+
+The worktree is created **only when needed** (right before Phase 3: Implementation). If the user chooses worktree mode:
+
+1. Enable worktree for the current spec:
+   ```bash
+   python "$HOME/.claude/skills/spec/scripts/spec-manager.py" enable-worktree
+   ```
+
+2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct code-writing agents into the worktree:
+
+```bash
+# Prefix all do-develop/do-frontend/spec-tester calls with DO_WORKTREE_DIR:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
+...
+EOF
+```
+
+Phases 1-2 are read-only and do not require `DO_WORKTREE_DIR` (e.g. `explore`, `spec-planner`, `code-architect`).
+Once worktree is enabled in Phase 3, prefix any agent invocation that writes code (`do-develop`, `do-frontend`, `spec-tester`) with `DO_WORKTREE_DIR=<worktree_dir>`.
 
 ## Spec Lifecycle (4 Phases)
 
@@ -145,6 +167,22 @@ Present the plan.md to the user. Use `AskUserQuestion`:
 
 ## Phase 3: Implementation
 
+### Step 0: Decide on worktree mode (ONLY NOW)
+
+Use AskUserQuestion to ask:
+
+```
+Develop in a separate worktree? (Isolates changes from main branch)
+- Yes (Recommended for larger changes)
+- No (Work directly in current directory)
+```
+
+If user chooses worktree:
+```bash
+python "$HOME/.claude/skills/spec/scripts/spec-manager.py" enable-worktree
+# Save the DO_WORKTREE_DIR from output
+```
+
 ### Step 1: Determine implementation strategy
 
 Based on plan.md `task_type` classification (set by spec-planner in Phase 2):
@@ -162,6 +200,23 @@ Based on plan.md `task_type` classification (set by spec-planner in Phase 2):
 
 **Backend-only:**
 ```bash
+# With worktree:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+- Explore output: <paste>
+
+## Current Task
+Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+
+## Acceptance Criteria
+All plan items implemented. Tests pass.
+EOF
+
+# Without worktree:
 codeagent-wrapper --agent do-develop - . <<'EOF'
 ## Original User Request
 <user request>
@@ -180,6 +235,23 @@ EOF
 
 **Frontend-only:**
 ```bash
+# With worktree:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+- Explore output: <paste>
+
+## Current Task
+Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+
+## Acceptance Criteria
+All plan items implemented. Tests pass.
+EOF
+
+# Without worktree:
 codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
 ## Original User Request
 <user request>
@@ -198,6 +270,49 @@ EOF
 
 **Fullstack (parallel):**
 ```bash
+# With worktree:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel <<'EOF'
+---TASK---
+id: spec_backend
+agent: do-develop
+workdir: .
+---CONTENT---
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+- Explore output: <paste>
+
+## Current Task
+Implement backend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+
+## Acceptance Criteria
+All backend plan items implemented. Tests pass.
+End with: Summary: <one sentence>
+
+---TASK---
+id: spec_frontend
+agent: do-frontend
+workdir: .
+skills: taste-core,taste-output
+---CONTENT---
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+- Explore output: <paste>
+
+## Current Task
+Implement frontend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+
+## Acceptance Criteria
+All frontend plan items implemented. Tests pass.
+End with: Summary: <one sentence>
+EOF
+
+# Without worktree:
 codeagent-wrapper --parallel <<'EOF'
 ---TASK---
 id: spec_backend
@@ -247,6 +362,20 @@ After implementation, write `summary.md` to the spec directory documenting what 
 ### Step 4: Run tests
 
 ```bash
+# With worktree:
+DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent spec-tester - . <<'EOF'
+## Context Pack
+- Plan: <paste plan.md>
+- Summary: <paste summary.md>
+
+## Current Task
+Execute tests per plan.md test criteria. Run relevant test suites. Report results.
+
+## Acceptance Criteria
+Test report with pass/fail counts, coverage info, and any issues found.
+EOF
+
+# Without worktree:
 codeagent-wrapper --agent spec-tester - . <<'EOF'
 ## Context Pack
 - Plan: <paste plan.md>
@@ -264,6 +393,7 @@ EOF
 
 - All tests pass: proceed to Phase 4
 - Tests fail: delegate fix to `codeagent-wrapper --agent do-develop` (or `do-frontend` for UI issues), then re-test
+- If worktree mode is enabled, keep using the same `DO_WORKTREE_DIR` for fix and re-test invocations
 - Use `AskUserQuestion` to confirm test results with user
 
 Update phase:
@@ -310,14 +440,14 @@ Each spec creates:
 
 ## Agents Used
 
-| Agent | Purpose | Phase |
-|-------|---------|-------|
-| `explore` | Codebase analysis, pattern discovery | 2 |
-| `spec-planner` | Design specification authoring | 2 |
-| `code-architect` | Architecture design (complex tasks) | 2 |
-| `do-develop` | Backend code implementation | 3 |
-| `do-frontend` | Frontend implementation (with taste skills) | 3 |
-| `spec-tester` | Test execution and reporting | 3 |
+| Agent | Purpose | Phase | Needs worktree |
+|-------|---------|-------|----------------|
+| `explore` | Codebase analysis, pattern discovery | 2 | No (read-only) |
+| `spec-planner` | Design specification authoring | 2 | No (read-only) |
+| `code-architect` | Architecture design (complex tasks) | 2 | No (read-only) |
+| `do-develop` | Backend code implementation | 3 | **Yes** — use `DO_WORKTREE_DIR` |
+| `do-frontend` | Frontend implementation (with taste skills) | 3 | **Yes** — use `DO_WORKTREE_DIR` |
+| `spec-tester` | Test execution and reporting | 3 | **Yes** — use `DO_WORKTREE_DIR` |
 
 ## Sub-skills
 

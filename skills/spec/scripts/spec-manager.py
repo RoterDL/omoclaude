@@ -7,6 +7,7 @@ Commands:
   list                                     - List all specs
   status                                   - Show current spec status
   update-phase <phase>                     - Update current spec phase
+  enable-worktree                          - Create/use a git worktree for current spec
   archive                                  - Archive current spec to 06-archived/
 """
 
@@ -15,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from datetime import datetime
 
@@ -156,6 +158,8 @@ def create_spec(category: str, title: str) -> dict:
         "phase": "intent",
         "created": datetime.now().strftime("%Y-%m-%d"),
         "tags": ["spec", "plan"],
+        "use_worktree": "false",
+        "worktree_dir": "",
     }
 
     body = f"""# {title}
@@ -212,6 +216,95 @@ def get_current_spec(project_root: str) -> str | None:
             return content if content else None
     except Exception:
         return None
+
+
+def create_worktree(project_root: str, spec_name: str) -> str:
+    """Create a git worktree for the spec. Returns the worktree directory path."""
+    result = subprocess.run(
+        ["git", "-C", project_root, "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Not a git repository: {project_root}")
+    git_root = result.stdout.strip()
+
+    worktree_dir = os.path.join(git_root, ".worktrees", f"spec-{spec_name}")
+    branch_name = f"spec/{spec_name}"
+
+    result = subprocess.run(
+        ["git", "-C", git_root, "worktree", "add", "-b", branch_name, worktree_dir],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to create worktree: {result.stderr}")
+
+    return worktree_dir
+
+
+def enable_worktree() -> bool:
+    """Enable worktree for the current spec."""
+    project_root = get_project_root()
+    current_spec = get_current_spec(project_root)
+
+    if not current_spec:
+        print("Error: No active spec.", file=sys.stderr)
+        return False
+
+    spec_dir = os.path.join(project_root, current_spec)
+    plan_path = os.path.join(spec_dir, FILE_PLAN)
+
+    if not os.path.exists(plan_path):
+        print("Error: plan.md not found.", file=sys.stderr)
+        return False
+
+    try:
+        with open(plan_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception:
+        print("Error: Failed to read plan.md.", file=sys.stderr)
+        return False
+
+    match = re.match(r"^---\n(.*?)\n---\n(.*)$", content, re.DOTALL)
+    if not match:
+        print("Error: Invalid plan.md format.", file=sys.stderr)
+        return False
+
+    fm = {}
+    for line in match.group(1).split("\n"):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if ":" not in line:
+            continue
+        key, raw_value = line.split(":", 1)
+        fm[key.strip()] = raw_value.strip()
+
+    body = match.group(2)
+
+    if fm.get("use_worktree") == "true" and fm.get("worktree_dir"):
+        worktree_dir = fm["worktree_dir"].strip('"').strip("'")
+        print(f"worktree_dir: {worktree_dir}")
+        print(f"export DO_WORKTREE_DIR={worktree_dir}")
+        return True
+
+    spec_name = os.path.basename(current_spec)
+    try:
+        worktree_dir = create_worktree(project_root, spec_name)
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return False
+
+    fm["use_worktree"] = "true"
+    fm["worktree_dir"] = worktree_dir
+
+    if not write_plan_md(plan_path, fm, body):
+        print("Error: Failed to write plan.md.", file=sys.stderr)
+        return False
+
+    print(f"worktree_dir: {worktree_dir}")
+    print(f"export DO_WORKTREE_DIR={worktree_dir}")
+    return True
 
 
 def list_specs() -> list[dict]:
@@ -302,6 +395,8 @@ def get_status() -> dict | None:
         "phase_name": PHASE_NAMES.get(fm.get("phase", ""), "Unknown"),
         "category": fm.get("category", "unknown"),
         "created": fm.get("created", "unknown"),
+        "use_worktree": fm.get("use_worktree", "false"),
+        "worktree_dir": fm.get("worktree_dir", ""),
     }
 
 
@@ -432,6 +527,9 @@ def main():
     # archive command
     subparsers.add_parser("archive", help="Archive current spec")
 
+    # enable-worktree command
+    subparsers.add_parser("enable-worktree", help="Enable worktree for current spec")
+
     args = parser.parse_args()
 
     if args.command == "create":
@@ -464,6 +562,8 @@ def main():
             print(f"Phase: {status.get('phase', '?')} ({status.get('phase_name', 'Unknown')})")
             print(f"Category: {status.get('category', 'unknown')}")
             print(f"Path: {status['path']}")
+            if status.get("use_worktree") == "true":
+                print(f"Worktree: {status.get('worktree_dir', '')}")
 
     elif args.command == "update-phase":
         if update_phase(args.phase):
@@ -473,6 +573,10 @@ def main():
 
     elif args.command == "archive":
         if not archive_spec():
+            sys.exit(1)
+
+    elif args.command == "enable-worktree":
+        if not enable_worktree():
             sys.exit(1)
 
     else:
