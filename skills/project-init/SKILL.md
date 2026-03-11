@@ -1,6 +1,6 @@
 ---
 name: project-init
-description: One-time project initialization for spec-driven development. Creates spec/ directory structure, memory indexes, and coding rules templates. Trigger on /project-init, when user says "initialize project" / "set up spec environment", or when a project has no spec/ directory.
+description: One-time project initialization for spec-driven development. Creates .spec/ directory structure, memory indexes, and coding rules templates. Trigger on /project-init, when user says "initialize project" / "set up spec environment", or when a project has no .spec/ directory.
 allowed-tools: ["Bash(~/.claude/skills/project-init/scripts/init-project.py:*)", "AskUserQuestion", "Read", "Glob"]
 ---
 
@@ -22,7 +22,7 @@ Run the initialization script to check and create the directory structure:
 python "$HOME/.claude/skills/project-init/scripts/init-project.py" check
 ```
 
-If spec/ and .claude/rules/ both exist, inform user that initialization is unnecessary. Suggest using `/spec` to start a development task.
+If .spec/ and .claude/rules/ both exist, inform user that initialization is unnecessary. Suggest using `/spec` to start a development task.
 
 If partially exists, only supplement missing parts.
 
@@ -46,9 +46,9 @@ python "$HOME/.claude/skills/project-init/scripts/init-project.py" init
 ```
 
 This creates:
-- `spec/` directory with 6 category subdirectories + context/
-- `spec/context/experience/index.md` (experience index)
-- `spec/context/knowledge/index.md` (knowledge index)
+- `.spec/` directory with 6 category subdirectories + context/
+- `.spec/context/experience/index.md` (experience index)
+- `.spec/context/knowledge/index.md` (knowledge index)
 - `.claude/rules/` directory (if not exists)
 
 ### Step 4: Create Coding Rules (if .claude/rules/ is empty)
@@ -82,9 +82,9 @@ Present initialization summary:
 ```
 Project spec environment initialized:
 
-- spec/ directory structure (6 categories + context)
-- spec/context/experience/index.md (experience index)
-- spec/context/knowledge/index.md (knowledge index)
+- .spec/ directory structure (6 categories + context)
+- .spec/context/experience/index.md (experience index)
+- .spec/context/knowledge/index.md (knowledge index)
 - .claude/rules/ (coding rules templates)
 
 Next steps:
@@ -97,7 +97,7 @@ Next steps:
 
 ```
 <project>/
-  spec/
+  .spec/
     01-planning/
     02-architecture/
     03-features/
@@ -119,5 +119,5 @@ Next steps:
 
 - Overwriting existing CLAUDE.md with template (check first, skip or merge)
 - Overwriting existing .claude/rules/ content (check first)
-- Recreating existing spec/ structure (check first)
+- Recreating existing .spec/ structure (check first)
 - Starting development immediately after init without gathering requirements

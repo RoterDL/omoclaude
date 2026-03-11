@@ -19,8 +19,8 @@ import sys
 from datetime import datetime
 
 # Directory constants
-DIR_SPEC = "spec"
-FILE_CURRENT_SPEC = "spec/.current-spec"
+DIR_SPEC = ".spec"
+FILE_CURRENT_SPEC = ".spec/.current-spec"
 FILE_PLAN = "plan.md"
 
 CATEGORIES = {

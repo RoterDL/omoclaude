@@ -11,8 +11,8 @@ allowed-tools: ["Read", "Glob", "Grep"]
 Fast retrieval across multi-layer project memory. Load relevant knowledge at the right moment to avoid repeating past mistakes.
 
 **Five-layer search scope**:
-1. **Experience memory**: Dilemma-strategy pairs in `spec/context/experience/exp-*.md`
-2. **Knowledge memory**: Project understanding, technical research in `spec/context/knowledge/know-*.md`
+1. **Experience memory**: Dilemma-strategy pairs in `.spec/context/experience/exp-*.md`
+2. **Knowledge memory**: Project understanding, technical research in `.spec/context/knowledge/know-*.md`
 3. **Procedural memory (SOP)**: Workflows in `.claude/skills/sop-*/SKILL.md`
 4. **Tool memory**: Follow-up actions at the end of each skill's SKILL.md
 5. **Auto Memory (read-only)**: Cross-session memory in `~/.claude/projects/*/memory/*.md`
@@ -28,10 +28,10 @@ Fast retrieval across multi-layer project memory. Load relevant knowledge at the
 
 ## Core Files
 
-- **Experience index**: `spec/context/experience/index.md`
-- **Knowledge index**: `spec/context/knowledge/index.md`
-- **Experience details**: `spec/context/experience/exp-{ID}-{title}.md`
-- **Knowledge details**: `spec/context/knowledge/know-{ID}-{title}.md`
+- **Experience index**: `.spec/context/experience/index.md`
+- **Knowledge index**: `.spec/context/knowledge/index.md`
+- **Experience details**: `.spec/context/experience/exp-{ID}-{title}.md`
+- **Knowledge details**: `.spec/context/knowledge/know-{ID}-{title}.md`
 - **SOP Skills**: `.claude/skills/sop-*/SKILL.md`
 - **Auto Memory**: `~/.claude/projects/*/memory/*.md` (read-only)
 
@@ -42,8 +42,8 @@ Fast retrieval across multi-layer project memory. Load relevant knowledge at the
 ```
 Retrieval flow:
 - [ ] Step 1: Read memory indexes
-      1. Read spec/context/experience/index.md (experience memory)
-      2. Read spec/context/knowledge/index.md (knowledge memory)
+      1. Read .spec/context/experience/index.md (experience memory)
+      2. Read .spec/context/knowledge/index.md (knowledge memory)
       3. Read MEMORY.md (read-only, supplementary source)
       4. Scan ~/.claude/projects/*/memory/*.md file name list (read-only)
 
@@ -63,8 +63,8 @@ Retrieval flow:
       Group results by memory type
 
 - [ ] Step 4: Load details (optional)
-      - Experience memory: read spec/context/experience/exp-xxx-{title}.md
-      - Knowledge memory: read spec/context/knowledge/know-xxx-{title}.md
+      - Experience memory: read .spec/context/experience/exp-xxx-{title}.md
+      - Knowledge memory: read .spec/context/knowledge/know-xxx-{title}.md
       - Procedural memory: suggest user invoke the corresponding SOP skill
       - Tool memory: read the follow-up actions section of the relevant skill
 ```

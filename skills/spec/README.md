@@ -97,7 +97,7 @@ python "$HOME/.claude/skills/spec/scripts/spec-manager.py" list
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
 ```
 
-State tracked via `spec/.current-spec` pointer file.
+State tracked via `.spec/.current-spec` pointer file.
 
 ## Dependencies
 

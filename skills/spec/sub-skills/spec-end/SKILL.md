@@ -43,7 +43,7 @@ Use `AskUserQuestion`:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
 ```
 
-This moves the spec directory to `spec/06-archived/` and clears the `.current-spec` pointer.
+This moves the spec directory to `.spec/06-archived/` and clears the `.current-spec` pointer.
 
 ### Step 5: Optional git commit
 

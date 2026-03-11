@@ -1,6 +1,6 @@
 ---
 name: exp-write
-description: Memory persistence skill. Writes major experience to spec/context/experience/ or knowledge to spec/context/knowledge/, updating corresponding indexes. Does not write MEMORY.md. Trigger after exp-reflect confirmation or manual /exp-write type=experience|knowledge.
+description: Memory persistence skill. Writes major experience to .spec/context/experience/ or knowledge to .spec/context/knowledge/, updating corresponding indexes. Does not write MEMORY.md. Trigger after exp-reflect confirmation or manual /exp-write type=experience|knowledge.
 allowed-tools: ["Read", "Write", "Edit", "Glob"]
 ---
 
@@ -8,14 +8,14 @@ allowed-tools: ["Read", "Write", "Edit", "Glob"]
 
 ## Overview
 
-Write memories to `spec/context/` directory and update index files. Supports two memory types:
+Write memories to `.spec/context/` directory and update index files. Supports two memory types:
 
-1. **Experience memory** (dilemma-strategy pairs) -> `spec/context/experience/`
-2. **Knowledge memory** (project understanding / technical research) -> `spec/context/knowledge/`
+1. **Experience memory** (dilemma-strategy pairs) -> `.spec/context/experience/`
+2. **Knowledge memory** (project understanding / technical research) -> `.spec/context/knowledge/`
 
 **Boundary**:
-- Writes to `spec/context/experience/` (experience details + index)
-- Writes to `spec/context/knowledge/` (knowledge details + index)
+- Writes to `.spec/context/experience/` (experience details + index)
+- Writes to `.spec/context/knowledge/` (knowledge details + index)
 - Does NOT write MEMORY.md (managed by Claude Code Auto Memory)
 - Does NOT write `.claude/rules/`
 
@@ -32,12 +32,12 @@ Write memories to `spec/context/` directory and update index files. Supports two
 ## Core Files
 
 **Experience memory**:
-- **Index**: `spec/context/experience/index.md`
-- **Details**: `spec/context/experience/exp-{ID}-{title}.md`
+- **Index**: `.spec/context/experience/index.md`
+- **Details**: `.spec/context/experience/exp-{ID}-{title}.md`
 
 **Knowledge memory**:
-- **Index**: `spec/context/knowledge/index.md`
-- **Details**: `spec/context/knowledge/know-{ID}-{title}.md`
+- **Index**: `.spec/context/knowledge/index.md`
+- **Details**: `.spec/context/knowledge/know-{ID}-{title}.md`
 
 ---
 
@@ -51,8 +51,8 @@ Write flow:
 
 - [ ] Step 1: Determine memory ID
       Read corresponding index file by type:
-      - experience -> read spec/context/experience/index.md, find max EXP-ID
-      - knowledge -> read spec/context/knowledge/index.md, find max KNOW-ID
+      - experience -> read .spec/context/experience/index.md, find max EXP-ID
+      - knowledge -> read .spec/context/knowledge/index.md, find max KNOW-ID
       New ID = max ID + 1
       Format: three digits, e.g. 001, 002, 003
 
@@ -67,13 +67,13 @@ Write flow:
 
 - [ ] Step 3: Write detail file
       Select path and template by type:
-      - experience -> spec/context/experience/exp-{ID}-{slug}.md (use experience template)
-      - knowledge -> spec/context/knowledge/know-{ID}-{slug}.md (use knowledge template)
+      - experience -> .spec/context/experience/exp-{ID}-{slug}.md (use experience template)
+      - knowledge -> .spec/context/knowledge/know-{ID}-{slug}.md (use knowledge template)
 
 - [ ] Step 4: Update index file
       Add new entry to corresponding index table:
-      - experience -> spec/context/experience/index.md
-      - knowledge -> spec/context/knowledge/index.md
+      - experience -> .spec/context/experience/index.md
+      - knowledge -> .spec/context/knowledge/index.md
 
 - [ ] Step 5: Confirm completion
       Inform user memory is saved
@@ -264,8 +264,8 @@ When updating existing memory:
 Update flow:
 - [ ] Step 1: Read existing memory file
       By type:
-      - experience -> spec/context/experience/exp-{ID}-{slug}.md
-      - knowledge -> spec/context/knowledge/know-{ID}-{slug}.md
+      - experience -> .spec/context/experience/exp-{ID}-{slug}.md
+      - knowledge -> .spec/context/knowledge/know-{ID}-{slug}.md
 
 - [ ] Step 2: Merge new content
       Experience: supplement strategy steps, add related files, update reasoning
@@ -284,8 +284,8 @@ Update flow:
 ```markdown
 Experience saved.
 
-File: spec/context/experience/exp-003-agentscope-memory.md
-Index: updated spec/context/experience/index.md
+File: .spec/context/experience/exp-003-agentscope-memory.md
+Index: updated .spec/context/experience/index.md
 
 If this experience contains daily coding tips worth cross-session recall,
 Auto Memory will handle them automatically.
@@ -298,8 +298,8 @@ Retrieve: /exp-search AgentScope
 ```markdown
 Knowledge saved.
 
-File: spec/context/knowledge/know-001-teaching-analyzer-architecture.md
-Index: updated spec/context/knowledge/index.md
+File: .spec/context/knowledge/know-001-teaching-analyzer-architecture.md
+Index: updated .spec/context/knowledge/index.md
 
 Retrieve: /exp-search TeachingAnalyzer
 ```

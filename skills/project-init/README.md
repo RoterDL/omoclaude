@@ -1,6 +1,6 @@
 # project-init - Project Spec Infrastructure Initialization
 
-One-time project initialization that creates the `spec/` directory structure, memory indexes, and coding rules templates for spec-driven development.
+One-time project initialization that creates the `.spec/` directory structure, memory indexes, and coding rules templates for spec-driven development.
 
 ## Installation
 
@@ -22,7 +22,7 @@ Or say "initialize project" / "set up spec environment" in conversation.
 
 ```
 <project>/
-  spec/
+  .spec/
     01-planning/
     02-architecture/
     03-features/

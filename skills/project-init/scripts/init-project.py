@@ -4,7 +4,7 @@ Idempotent project initialization script for spec-driven development.
 
 Commands:
   check   - Check project initialization state
-  init    - Create spec/ directory structure and memory indexes
+  init    - Create .spec/ directory structure and memory indexes
 """
 
 import argparse
@@ -13,16 +13,16 @@ import sys
 from datetime import datetime
 
 
-# Directory structure to create under spec/
+# Directory structure to create under .spec/
 SPEC_DIRS = [
-    "spec/01-planning",
-    "spec/02-architecture",
-    "spec/03-features",
-    "spec/04-bugfix",
-    "spec/05-testing",
-    "spec/06-archived",
-    "spec/context/experience",
-    "spec/context/knowledge",
+    ".spec/01-planning",
+    ".spec/02-architecture",
+    ".spec/03-features",
+    ".spec/04-bugfix",
+    ".spec/05-testing",
+    ".spec/06-archived",
+    ".spec/context/experience",
+    ".spec/context/knowledge",
 ]
 
 RULES_DIR = ".claude/rules"
@@ -36,12 +36,12 @@ def get_project_root() -> str:
 def check_state(project_root: str) -> dict:
     """Check what already exists."""
     state = {
-        "spec_dir": os.path.exists(os.path.join(project_root, "spec")),
+        "spec_dir": os.path.exists(os.path.join(project_root, ".spec")),
         "experience_index": os.path.exists(
-            os.path.join(project_root, "spec/context/experience/index.md")
+            os.path.join(project_root, ".spec/context/experience/index.md")
         ),
         "knowledge_index": os.path.exists(
-            os.path.join(project_root, "spec/context/knowledge/index.md")
+            os.path.join(project_root, ".spec/context/knowledge/index.md")
         ),
         "rules_dir": os.path.exists(os.path.join(project_root, RULES_DIR)),
         "missing_spec_dirs": [],
@@ -57,7 +57,7 @@ def check_state(project_root: str) -> dict:
 
 def create_experience_index(project_root: str) -> bool:
     """Create experience index file."""
-    path = os.path.join(project_root, "spec/context/experience/index.md")
+    path = os.path.join(project_root, ".spec/context/experience/index.md")
     if os.path.exists(path):
         return False
 
@@ -94,7 +94,7 @@ updated: {today}
 
 def create_knowledge_index(project_root: str) -> bool:
     """Create knowledge index file."""
-    path = os.path.join(project_root, "spec/context/knowledge/index.md")
+    path = os.path.join(project_root, ".spec/context/knowledge/index.md")
     if os.path.exists(path):
         return False
 
@@ -148,14 +148,14 @@ def cmd_check():
     else:
         print("STATUS: needs_initialization")
         if not state["spec_dir"]:
-            print("MISSING: spec/ directory")
+            print("MISSING: .spec/ directory")
         if state["missing_spec_dirs"]:
             for d in state["missing_spec_dirs"]:
                 print(f"MISSING: {d}")
         if not state["experience_index"]:
-            print("MISSING: spec/context/experience/index.md")
+            print("MISSING: .spec/context/experience/index.md")
         if not state["knowledge_index"]:
-            print("MISSING: spec/context/knowledge/index.md")
+            print("MISSING: .spec/context/knowledge/index.md")
         if not state["rules_dir"]:
             print(f"MISSING: {RULES_DIR}")
 
@@ -180,10 +180,10 @@ def cmd_init():
 
     # Create index files
     if create_experience_index(project_root):
-        actions.append("CREATED: spec/context/experience/index.md")
+        actions.append("CREATED: .spec/context/experience/index.md")
 
     if create_knowledge_index(project_root):
-        actions.append("CREATED: spec/context/knowledge/index.md")
+        actions.append("CREATED: .spec/context/knowledge/index.md")
 
     if not actions:
         print("STATUS: no_changes")

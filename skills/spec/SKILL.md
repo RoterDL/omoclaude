@@ -56,7 +56,7 @@ When triggered via `/spec <task>`:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" create --category features --title "<task description>"
 ```
 
-This creates a spec directory under `spec/03-features/` (or appropriate category) with a `.current-spec` pointer.
+This creates a spec directory under `.spec/03-features/` (or appropriate category) with a `.current-spec` pointer.
 
 ## Phase 1: Intent Confirmation
 
@@ -76,10 +76,10 @@ Use the intent-confirm sub-skill logic:
 ### Step 1: Search related experience
 
 ```bash
-# Invoke exp-search for related memories (if spec/context/ exists)
+# Invoke exp-search for related memories (if .spec/context/ exists)
 ```
 
-Read `spec/context/experience/index.md` and `spec/context/knowledge/index.md` for relevant prior experience.
+Read `.spec/context/experience/index.md` and `.spec/context/knowledge/index.md` for relevant prior experience.
 
 ### Step 2: Explore codebase
 
@@ -128,7 +128,7 @@ EOF
 ### Step 4: Write plan.md
 
 Write the spec-planner output to the spec directory:
-- `spec/{category}/{YYYYMMDD-HHMM-slug}/plan.md`
+- `..spec/{category}/{YYYYMMDD-HHMM-slug}/plan.md`
 
 Update phase:
 ```bash
@@ -289,7 +289,7 @@ Use `AskUserQuestion`:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
 ```
 
-This moves the spec directory to `spec/06-archived/`.
+This moves the spec directory to `.spec/06-archived/`.
 
 Update phase:
 ```bash
@@ -300,7 +300,7 @@ python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase end
 
 Each spec creates:
 ```
-spec/{category}/{YYYYMMDD-HHMM-slug}/
+.spec/{category}/{YYYYMMDD-HHMM-slug}/
   plan.md           # Design specification (Phase 2)
   test-plan.md      # Test plan (Phase 2, optional)
   summary.md        # Implementation summary (Phase 3)

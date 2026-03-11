@@ -27,18 +27,18 @@ After plan.md is created, **must** use `AskUserQuestion` to wait for user confir
 
 **Path examples**:
 ```
-spec/03-features/20260311-0900-user-auth/plan.md
-spec/04-bugfix/20260311-1400-memory-leak-fix/plan.md
+.spec/03-features/20260311-0900-user-auth/plan.md
+.spec/04-bugfix/20260311-1400-memory-leak-fix/plan.md
 ```
 
 ## Workflow
 
 | Step | Action | Key Point |
 |------|--------|-----------|
-| 1 | Search related experience | Read spec/context/experience/index.md, spec/context/knowledge/index.md |
+| 1 | Search related experience | Read .spec/context/experience/index.md, .spec/context/knowledge/index.md |
 | 2 | Explore codebase via codeagent-wrapper | Identify patterns, extension points, constraints |
 | 3 | Determine category and directory name | Based on task type; use YYYYMMDD-HHMM-slug format |
-| 4 | Create spec directory | `mkdir -p "spec/{category}/{dirname}"` |
+| 4 | Create spec directory | `mkdir -p ".spec/{category}/{dirname}"` |
 | 5 | Invoke spec-planner agent | Generate plan.md content via codeagent-wrapper |
 | 6 | Write plan.md | Save to spec directory with frontmatter |
 | 7 | Wait for user confirmation | **Must** use AskUserQuestion |
@@ -71,7 +71,7 @@ tags: [spec, plan]
 ## Prohibitions
 
 - Do NOT start coding before spec confirmation
-- Do NOT create directories directly under spec/ (must use category subdirectory)
+- Do NOT create directories directly under .spec/ (must use category subdirectory)
 - Do NOT skip user confirmation step
 - Do NOT include test plan in plan.md (test planning is handled by spec-test)
 

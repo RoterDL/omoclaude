@@ -11,9 +11,9 @@ allowed-tools: ["Read", "Glob", "Grep"]
 Analyze current conversation, extract memories worth persisting, and route them by type to appropriate storage layers.
 
 **Memory type recognition**:
-- **Dilemma-strategy pairs** (experience memory) -> route by weight (major -> exp-write to `spec/context/experience/`, lightweight -> Auto Memory)
-- **Project understanding** (knowledge memory) -> exp-write to `spec/context/knowledge/` (architecture, data flow, module analysis)
-- **Technical research** (knowledge memory) -> exp-write to `spec/context/knowledge/` (framework comparison, selection analysis)
+- **Dilemma-strategy pairs** (experience memory) -> route by weight (major -> exp-write to `.spec/context/experience/`, lightweight -> Auto Memory)
+- **Project understanding** (knowledge memory) -> exp-write to `.spec/context/knowledge/` (architecture, data flow, module analysis)
+- **Technical research** (knowledge memory) -> exp-write to `.spec/context/knowledge/` (framework comparison, selection analysis)
 - **Procedural memory** (SOP) -> create `sop-xxx` skill via skill-creator
 - **Tool memory** -> update skill's follow-up actions section
 
@@ -54,9 +54,9 @@ Reflection flow:
 
       | Content characteristic | Memory type | Storage location |
       |----------------------|-------------|------------------|
-      | What problem was solved? Why this approach? | Experience | spec/context/experience/ |
-      | Project architecture, data flow, module analysis? | Knowledge | spec/context/knowledge/ |
-      | Technical research, framework comparison? | Knowledge | spec/context/knowledge/ |
+      | What problem was solved? Why this approach? | Experience | .spec/context/experience/ |
+      | Project architecture, data flow, module analysis? | Knowledge | .spec/context/knowledge/ |
+      | Technical research, framework comparison? | Knowledge | .spec/context/knowledge/ |
       | Multi-step operations completed (>5 steps)? Reusable? | Procedural | sop-xxx skill |
       | Fixed follow-up action after a skill? | Tool memory | Skill follow-up section |
 
@@ -75,14 +75,14 @@ Reflection flow:
       - No weight distinction needed; project understanding is inherently structured
 
       Routing result:
-      - Major experience -> continue to exp-write flow (write to spec/context/experience/)
+      - Major experience -> continue to exp-write flow (write to .spec/context/experience/)
       - Lightweight experience -> suggest Auto Memory handles it (see lightweight guidance)
-      - Knowledge memory -> continue to exp-write flow (write to spec/context/knowledge/)
+      - Knowledge memory -> continue to exp-write flow (write to .spec/context/knowledge/)
 
 - [ ] Step 3: Check existing memories (prevent duplicates)
       Based on type identified in step 2, check corresponding location:
-      - Experience -> read spec/context/experience/index.md
-      - Knowledge -> read spec/context/knowledge/index.md
+      - Experience -> read .spec/context/experience/index.md
+      - Knowledge -> read .spec/context/knowledge/index.md
       - Procedural -> list .claude/skills/ sop-* directories
       - Tool memory -> read target skill's follow-up section
 
@@ -246,5 +246,5 @@ If you believe this is important enough for structured recording, let me know an
 |----------|-------------------|
 | Write experience memory | -> `/exp-write type=experience` |
 | Write knowledge memory | -> `/exp-write type=knowledge` |
-| Check for duplicates | -> read `spec/context/experience/index.md` and `spec/context/knowledge/index.md` |
+| Check for duplicates | -> read `.spec/context/experience/index.md` and `.spec/context/knowledge/index.md` |
 | Update existing memory | -> `/exp-write` update mode |

@@ -19,14 +19,14 @@ Installs three skills:
 |-------|---------|---------|-------|
 | `exp-search` | `/exp-search <keywords>` | Read-only retrieval across 5 memory layers | Read, Glob, Grep |
 | `exp-reflect` | `/exp-reflect` | Analyze conversation, extract + classify memories | Read, Glob, Grep |
-| `exp-write` | `/exp-write type=experience\|knowledge` | Write memories to `spec/context/` | Read, Write, Edit, Glob |
+| `exp-write` | `/exp-write type=experience\|knowledge` | Write memories to `.spec/context/` | Read, Write, Edit, Glob |
 
 ## Five-Layer Memory Search (exp-search)
 
 | Layer | Location | Content |
 |-------|----------|---------|
-| 1. Experience | `spec/context/experience/exp-*.md` | Dilemma-strategy pairs |
-| 2. Knowledge | `spec/context/knowledge/know-*.md` | Project understanding, technical research |
+| 1. Experience | `.spec/context/experience/exp-*.md` | Dilemma-strategy pairs |
+| 2. Knowledge | `.spec/context/knowledge/know-*.md` | Project understanding, technical research |
 | 3. SOP | `.claude/skills/sop-*/SKILL.md` | Reusable multi-step workflows |
 | 4. Tool Memory | Skill SKILL.md follow-up sections | Post-skill actions |
 | 5. Auto Memory | `~/.claude/projects/*/memory/*.md` | Claude native memory (read-only) |
@@ -71,7 +71,7 @@ exp-reflect classifies memories by weight to decide storage:
 
 ```
 <project>/
-  spec/
+  .spec/
     context/
       experience/
         index.md                              # Experience index table
@@ -82,12 +82,12 @@ exp-reflect classifies memories by weight to decide storage:
         know-001-teaching-analyzer-arch.md    # Knowledge detail
 ```
 
-Requires `spec/context/` directory -- created by `/project-init` or manually.
+Requires `.spec/context/` directory -- created by `/project-init` or manually.
 
 ## Dependencies
 
 - None (memory is independent of spec/do/omo)
-- Optional: `project-init` module to create `spec/context/` directory structure
+- Optional: `project-init` module to create `.spec/context/` directory structure
 
 ## Prerequisites
 
@@ -111,7 +111,7 @@ All three skills use only Read/Write/Edit/Glob/Grep tools -- no shell commands o
 |------|----|----------|
 | Any workflow | `exp-search` | Before complex tasks, search for related experience |
 | Any workflow | `exp-reflect` | After task completion, capture lessons learned |
-| `exp-reflect` | `exp-write` | Write confirmed memories to spec/context/ |
+| `exp-reflect` | `exp-write` | Write confirmed memories to .spec/context/ |
 | `exp-write` | `exp-search` | Verify newly written memories are retrievable |
 | `spec` Phase 2 | `exp-search` | Search experience during design planning |
 | `spec` Phase 4 | `exp-reflect` | Capture experience during spec wrap-up |
@@ -122,4 +122,4 @@ All three skills use only Read/Write/Edit/Glob/Grep tools -- no shell commands o
 python uninstall.py --module memory
 ```
 
-Note: This only removes the skill files. Memory data in your project's `spec/context/` is not affected.
+Note: This only removes the skill files. Memory data in your project's `.spec/context/` is not affected.
