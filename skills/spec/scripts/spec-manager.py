@@ -7,6 +7,7 @@ Commands:
   list                                     - List all specs
   status                                   - Show current spec status
   update-phase <phase>                     - Update current spec phase
+  update-body [--file <path>]              - Update plan.md body preserving frontmatter
   enable-worktree                          - Create/use a git worktree for current spec
   archive                                  - Archive current spec to 06-archived/
 """
@@ -102,6 +103,61 @@ def read_plan_frontmatter(plan_path: str) -> dict | None:
             frontmatter[key] = raw_value
 
     return frontmatter
+
+
+def _derive_frontmatter_from_spec(project_root: str, current_spec: str) -> dict:
+    """Derive default frontmatter from spec directory path when plan.md lacks frontmatter."""
+    spec_path = current_spec
+    if not os.path.isabs(spec_path):
+        spec_path = os.path.join(project_root, current_spec)
+
+    spec_name = os.path.basename(spec_path)
+    parts = spec_name.split("-", 2)
+    if len(parts) >= 3:
+        title = parts[2].replace("-", " ")
+    else:
+        title = spec_name
+
+    parent_dir = os.path.basename(os.path.dirname(spec_path))
+    category = parent_dir if parent_dir else "unknown"
+
+    return {
+        "title": title,
+        "type": "plan",
+        "category": category,
+        "status": "draft",
+        "phase": "intent",
+        "created": (
+            f"{spec_name[:4]}-{spec_name[4:6]}-{spec_name[6:8]}"
+            if len(spec_name) >= 8
+            else datetime.now().strftime("%Y-%m-%d")
+        ),
+        "tags": ["spec", "plan"],
+        "use_worktree": "false",
+        "worktree_dir": "",
+    }
+
+
+def _read_plan_content(
+    plan_path: str, project_root: str, current_spec: str
+) -> tuple[dict, str] | None:
+    """Read plan.md and return (frontmatter, body). Handles missing frontmatter gracefully."""
+    if not os.path.exists(plan_path):
+        return None
+
+    try:
+        with open(plan_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception:
+        return None
+
+    fm = read_plan_frontmatter(plan_path)
+    if fm is not None:
+        match = re.match(r"^---\n(.*?)\n---\n(.*)$", content, re.DOTALL)
+        return fm, match.group(2)
+
+    fm = _derive_frontmatter_from_spec(project_root, current_spec)
+    return fm, content
 
 
 def write_plan_md(plan_path: str, frontmatter: dict, body: str) -> bool:
@@ -255,32 +311,12 @@ def enable_worktree() -> bool:
     spec_dir = os.path.join(project_root, current_spec)
     plan_path = os.path.join(spec_dir, FILE_PLAN)
 
-    if not os.path.exists(plan_path):
-        print("Error: plan.md not found.", file=sys.stderr)
+    result = _read_plan_content(plan_path, project_root, current_spec)
+    if result is None:
+        print("Error: plan.md not found or unreadable.", file=sys.stderr)
         return False
 
-    try:
-        with open(plan_path, "r", encoding="utf-8") as f:
-            content = f.read()
-    except Exception:
-        print("Error: Failed to read plan.md.", file=sys.stderr)
-        return False
-
-    match = re.match(r"^---\n(.*?)\n---\n(.*)$", content, re.DOTALL)
-    if not match:
-        print("Error: Invalid plan.md format.", file=sys.stderr)
-        return False
-
-    fm = {}
-    for line in match.group(1).split("\n"):
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, raw_value = line.split(":", 1)
-        fm[key.strip()] = raw_value.strip()
-
-    body = match.group(2)
+    fm, body = result
 
     if fm.get("use_worktree") == "true" and fm.get("worktree_dir"):
         worktree_dir = fm["worktree_dir"].strip('"').strip("'")
@@ -419,37 +455,14 @@ def update_phase(phase: str) -> bool:
     spec_dir = os.path.join(project_root, current_spec)
     plan_path = os.path.join(spec_dir, FILE_PLAN)
 
-    if not os.path.exists(plan_path):
-        print("Error: plan.md not found.", file=sys.stderr)
+    result = _read_plan_content(plan_path, project_root, current_spec)
+    if result is None:
+        print("Error: plan.md not found or unreadable.", file=sys.stderr)
         return False
 
-    try:
-        with open(plan_path, "r", encoding="utf-8") as f:
-            content = f.read()
-    except Exception:
-        print("Error: Failed to read plan.md.", file=sys.stderr)
-        return False
-
-    match = re.match(r"^---\n(.*?)\n---\n(.*)$", content, re.DOTALL)
-    if not match:
-        print("Error: Invalid plan.md format.", file=sys.stderr)
-        return False
-
-    fm_str = match.group(1)
-    body = match.group(2)
-
-    # Parse and update frontmatter
-    fm = {}
-    for line in fm_str.split("\n"):
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, raw_value = line.split(":", 1)
-        fm[key.strip()] = raw_value.strip()
+    fm, body = result
 
     fm["phase"] = phase
-    # Update status based on phase
     status_map = {
         "intent": "draft",
         "plan": "confirmed",
@@ -459,8 +472,45 @@ def update_phase(phase: str) -> bool:
     }
     fm["status"] = status_map.get(phase, fm.get("status", "draft"))
 
-    write_plan_md(plan_path, fm, body)
-    return True
+    return write_plan_md(plan_path, fm, body)
+
+
+def update_body(body_file: str | None) -> bool:
+    """Update plan.md body content while preserving frontmatter.
+
+    Reads new body from body_file path or stdin if body_file is None.
+    """
+    project_root = get_project_root()
+    current_spec = get_current_spec(project_root)
+
+    if not current_spec:
+        print("Error: No active spec.", file=sys.stderr)
+        return False
+
+    spec_dir = os.path.join(project_root, current_spec)
+    plan_path = os.path.join(spec_dir, FILE_PLAN)
+
+    result = _read_plan_content(plan_path, project_root, current_spec)
+    if result is not None:
+        fm, _ = result
+    else:
+        fm = _derive_frontmatter_from_spec(project_root, current_spec)
+
+    try:
+        if body_file:
+            with open(body_file, "r", encoding="utf-8") as f:
+                new_body = f.read()
+        else:
+            new_body = sys.stdin.read()
+    except Exception as e:
+        print(f"Error reading body: {e}", file=sys.stderr)
+        return False
+
+    if not new_body.strip():
+        print("Error: Empty body content.", file=sys.stderr)
+        return False
+
+    return write_plan_md(plan_path, fm, new_body)
 
 
 def archive_spec() -> bool:
@@ -524,6 +574,14 @@ def main():
         "phase", choices=PHASE_NAMES.keys(), help="Phase name"
     )
 
+    # update-body command
+    body_parser = subparsers.add_parser(
+        "update-body", help="Update plan.md body preserving frontmatter"
+    )
+    body_parser.add_argument(
+        "--file", default=None, help="File to read body from (default: stdin)"
+    )
+
     # archive command
     subparsers.add_parser("archive", help="Archive current spec")
 
@@ -568,6 +626,12 @@ def main():
     elif args.command == "update-phase":
         if update_phase(args.phase):
             print(f"Updated to phase: {args.phase} ({PHASE_NAMES[args.phase]})")
+        else:
+            sys.exit(1)
+
+    elif args.command == "update-body":
+        if update_body(args.file):
+            print("Updated plan.md body.")
         else:
             sys.exit(1)
 
