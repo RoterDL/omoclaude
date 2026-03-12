@@ -262,6 +262,11 @@
       "description": "Spec-driven development lifecycle with gate-controlled phases",
       "dependencies": ["memory"],
       "agents": {
+        "spec-explorer": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/spec/references/spec-explorer.md"
+        },
         "spec-planner": {
           "backend": "claude",
           "model": "claude-opus-4-6",
