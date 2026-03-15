@@ -278,6 +278,12 @@
           "prompt_file": "~/.claude/skills/spec/references/plan-reviewer.md",
           "reasoning": "xhigh"
         },
+        "spec-code-reviewer": {
+          "backend": "codex",
+          "model": "gpt-5.4",
+          "prompt_file": "~/.claude/skills/spec/references/spec-code-reviewer.md",
+          "reasoning": "high"
+        },
         "spec-tester": {
           "backend": "claude",
           "model": "claude-sonnet-4-6",
