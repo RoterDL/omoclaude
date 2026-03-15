@@ -272,6 +272,12 @@
           "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/spec/references/spec-planner.md"
         },
+        "plan-reviewer": {
+          "backend": "codex",
+          "model": "gpt-5.4",
+          "prompt_file": "~/.claude/skills/spec/references/plan-reviewer.md",
+          "reasoning": "xhigh"
+        },
         "spec-tester": {
           "backend": "claude",
           "model": "claude-sonnet-4-6",

@@ -83,7 +83,7 @@ Each skill lives under `skills/<name>/` with a `SKILL.md` (the prompt loaded by 
 - `skills/do/agents/*.md` - do skill agent prompts
 - `skills/omo/references/*.md` - omo skill agent prompts
 - `skills/research-pro/references/*.md` - research-pro agent prompts
-- `skills/spec/references/*.md` - spec skill agent prompts (spec-planner, spec-tester)
+- `skills/spec/references/*.md` - spec skill agent prompts (spec-planner, plan-reviewer, spec-tester)
 
 These are referenced by `config.json` `agents.<name>.prompt_file` and merged into `~/.codeagent/models.json` at install time.
 
@@ -113,7 +113,7 @@ codeagent-wrapper/
 
 ### spec Skill Lifecycle
 
-`/spec` manages design document lifecycle with 4 gate-controlled phases (Intent -> Plan -> Implement -> End). Creates spec directories under `.spec/{category}/{YYYYMMDD-HHMM-slug}/` with `plan.md`, `summary.md`, `test-report.md`. State tracked via `.spec/.current-spec` pointer file. `scripts/spec-manager.py` manages lifecycle (create, list, status, update-phase, archive). Implementation delegates to existing `develop`/`code-architect` agents or `/do` workflow. Depends on `memory` module.
+`/spec` manages design document lifecycle with 4 gate-controlled phases (Intent -> Plan -> Implement -> End). Creates spec directories under `.spec/{category}/{YYYYMMDD-HHMM-slug}/` with `plan.md`, `summary.md`, `test-report.md`. State tracked via `.spec/.current-spec` pointer file. Phase 2 includes automated `plan-reviewer` review of `plan.md` before the user confirmation gate. `scripts/spec-manager.py` manages lifecycle (create, list, status, update-phase, archive). Implementation delegates to existing `develop`/`code-architect` agents or `/do` workflow. Depends on `memory` module.
 
 ### Memory System
 
