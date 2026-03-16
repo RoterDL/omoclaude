@@ -374,8 +374,28 @@ Update phase:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase test
 ```
 ## Phase 4: Wrap-up
+### Step 0: Verify completion
+Read the current spec directory and verify all expected artifacts exist:
+- `plan.md` (confirmed)
+- `summary.md` (implementation complete)
+- `test-report.md` (tests passed)
+- `debug-*.md` / `debug-*-fix.md` (if issues were found and fixed)
+If any critical artifact is missing, prompt the user to confirm whether to continue with wrap-up.
 ### Step 1: Experience reflection
-Suggest running `/exp-reflect` to capture lessons learned from this spec cycle.
+This is a **mandatory** step and must not be skipped by default. The orchestrator proactively runs `/exp-reflect` on spec lifecycle artifacts (`plan.md`, `summary.md`, `review-report.md`, `test-report.md`) and extracts reusable lessons:
+1. Read all artifacts in the spec directory: `plan.md`, `summary.md`, `review-report.md`, `test-report.md`, `debug-*.md`
+2. Analyze and extract two memory types:
+   - **Experience (dilemma-strategy pairs)**: implementation problems and resolutions, BLOCKING issues found in review/test and their fix strategies, design decisions from plan revisions
+   - **Knowledge (project understanding)**: architecture patterns, code conventions, and module relationships discovered during exploration
+3. Present the findings to the user using exp-reflect's Reflection Draft Format for confirmation
+4. After user confirmation, call `/exp-write type=experience` and `/exp-write type=knowledge` to persist the approved items
+5. If there is nothing worth extracting (for example, a trivial task), explain why and skip experience capture
+
+Use `AskUserQuestion`:
+- "Run experience extraction now" (recommended)
+- "Skip and provide a reason"
+
+The orchestrator should prepare the reflection draft before presenting the choice so the default path is active execution, not passive suggestion.
 ### Step 2: Archive confirmation
 Use `AskUserQuestion`:
 - "Archive spec and optionally commit"
@@ -388,6 +408,17 @@ This moves the spec directory to `.spec/06-archived/`.
 Update phase:
 ```bash
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase end
+```
+### Step 4: Completion summary
+Report completion:
+```
+Spec lifecycle complete:
+- Plan: plan.md (confirmed)
+- Implementation: summary.md
+- Review: review-report.md [pass/iterations]
+- Tests: test-report.md [passed/failed]
+- Experience: [captured N items / skipped (reason)]
+- Archive: [archived to 06-archived/ / kept in place]
 ```
 ## Spec Directory Structure
 Each spec creates:
