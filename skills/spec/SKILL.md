@@ -18,7 +18,9 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 ## Spec Lifecycle (4 Phases)
 ```text
 /spec <task description>
+-> Trivial detection -> if trivial: express-path (skip to Phase 2 minimal)
 -> Phase 1: Intent Confirmation -> restate, clarify, AskUserQuestion gate
+-> Complexity Triage -> light / standard / full
 -> Phase 2: Design & Planning -> exp-search -> spec-explorer -> spec-planner -> plan.md -> plan-reviewer (intensity-gated) -> gate
 -> Phase 3: Implementation -> worktree decision -> route do-develop/do-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
 -> Phase 4: Wrap-up -> /exp-reflect (intensity-gated) -> archive -> update-phase end
@@ -29,6 +31,13 @@ When triggered via `/spec <task>`:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" create --category features --title "<task description>"
 ```
 This creates a spec directory under `.spec/03-features/` (or appropriate category) with a `.current-spec` pointer.
+## Trivial Detection (before Phase 1)
+After initialization, check if the task is trivial before entering Phase 1:
+- **trivial**: single file named + typo/wording fix or user said "just do it" -> express-path
+
+If not trivial, proceed to Phase 1.
+
+**Trivial express-path**: Skip Phase 1 and Complexity Triage. Phase 2: skip Steps 1-2, orchestrator writes minimal plan at Step 3 (HC#7 exception), skip Step 5, merge Step 6 gate with Phase 3 Step 6. Phase 3: skip Step 0/4/5. Phase 4: skip Step 1.
 ## Phase 1: Intent Confirmation
 Use the intent-confirm sub-skill logic:
 1. Restate user's intent in concrete, actionable terms.
@@ -38,13 +47,11 @@ Use the intent-confirm sub-skill logic:
    - "Confirmed, proceed to planning"
    - "Need to clarify" (with details)
 ## Complexity Triage (after Phase 1)
-Evaluate task before Phase 2. Produce `complexity_level`:
-- **trivial**: single file named + typo/wording fix or user said "just do it" -> express-path
+Evaluate task before Phase 2. Produce `complexity_level` (non-trivial tasks only):
 - **light**: narrow scope, few files, low risk -> skip spec-explorer
 - **standard**: default
 - **full**: large scope, high risk, cross-cutting changes
 This is orchestrator judgment, independent of `review_intensity` (set later by `spec-planner`).
-**Trivial express-path**: Skip Phase 1. Phase 2: skip Steps 1-2, orchestrator writes minimal plan at Step 3 (HC#7 exception), skip Step 5, merge Step 6 gate with Phase 3 Step 6. Phase 3: skip Step 0/4/5. Phase 4: skip Step 1.
 ## Phase 2: Design & Planning
 **If trivial**: Skip Steps 1-2; at Step 3, orchestrator writes minimal plan directly via `update-body`; skip Step 5; merge Step 6 with Phase 3 gate.
 Steps 1-4 and Step 6 are mandatory per Hard Constraints #6-#8. Step 5 (plan review) depth is governed by Hard Constraint #8 (`review_intensity`).
