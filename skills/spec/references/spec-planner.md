@@ -37,9 +37,13 @@ Produce a complete plan.md document with these sections:
 
 ### 5. Task Classification
 - `task_type`: "backend_only" | "frontend_only" | "fullstack"
+- `review_intensity`: "light" | "standard" | "full"
+  - "light": <=3 files, <=100 estimated changed lines, no high risks
+  - "full": >10 files, >500 estimated lines, or any high risk
+  - "standard": everything else. When in doubt, prefer "standard" over "light".
 - `backend_tasks`: list backend implementation tasks (if any)
 - `frontend_tasks`: list frontend implementation tasks (if any)
-- Rationale for classification
+- Rationale for classification (must justify intensity level)
 
 ### 6. Risks and Dependencies
 - Technical risks and mitigations

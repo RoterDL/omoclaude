@@ -59,6 +59,7 @@ tags: [spec, plan]
 ## Task Classification
 
 - **task_type**: {backend_only | frontend_only | fullstack}
+- **review_intensity**: {light | standard | full}
 - **backend_tasks**: {list of backend tasks, or "N/A"}
 - **frontend_tasks**: {list of frontend tasks, or "N/A"}
 - **Rationale**: {why this classification}
