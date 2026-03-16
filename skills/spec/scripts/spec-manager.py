@@ -546,6 +546,50 @@ def archive_spec() -> bool:
     return True
 
 
+def write_artifact(filename: str, content_file: str | None) -> bool:
+    """Write content to a named file in the current spec directory."""
+    if "/" in filename or ".." in filename:
+        print(
+            f"Error: Invalid filename '{filename}'. Must not contain '/' or '..'.",
+            file=sys.stderr,
+        )
+        return False
+    if not filename.endswith(".md"):
+        print(f"Error: Filename must end with '.md', got '{filename}'.", file=sys.stderr)
+        return False
+
+    project_root = get_project_root()
+    current_spec = get_current_spec(project_root)
+    if not current_spec:
+        print("Error: No active spec.", file=sys.stderr)
+        return False
+
+    try:
+        if content_file:
+            with open(content_file, "r", encoding="utf-8") as f:
+                content = f.read()
+        else:
+            content = sys.stdin.read()
+    except Exception as e:
+        print(f"Error reading content: {e}", file=sys.stderr)
+        return False
+
+    if not content.strip():
+        print("Error: Empty content.", file=sys.stderr)
+        return False
+
+    target_path = os.path.join(project_root, current_spec, filename)
+    try:
+        with open(target_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    except Exception as e:
+        print(f"Error writing artifact: {e}", file=sys.stderr)
+        return False
+
+    print(f"Wrote: {os.path.relpath(target_path, project_root)}")
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="Spec lifecycle state management")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -587,6 +631,15 @@ def main():
 
     # enable-worktree command
     subparsers.add_parser("enable-worktree", help="Enable worktree for current spec")
+
+    # write-artifact command
+    artifact_parser = subparsers.add_parser(
+        "write-artifact", help="Write artifact to current spec directory"
+    )
+    artifact_parser.add_argument("filename", help="Target filename (e.g. summary.md)")
+    artifact_parser.add_argument(
+        "--file", default=None, help="Read content from file (default: stdin)"
+    )
 
     args = parser.parse_args()
 
@@ -641,6 +694,10 @@ def main():
 
     elif args.command == "enable-worktree":
         if not enable_worktree():
+            sys.exit(1)
+
+    elif args.command == "write-artifact":
+        if not write_artifact(args.filename, args.file):
             sys.exit(1)
 
     else:
