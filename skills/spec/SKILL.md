@@ -1,7 +1,7 @@
 ---
 name: spec
 description: Spec-driven development lifecycle with gate-controlled phases. Manages design documents (plan.md), test plans, implementation delegation, and archival. Triggers on /spec <task description>. Orchestrates spec-planner, spec-tester agents via codeagent-wrapper, and delegates implementation to do-develop/do-frontend agents with frontend/backend routing.
-allowed-tools: ["Bash(~/.claude/skills/spec/scripts/spec-manager.py:*)", "Bash(codeagent-wrapper:*)", "AskUserQuestion", "Read", "Glob", "Grep"]
+allowed-tools: ["Bash(~/.claude/skills/spec/scripts/spec-manager.py:*)", "Bash(~/.claude/skills/spec/scripts/capture-diff.sh:*)", "Bash(codeagent-wrapper:*)", "AskUserQuestion", "Read", "Glob", "Grep"]
 ---
 # spec - Spec-Driven Development Lifecycle
 You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design document (spec): intent confirmation, planning, implementation delegation, testing, and archival.
@@ -21,21 +21,19 @@ The worktree is created only when needed, right before Phase 3.
    ```bash
    python "$HOME/.claude/skills/spec/scripts/spec-manager.py" enable-worktree
    ```
-2. Save the `DO_WORKTREE_DIR` value from the output and use it as a prefix for Phase 3 `codeagent-wrapper` calls that operate in the worktree.
+2. Save the `DO_WORKTREE_DIR` value from the output and use it as a prefix for Phase 3 `codeagent-wrapper` calls.
 ```bash
 DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 ...
 EOF
 ```
-Phases 1-2 are read-only and do not require `DO_WORKTREE_DIR` (for example `spec-explorer`, `spec-planner`, `code-architect`).
-Do not ask about worktree earlier in the lifecycle.
 ## Spec Lifecycle (4 Phases)
 ```text
 /spec <task description>
 -> Phase 1: Intent Confirmation -> restate, clarify, AskUserQuestion gate
 -> Phase 2: Design & Planning -> exp-search -> spec-explorer -> spec-planner -> plan.md -> plan-reviewer (intensity-gated) -> gate
 -> Phase 3: Implementation -> worktree decision -> route do-develop/do-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
--> Phase 4: Wrap-up -> /exp-reflect -> archive -> update-phase end
+-> Phase 4: Wrap-up -> /exp-reflect (intensity-gated) -> archive -> update-phase end
 ```
 ## Initialization (on /spec trigger)
 When triggered via `/spec <task>`:
@@ -54,12 +52,13 @@ Use the intent-confirm sub-skill logic:
 **Skip conditions**: user provided a detailed spec, it is a single-file fix, or the user explicitly said "just do it".
 ## Phase 2: Design & Planning
 Steps 1-4 and Step 6 are mandatory per Hard Constraints #6-#8. Step 5 (plan review) depth is governed by Hard Constraint #8 (`review_intensity`).
+**Orchestrator pre-assessment**: Before Step 2, evaluate the task description for triviality signals: single file explicitly named, typo/wording-level fix, user says "just do it", obviously narrow scope. If trivial, skip `spec-explorer` and use your own Read/Grep for lightweight context, passing streamlined results to `spec-planner` in Step 3. This is your own judgment — independent of `review_intensity` (set later by `spec-planner`).
 ### Step 1: Search related experience
 ```bash
 # Invoke exp-search for related memories (if .spec/context/ exists)
 ```
 Read `.spec/context/experience/index.md` and `.spec/context/knowledge/index.md` for relevant prior experience.
-### Step 2: Explore codebase (MANDATORY: via spec-explorer agent)
+### Step 2: Explore codebase (via spec-explorer agent)
 Use `codeagent-wrapper --agent spec-explorer` via Bash. Do NOT replace it with the built-in Explore/Agent tool.
 ```bash
 codeagent-wrapper --agent spec-explorer - . <<'EOF'
@@ -78,7 +77,7 @@ Thoroughness: medium.
 Output: key files with line numbers, module map, existing patterns to follow.
 EOF
 ```
-### Step 3: Generate design spec (MANDATORY: via spec-planner agent)
+### Step 3: Generate design spec (via spec-planner agent)
 Delegate `plan.md` content generation to `codeagent-wrapper --agent spec-planner`; do not author it yourself.
 ```bash
 codeagent-wrapper --agent spec-planner - . <<'EOF'
@@ -100,7 +99,7 @@ Create a design specification (plan.md) including:
 6. Risks and dependencies
 7. Non-goals
 
-**Review notice:** After you output the plan, it will be reviewed by plan-reviewer (Codex model) against a 7-area checklist covering completeness, feasibility, risk, and convention adherence. BLOCKING issues trigger automatic revision loops. Write a thorough, specific, and well-structured plan on the first attempt.
+**Review notice:** After you output the plan, it will be reviewed by plan-reviewer against a 7-area checklist covering completeness, feasibility, risk, and convention adherence. BLOCKING issues trigger automatic revision loops. Write a thorough, specific, and well-structured plan on the first attempt.
 **Self-review:** Before outputting the final plan, review it yourself against the 7 sections above. Check for: missing sections, vague descriptions without file paths, untestable requirements, missing risk mitigations, and scope creep beyond the original request. Fix any issues before outputting.
 
 Output the full plan.md content.
@@ -112,21 +111,19 @@ EOF
 ### Step 4: Write plan.md
 Pipe the `spec-planner` output through `update-body` to preserve frontmatter, then advance phase:
 ```bash
-# Write spec-planner output as plan.md body (preserves frontmatter)
 echo '<spec-planner output>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-body
 # Or from a file:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-body --file /tmp/plan-body.md
 
-# Advance phase
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase plan
 ```
-Do NOT overwrite `plan.md` directly via Write/cp; direct overwrites break the YAML frontmatter and can make `update-phase` fail.
+Do NOT overwrite `plan.md` directly via Write/cp; direct overwrites break the YAML frontmatter.
 ### Step 5: Plan review (intensity-gated)
 Read plan.md Task Classification to get `review_intensity`. If missing, default to `standard`.
 
-**light intensity**: Skip plan-reviewer. Log "Plan review skipped (light intensity; planner self-review suffices)." Proceed to Step 6.
+**light intensity**: Skip plan-reviewer. Log "Plan review skipped (light intensity)." Proceed to Step 6.
 
-**standard intensity**: Single plan-reviewer invocation (no iteration loop).
+**standard or full intensity**: Invoke plan-reviewer:
 ```bash
 codeagent-wrapper --agent plan-reviewer - . <<'EOF'
 ## Original User Request
@@ -142,30 +139,12 @@ Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
 Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
 EOF
 ```
-Save result as `plan-review.md`. Proceed to Step 6 regardless of BLOCKING count (user decides whether to revise at Step 6).
-
-**full intensity**: Initialize revision counter at 0.
-```bash
-codeagent-wrapper --agent plan-reviewer - . <<'EOF'
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-
-## Current Task
-Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
-
-## Acceptance Criteria
-Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-**Handle review results:**
-- **BLOCKING=0**: save review as `plan-review.md` in the spec directory, then proceed to Step 6.
-- **BLOCKING>0 and iteration < 2**: re-invoke `spec-planner` with reviewer feedback appended to the Context Pack, re-write `plan.md` via `update-body`, then re-review.
-- **BLOCKING>0 and iteration >= 2**: save the latest review as `plan-review.md`, present the review to the user via `AskUserQuestion`, and ask for guidance.
-When re-running `spec-planner`, append the latest review output to the Context Pack and instruct it to revise `plan.md` to resolve every BLOCKING issue before re-reviewing.
-Save the final review output as `plan-review.md` in the spec directory.
+**Result handling by intensity:**
+- **standard**: Save result as `plan-review.md`. Proceed to Step 6 regardless of BLOCKING count (user decides at gate).
+- **full**: Initialize revision counter at 0.
+  - **BLOCKING=0**: save as `plan-review.md`, proceed to Step 6.
+  - **BLOCKING>0 and iteration < 2**: re-invoke `spec-planner` with reviewer feedback appended to Context Pack, re-write `plan.md` via `update-body`, re-review.
+  - **BLOCKING>0 and iteration >= 2**: save as `plan-review.md`, present to user via `AskUserQuestion` for guidance.
 ### Step 6: User confirmation gate
 Present `plan.md` to the user. Use `AskUserQuestion`:
 - "Approve design and proceed to implementation"
@@ -184,26 +163,25 @@ If user chooses worktree:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" enable-worktree
 # Save the DO_WORKTREE_DIR from output
 ```
-**Worktree mode note:** If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>` to all Phase 3 `codeagent-wrapper` invocations below (`do-develop`, `do-frontend`, `do-reviewer`, `spec-code-reviewer`, `spec-tester`). This note applies to `codeagent-wrapper` calls only; the diff capture script in Step 5 already handles worktree and non-worktree mode internally.
+If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>` to all Phase 3 `codeagent-wrapper` invocations below (per Hard Constraint #5).
 ### Step 1: Determine implementation strategy
-Based on `plan.md` `task_type` classification (set by `spec-planner` in Phase 2):
-| task_type | Agent(s) | Skills Injection |
-|-----------|----------|-----------------|
-| `backend_only` | `do-develop` | (none, auto-detect) |
-| `frontend_only` | `do-frontend` | `--skills taste-core,taste-output` |
-| `fullstack` | `do-develop` + `do-frontend` in parallel | frontend gets taste skills |
-- Missing `task_type`: default to `do-develop` only.
-- **Optional add-on**: when the task is explicitly creative/premium UI, append `taste-creative`; when it is a UI redesign/overhaul, append `taste-redesign`.
-### Step 2: Execute implementation
+Based on `plan.md` `task_type` classification:
+| task_type | Agent | Skills flag | Scope label |
+|-----------|-------|------------|-------------|
+| `backend_only` | `do-develop` | (none) | (omit) |
+| `frontend_only` | `do-frontend` | `--skills taste-core,taste-output` | "frontend" |
+| `fullstack` | both in parallel | frontend gets taste skills | "backend"/"frontend" |
+- Missing `task_type`: default to `do-develop`.
+- **Optional**: append `taste-creative` for creative/premium UI; `taste-redesign` for UI overhaul.
 
-Select the **Review notice** to embed in agent prompts based on `review_intensity`:
+Select **Review notice** based on `review_intensity`:
 - **light**: `**Review notice:** Your code will be validated by tests. Apply Priority A self-review before outputting.`
 - **standard**: `**Review notice:** After implementation, your code will be reviewed (Priority A/B). Write clean, correct code.`
 - **full**: `**Review notice:** After implementation, your code will undergo thorough review (Priority A/B/C). Write clean, correct, minimal code.`
-
-**Backend-only:**
+### Step 2: Execute implementation
+**Single agent** (backend_only or frontend_only):
 ```bash
-codeagent-wrapper --agent do-develop - . <<'EOF'
+codeagent-wrapper --agent {agent} {skills_flag} - . <<'EOF'
 ## Original User Request
 <user request>
 
@@ -212,81 +190,22 @@ codeagent-wrapper --agent do-develop - . <<'EOF'
 - Explore output: <paste>
 
 ## Current Task
-Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
-<insert review notice based on review_intensity>
+Implement {scope_label} changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+{review_notice}
 
 ## Acceptance Criteria
 All plan items implemented. Tests pass.
 EOF
 ```
-**Frontend-only:**
+**Fullstack (parallel)**: Use `codeagent-wrapper --parallel` with two `---TASK---` blocks following the same template structure. Backend task uses `do-develop`, frontend task uses `do-frontend` with `skills: taste-core,taste-output`. Each task's Acceptance Criteria should end with `Summary: <one sentence>`.
+
+After implementation completes:
 ```bash
-codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-- Explore output: <paste>
-
-## Current Task
-Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
-<insert review notice based on review_intensity>
-
-## Acceptance Criteria
-All plan items implemented. Tests pass.
-EOF
-```
-**Fullstack (parallel):**
-```bash
-codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: spec_backend
-agent: do-develop
-workdir: .
----CONTENT---
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-- Explore output: <paste>
-
-## Current Task
-Implement backend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
-<insert review notice based on review_intensity>
-
-## Acceptance Criteria
-All backend plan items implemented. Tests pass.
-End with: Summary: <one sentence>
-
----TASK---
-id: spec_frontend
-agent: do-frontend
-workdir: .
-skills: taste-core,taste-output
----CONTENT---
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-- Explore output: <paste>
-
-## Current Task
-Implement frontend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
-<insert review notice based on review_intensity>
-
-## Acceptance Criteria
-All frontend plan items implemented. Tests pass.
-End with: Summary: <one sentence>
-EOF
+python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase implement
 ```
 ### Step 3: Generate summary.md
-After implementation, write `summary.md` to the spec directory documenting what was built.
-Capture the implemented scope, key files changed, and any test updates.
+Write `summary.md` to the spec directory documenting: implemented scope, key files changed, test updates.
 ### Step 4: Run tests
-Use `codeagent-wrapper --agent spec-tester` with the 3-section contract below. If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>`.
 ```bash
 codeagent-wrapper --agent spec-tester - . <<'EOF'
 ## Context Pack
@@ -300,43 +219,21 @@ Execute tests per plan.md test criteria. Run relevant test suites. Report result
 Test report with pass/fail counts, coverage info, and any issues found.
 EOF
 ```
-**Handle test results:**
-- All tests pass: proceed to Step 5 (code review).
-- Tests fail: delegate fix to `codeagent-wrapper --agent do-develop` (or `do-frontend` for UI issues), then re-test.
-- If worktree mode is enabled, keep using the same `DO_WORKTREE_DIR` for fix and re-test invocations.
-### Step 5: Code review (intensity-gated)
-Read plan.md Task Classification to get `review_intensity`. The orchestrator may upgrade (never downgrade) intensity based on actual diff:
-```bash
-# Capture diff — must include both tracked and untracked changes
-# Set BASE_DIR for file reads: worktree root if in worktree mode, else current directory
-if [ -n "$DO_WORKTREE_DIR" ]; then
-  BASE_DIR="$DO_WORKTREE_DIR"
-  DIFF_OUTPUT=$(git -C "$DO_WORKTREE_DIR" diff HEAD)
-  UNTRACKED=$(git -C "$DO_WORKTREE_DIR" status --porcelain | grep '^??')
-else
-  BASE_DIR="."
-  DIFF_OUTPUT=$(git diff HEAD)
-  UNTRACKED=$(git status --porcelain | grep '^??')
-fi
+Save spec-tester output as `test-report.md` in the spec directory.
 
-# If there are untracked new files, read their contents and append to DIFF_OUTPUT
-if [ -n "$UNTRACKED" ]; then
-  NEW_FILES_CONTENT="--- Untracked new files ---"
-  while IFS= read -r line; do
-    filepath="${line#\?\? }"
-    NEW_FILES_CONTENT="$NEW_FILES_CONTENT
---- new file: $filepath ---
-$(cat "$BASE_DIR/$filepath")"
-  done <<< "$UNTRACKED"
-  DIFF_OUTPUT="$DIFF_OUTPUT
-$NEW_FILES_CONTENT"
-fi
+**Handle test results:**
+- All tests pass: proceed to Step 5.
+- Tests fail: delegate fix to `do-develop` (or `do-frontend` for UI issues), then re-test.
+### Step 5: Code review (intensity-gated)
+Read `review_intensity` from plan.md. Capture diff:
+```bash
+DIFF_OUTPUT=$(bash "$HOME/.claude/skills/spec/scripts/capture-diff.sh")
 ```
-Count changed lines and files from `DIFF_OUTPUT`. If actual counts exceed the next tier's thresholds (>3 files or >100 lines → at least `standard`; >10 files or >500 lines → `full`), upgrade intensity.
+Count changed lines and files. If actual counts exceed the next tier's thresholds (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`), upgrade intensity.
 
 **light intensity**: Skip code review. Log "Code review skipped (light intensity; self-review + tests passed)." Proceed to Step 6.
 
-**standard intensity**: Single invocation of `do-reviewer` (no iteration loop). If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>`.
+**standard intensity**: Single invocation of `do-reviewer` (no iteration loop).
 ```bash
 codeagent-wrapper --agent do-reviewer - . <<'EOF'
 ## Original User Request
@@ -355,9 +252,9 @@ Review implementation against plan.md.
 Summary: BLOCKING=<n>, MINOR=<n>.
 EOF
 ```
-If BLOCKING > 0, present to user via `AskUserQuestion` for guidance (no automatic fix loop).
+Save review output as `review-report.md`. If BLOCKING > 0, present to user via `AskUserQuestion` for guidance.
 
-**full intensity**: Initialize `review_iteration=0`. Single invocation of `spec-code-reviewer`. If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>`.
+**full intensity**: Initialize `review_iteration=0`. Invoke `spec-code-reviewer`:
 ```bash
 codeagent-wrapper --agent spec-code-reviewer - . <<'EOF'
 ## Original User Request
@@ -377,51 +274,37 @@ Summary: BLOCKING=<n>, MINOR=<n>.
 EOF
 ```
 **Handle review results:**
-- **BLOCKING=0**: proceed to Step 6.
-- **BLOCKING>0 and iteration < 2**: delegate fixes to `do-develop` (or `do-frontend` for UI issues), increment `review_iteration`, re-capture diff, re-review.
-- **BLOCKING>0 and iteration >= 2**: save report as `review-report.md`, present to user via `AskUserQuestion`.
-
-Save review output as `review-report.md` in the spec directory:
-```markdown
-# Code Review Report
-
-## Review ({do-reviewer | spec-code-reviewer})
-<full output>
-
-## Summary
-BLOCKING=<n>, MINOR=<n>
-Intensity: {light|standard|full}
-Iteration: <n>/{max}
-```
+- **BLOCKING=0**: save as `review-report.md`, proceed to Step 6.
+- **BLOCKING>0 and iteration < 2**: delegate fixes, re-capture diff, re-review.
+- **BLOCKING>0 and iteration >= 2**: save as `review-report.md`, present to user via `AskUserQuestion`.
 ### Step 6: Completion gate
-- Use `AskUserQuestion` to confirm test and review results with the user.
-Update phase:
+Use `AskUserQuestion` to confirm test and review results with the user.
 ```bash
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase test
 ```
 ## Phase 4: Wrap-up
 ### Step 0: Verify completion
-Read the current spec directory and verify all expected artifacts exist:
+Read the spec directory and verify expected artifacts exist:
 - `plan.md` (confirmed)
 - `summary.md` (implementation complete)
 - `test-report.md` (tests passed)
-- `debug-*.md` / `debug-*-fix.md` (if issues were found and fixed)
-If any critical artifact is missing, prompt the user to confirm whether to continue with wrap-up.
-### Step 1: Experience reflection
-This is a **mandatory** step and must not be skipped by default. The orchestrator proactively runs `/exp-reflect` on spec lifecycle artifacts (`plan.md`, `summary.md`, `review-report.md`, `test-report.md`) and extracts reusable lessons:
-1. Read all artifacts in the spec directory: `plan.md`, `summary.md`, `review-report.md`, `test-report.md`, `debug-*.md`
-2. Analyze and extract two memory types:
-   - **Experience (dilemma-strategy pairs)**: implementation problems and resolutions, BLOCKING issues found in review/test and their fix strategies, design decisions from plan revisions
-   - **Knowledge (project understanding)**: architecture patterns, code conventions, and module relationships discovered during exploration
-3. Present the findings to the user using exp-reflect's Reflection Draft Format for confirmation
-4. After user confirmation, call `/exp-write type=experience` and `/exp-write type=knowledge` to persist the approved items
-5. If there is nothing worth extracting (for example, a trivial task), explain why and skip experience capture
+- `review-report.md` (if review was run)
+If any critical artifact is missing, prompt the user to confirm whether to continue.
+### Step 1: Experience reflection (intensity-gated)
+For `standard` and `full` intensity, this step is **mandatory**. For `light` intensity, default to skip (offer "Run anyway" as secondary choice).
+
+The orchestrator proactively reads spec artifacts (`plan.md`, `summary.md`, `review-report.md`, `test-report.md`, `debug-*.md`) and extracts reusable lessons:
+1. Analyze and extract:
+   - **Experience (dilemma-strategy pairs)**: implementation problems and resolutions, BLOCKING issues and fix strategies, design decisions from plan revisions
+   - **Knowledge (project understanding)**: architecture patterns, code conventions, module relationships
+2. Present findings using exp-reflect's Reflection Draft Format
+3. After user confirmation, call `/exp-write type=experience` and `/exp-write type=knowledge`
 
 Use `AskUserQuestion`:
-- "Run experience extraction now" (recommended)
-- "Skip and provide a reason"
+- For standard/full: "Run experience extraction now" (recommended) / "Skip"
+- For light: "Skip experience extraction (light task)" (recommended) / "Run anyway"
 
-The orchestrator should prepare the reflection draft before presenting the choice so the default path is active execution, not passive suggestion.
+Prepare the reflection draft before presenting the choice.
 ### Step 2: Archive confirmation
 Use `AskUserQuestion`:
 - "Archive spec and optionally commit"
@@ -431,12 +314,10 @@ Use `AskUserQuestion`:
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
 ```
 This moves the spec directory to `.spec/06-archived/`.
-Update phase:
 ```bash
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase end
 ```
 ### Step 4: Completion summary
-Report completion:
 ```
 Spec lifecycle complete:
 - Plan: plan.md (confirmed)
@@ -447,12 +328,10 @@ Spec lifecycle complete:
 - Archive: [archived to 06-archived/ / kept in place]
 ```
 ## Spec Directory Structure
-Each spec creates:
 ```text
 .spec/{category}/{YYYYMMDD-HHMM-slug}/
   plan.md           # Design specification (Phase 2)
   plan-review.md    # Plan review results (Phase 2)
-  test-plan.md      # Test plan (Phase 2, optional)
   summary.md        # Implementation summary (Phase 3)
   review-report.md  # Code review results (Phase 3)
   test-report.md    # Test results (Phase 3)
@@ -462,15 +341,3 @@ Each spec creates:
 - Related agents: `spec-explorer`, `spec-planner`, `plan-reviewer`, `code-architect`, `do-develop`, `do-frontend`, `do-reviewer`, `spec-code-reviewer`, `spec-tester`.
 - Use `code-architect` in Phase 2 when the plan needs deeper architecture input.
 - Related sub-skills: `intent-confirm`, `spec-plan`, `spec-test`, `spec-debug` (issue diagnosis and fix delegation), `spec-end` (archival and experience capture).
-- Use `spec-debug` when review or test failures need diagnosis before another fix loop.
-- State management commands:
-```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" create --category <cat> --title "<title>"
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" status
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" list
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase <intent|plan|implement|test|end>
-echo '<new body>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-body
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-body --file <path>
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" enable-worktree
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
-```
