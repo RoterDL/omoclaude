@@ -59,3 +59,5 @@ Produce a complete plan.md document with these sections:
 - Keep the plan focused on the immediate task, not hypothetical future needs
 - If the explore output reveals existing patterns, follow them
 - Flag any areas of uncertainty for user decision
+- **Self-review before output:** Before producing the final plan, review it against all 7 sections. Verify: every section is present and substantive, implementation steps reference actual file paths, requirements are testable, risks have mitigations, scope stays within the original request.
+- **Review awareness:** Your plan will be reviewed by plan-reviewer (Codex model) against a 7-area checklist. BLOCKING issues trigger automatic revision. Aim for zero BLOCKING issues on the first pass.

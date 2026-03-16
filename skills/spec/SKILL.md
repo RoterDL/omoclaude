@@ -101,6 +101,9 @@ Create a design specification (plan.md) including:
 6. Risks and dependencies
 7. Non-goals
 
+**Review notice:** After you output the plan, it will be reviewed by plan-reviewer (Codex model) against a 7-area checklist covering completeness, feasibility, risk, and convention adherence. BLOCKING issues trigger automatic revision loops. Write a thorough, specific, and well-structured plan on the first attempt.
+**Self-review:** Before outputting the final plan, review it yourself against the 7 sections above. Check for: missing sections, vague descriptions without file paths, untestable requirements, missing risk mitigations, and scope creep beyond the original request. Fix any issues before outputting.
+
 Output the full plan.md content.
 
 ## Acceptance Criteria
