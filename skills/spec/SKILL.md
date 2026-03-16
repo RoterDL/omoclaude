@@ -274,6 +274,7 @@ DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
 
 ## Current Task
 Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All plan items implemented. Tests pass.
@@ -290,6 +291,7 @@ codeagent-wrapper --agent do-develop - . <<'EOF'
 
 ## Current Task
 Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All plan items implemented. Tests pass.
@@ -309,6 +311,7 @@ DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-frontend --skills ta
 
 ## Current Task
 Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All plan items implemented. Tests pass.
@@ -325,6 +328,7 @@ codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EO
 
 ## Current Task
 Implement according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All plan items implemented. Tests pass.
@@ -349,6 +353,7 @@ workdir: .
 
 ## Current Task
 Implement backend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All backend plan items implemented. Tests pass.
@@ -369,6 +374,7 @@ skills: taste-core,taste-output
 
 ## Current Task
 Implement frontend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All frontend plan items implemented. Tests pass.
@@ -391,6 +397,7 @@ workdir: .
 
 ## Current Task
 Implement backend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All backend plan items implemented. Tests pass.
@@ -411,6 +418,7 @@ skills: taste-core,taste-output
 
 ## Current Task
 Implement frontend changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+**Review notice:** After implementation, your code will undergo parallel dual review by Claude (do-reviewer) and Codex (spec-code-reviewer) against cr checklists (Priority A/B/C). Write clean, correct, minimal code.
 
 ## Acceptance Criteria
 All frontend plan items implemented. Tests pass.
