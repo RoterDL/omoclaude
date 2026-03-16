@@ -21,8 +21,8 @@ python install.py --module omo
 | `oracle` | Technical advisor | claude | claude-opus-4-6 |
 | `librarian` | External research | claude | claude-sonnet-4-6 |
 | `explore` | Codebase search | claude | claude-sonnet-4-6 |
-| `develop` | Code implementation | codex | gpt-5.3-codex |
-| `frontend-ui-ux-engineer` | UI/UX specialist | gemini | gemini-3.1-pro-preview |
+| `develop` | Code implementation | codex | gpt-5.4 |
+| `frontend-ui-ux-engineer` | UI/UX specialist | claude | claude-opus-4-6 |
 | `document-writer` | Documentation | gemini | gemini-3-flash-preview |
 | `code-reviewer` | Code review | claude | claude-sonnet-4-6 |
 
@@ -127,7 +127,7 @@ Agent-model mappings in `~/.codeagent/models.json`:
 ```json
 {
   "default_backend": "codex",
-  "default_model": "gpt-5.3-codex",
+  "default_model": "gpt-5.4",
   "agents": {
     "oracle": {
       "backend": "claude",
@@ -144,8 +144,8 @@ Agent-model mappings in `~/.codeagent/models.json`:
       "model": "claude-sonnet-4-6"
     },
     "frontend-ui-ux-engineer": {
-      "backend": "gemini",
-      "model": "gemini-3.1-pro-preview"
+      "backend": "claude",
+      "model": "claude-opus-4-6"
     },
     "document-writer": {
       "backend": "gemini",
@@ -157,7 +157,7 @@ Agent-model mappings in `~/.codeagent/models.json`:
     },
     "develop": {
       "backend": "codex",
-      "model": "gpt-5.3-codex",
+      "model": "gpt-5.4",
       "yolo": true,
       "reasoning": "xhigh"
     }

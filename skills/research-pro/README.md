@@ -60,11 +60,11 @@ Before invoking `format-writer` or `paper-downloader`, the orchestrator must:
 
 | Agent | Purpose | Backend | Model |
 |-------|---------|---------|-------|
-| `content-extractor` | Structured paper extraction (no evaluation) | codex | gpt-5.2 |
-| `paper-reviewer` | Paper review + reviewer response guidance | codex | gpt-5.2 |
-| `literature-scout` | Online literature search with verified links | codex | gpt-5.2 |
-| `literature-filter` | Screen and rank search results with tiered recommendations | codex | gpt-5.2 |
-| `paper-downloader` | Batch download paper PDFs from open-access sources | codex | gpt-5.2 |
+| `content-extractor` | Structured paper extraction (no evaluation) | codex | gpt-5.4 |
+| `paper-reviewer` | Paper review + reviewer response guidance | codex | gpt-5.4 |
+| `literature-scout` | Online literature search with verified links | codex | gpt-5.4 |
+| `literature-filter` | Screen and rank search results with tiered recommendations | codex | gpt-5.4 |
+| `paper-downloader` | Batch download paper PDFs from open-access sources | codex | gpt-5.4 |
 | `format-writer` | Generate formatted output documents | gemini | gemini-3-flash-preview |
 
 ## Hard Constraints
@@ -116,32 +116,32 @@ Agent-model mappings in `~/.codeagent/models.json`:
   "agents": {
     "content-extractor": {
       "backend": "codex",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
       "prompt_file": "~/.claude/skills/research-pro/references/content-extractor.md",
       "reasoning": "high"
     },
     "paper-reviewer": {
       "backend": "codex",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
       "prompt_file": "~/.claude/skills/research-pro/references/paper-reviewer.md",
       "reasoning": "xhigh"
     },
     "literature-scout": {
       "backend": "codex",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
       "prompt_file": "~/.claude/skills/research-pro/references/literature-scout.md",
       "yolo": true,
       "reasoning": "high"
     },
     "literature-filter": {
       "backend": "codex",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
       "prompt_file": "~/.claude/skills/research-pro/references/literature-filter.md",
       "reasoning": "high"
     },
     "paper-downloader": {
       "backend": "codex",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
       "prompt_file": "~/.claude/skills/research-pro/references/paper-downloader.md",
       "yolo": true,
       "reasoning": "high"

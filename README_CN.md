@@ -26,7 +26,7 @@ python install.py
 | [codeagent](skills/codeagent/SKILL.md) | 面向实现任务的精简技能，依赖 codeagent-wrapper | `skill:codeagent` 或 `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | 多智能体学术研究编排 | `/research-pro` 命令 |
 | [taste](skills/taste/) | 前端设计质量规则（skill 注入，供 `do-frontend` 使用） | `do` 的依赖 |
-| [cr](skills/cr/) | 代码审查清单 | `do` / `omo` 的依赖 |
+| [cr](skills/cr/README.md) | 自动代码审查，支持单智能体和多智能体模式 | `/cr` 命令 |
 | [spec](skills/spec/README.md) | Spec 驱动开发生命周期，4 阶段门控 | `/spec` 命令 |
 | [memory](skills/memory/README.md) | 双层结构化记忆系统（经验/知识） | `/exp-search`、`/exp-reflect`、`/exp-write` |
 | [project-init](skills/project-init/README.md) | 一次性项目初始化，创建 `.spec/` 目录结构 | `/project-init` 命令 |
@@ -42,7 +42,7 @@ python install.py
 | codeagent | 基于 codeagent-wrapper 的实现型技能 |
 | research-pro | 多智能体学术研究编排 |
 | taste | 前端设计质量规则 — 4 个可注入子技能（`taste-core`、`taste-output`、`taste-creative`、`taste-redesign`） |
-| cr | 代码审查清单与参考资料 |
+| cr | 自动代码审查 — 单智能体交互式修复或多智能体对抗式审查 + 自动修复 |
 | spec | Spec 驱动开发生命周期：意图确认 -> 设计规划 -> 实现 -> 收尾 |
 | memory | 双层结构化记忆 — 3 个技能（`exp-search`、`exp-reflect`、`exp-write`） |
 | project-init | 一次性 `.spec/` 目录初始化，含记忆索引和编码规则模板 |
@@ -80,6 +80,7 @@ python uninstall.py --module do,omo
   "modules": {
     "do": { "enabled": true },
     "omo": { "enabled": false },
+    "cr": { "enabled": true },
     "codeagent": { "enabled": false },
     "research-pro": { "enabled": true },
     "taste": { "enabled": true },
@@ -96,6 +97,7 @@ python uninstall.py --module do,omo
 |------|------|
 | 功能开发（默认） | `/do` |
 | Bug 调查与修复 | `/omo` |
+| 代码审查（分支 / PR / 文件） | `/cr` |
 | 论文阅读 / 论文审查 / 文献检索 | `/research-pro` |
 | 单轨实现任务 | `skill:codeagent` |
 | Spec 驱动的功能开发 | `/spec` |
@@ -129,6 +131,7 @@ python uninstall.py --module do,omo
 │   ├── omo/
 │   ├── research-pro/
 │   ├── codeagent/
+│   ├── cr/
 │   ├── spec/
 │   ├── project-init/
 │   ├── exp-search/

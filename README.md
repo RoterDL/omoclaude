@@ -27,7 +27,7 @@ Original upstream project: https://github.com/cexll/myclaude
 | [codeagent](skills/codeagent/SKILL.md) | Focused implementation skill using codeagent-wrapper | `skill:codeagent` or `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | Multi-agent academic research orchestration | `/research-pro` command |
 | [taste](skills/taste/) | Frontend design quality rules (skill injection for `do-frontend`) | Dependency of `do` |
-| [cr](skills/cr/) | Code review checklists | Dependency of `do` / `omo` |
+| [cr](skills/cr/README.md) | Automated code review with single-agent and multi-agent modes | `/cr` command |
 | [spec](skills/spec/README.md) | Spec-driven development lifecycle with gate-controlled phases | `/spec` command |
 | [memory](skills/memory/README.md) | Dual-layer structured memory system (experience/knowledge) | `/exp-search`, `/exp-reflect`, `/exp-write` |
 | [project-init](skills/project-init/README.md) | One-time project initialization for `.spec/` directory structure | `/project-init` command |
@@ -43,7 +43,7 @@ Installable skills in this repository:
 | codeagent | Focused implementation with codeagent-wrapper |
 | research-pro | Multi-agent academic research orchestration |
 | taste | Frontend design quality rules — 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) |
-| cr | Code review checklists and references |
+| cr | Automated code review — single-agent interactive fix or multi-agent adversarial review with auto-fix |
 | spec | Spec-driven development lifecycle: Intent -> Plan -> Implement -> End |
 | memory | Dual-layer structured memory — 3 skills (`exp-search`, `exp-reflect`, `exp-write`) |
 | project-init | One-time `.spec/` directory initialization with memory indexes and coding rules |
@@ -81,6 +81,7 @@ Edit `config.json` to enable/disable modules:
   "modules": {
     "do": { "enabled": true },
     "omo": { "enabled": false },
+    "cr": { "enabled": true },
     "codeagent": { "enabled": false },
     "research-pro": { "enabled": true },
     "taste": { "enabled": true },
@@ -97,6 +98,7 @@ Edit `config.json` to enable/disable modules:
 |----------|-------------|
 | Feature development (default) | `/do` |
 | Bug investigation + fix | `/omo` |
+| Code review (branch / PR / files) | `/cr` |
 | Academic paper reading / review / literature search | `/research-pro` |
 | Focused single-track implementation | `skill:codeagent` |
 | Spec-driven feature development | `/spec` |
@@ -130,6 +132,7 @@ Edit `config.json` to enable/disable modules:
 │   ├── omo/
 │   ├── research-pro/
 │   ├── codeagent/
+│   ├── cr/
 │   ├── spec/
 │   ├── project-init/
 │   ├── exp-search/

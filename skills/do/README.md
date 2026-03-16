@@ -225,12 +225,14 @@ Required when using `agent:` in parallel tasks or `--agent`. The installer write
     },
     "do-develop": {
       "backend": "codex",
-      "model": "gpt-5.3-codex",
-      "prompt_file": "~/.claude/skills/do/agents/do-develop.md"
+      "model": "gpt-5.4",
+      "prompt_file": "~/.claude/skills/do/agents/do-develop.md",
+      "reasoning": "xhigh",
+      "yolo": true
     },
     "do-frontend": {
-      "backend": "gemini",
-      "model": "gemini-3.1-pro-preview",
+      "backend": "claude",
+      "model": "claude-opus-4-6",
       "prompt_file": "~/.claude/skills/do/agents/do-frontend.md"
     }
   }

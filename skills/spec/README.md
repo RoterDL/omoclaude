@@ -10,7 +10,7 @@ python install.py --module spec
 
 Installs:
 - `~/.claude/skills/spec/` - skill files, sub-skills, scripts, references
-- `spec-planner` and `spec-tester` agent presets merged into `~/.codeagent/models.json`
+- `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-code-reviewer`, and `spec-tester` agent presets merged into `~/.codeagent/models.json`
 - Automatically installs `memory` dependency
 
 ## Usage
@@ -60,6 +60,9 @@ spec/
   SKILL.md                         # Main skill prompt
   README.md                        # This file
   references/
+    spec-explorer.md               # spec-explorer agent prompt
+    plan-reviewer.md               # plan-reviewer agent prompt
+    spec-code-reviewer.md          # spec-code-reviewer agent prompt
     spec-planner.md                # spec-planner agent prompt
     spec-tester.md                 # spec-tester agent prompt
     plan-template.md               # plan.md template
@@ -81,7 +84,10 @@ spec/
 | `code-architect` | do | Architecture design |
 | `do-develop` | do | Backend implementation |
 | `do-frontend` | do | Frontend implementation (with taste skills) |
+| `spec-explorer` | spec | Self-contained codebase analysis for spec planning |
 | `spec-planner` | spec | Design specification authoring |
+| `plan-reviewer` | spec | Automated plan.md review before user confirmation |
+| `spec-code-reviewer` | spec | Post-implementation code review (Codex-based) |
 | `spec-tester` | spec | Test execution and reporting |
 
 ## State Management
