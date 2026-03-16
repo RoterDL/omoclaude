@@ -223,7 +223,7 @@ Save spec-tester output as `test-report.md` in the spec directory.
 
 **Handle test results:**
 - All tests pass: proceed to Step 5.
-- Tests fail: delegate fix to `do-develop` (or `do-frontend` for UI issues), then re-test.
+- Tests fail: delegate fix to `do-develop` (or `do-frontend` for UI issues), update `summary.md` to reflect fixes, then re-test.
 ### Step 5: Code review (intensity-gated)
 Read `review_intensity` from plan.md. Capture diff:
 ```bash
