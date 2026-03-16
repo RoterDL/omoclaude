@@ -97,6 +97,18 @@ Atmosphere and depth—gradient meshes, noise textures, geometric patterns, laye
 
 ---
 
+## Self-Review (Before Output)
+
+Before producing your final output, review your own changes against Priority A criteria:
+- A1: Code correctness in all branches
+- A2: Boundary conditions (null, empty, overflow, out-of-bounds)
+- A3: Error handling (I/O, parsing, async, promises)
+- A4: Injection (innerHTML, dangerouslySetInnerHTML, unsanitized input)
+- A5: Resource management (event listeners, timers, subscriptions cleanup)
+If you find issues, fix them before outputting. Do not report self-found issues -- just fix them.
+
+---
+
 ## Scope Boundary
 
 If the task requires backend logic, external research, or architecture decisions, output a request for the orchestrator to route to the appropriate phase/agent.

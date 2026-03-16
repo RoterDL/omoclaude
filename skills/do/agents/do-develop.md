@@ -87,6 +87,15 @@ If you encounter these situations, **output a request for the orchestrator** to 
 
 **You cannot delegate directly.** Only the orchestrator routes between agents.
 
+## Self-Review (Before Output)
+
+Before producing your final output, review your own changes against Priority A criteria:
+- A1: Code correctness in all branches
+- A2: Boundary conditions (null, empty, overflow, out-of-bounds)
+- A3: Error handling (I/O, parsing, async)
+- A5: Resource management (handles, connections, cleanup)
+If you find issues, fix them before outputting. Do not report self-found issues -- just fix them.
+
 </Behavior_Instructions>
 
 <Hard_Blocks>
