@@ -25,10 +25,18 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 -> Phase 3: Implementation -> worktree decision -> route spec-develop/spec-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
 -> Phase 4: Wrap-up -> /exp-reflect (intensity-gated) -> archive -> update-phase end
 ```
+## Script Path Resolution (cross-platform)
+All commands below use `$SPEC_MGR` for the spec-manager.py path and `$CAPTURE_DIFF` for capture-diff.sh. Since shell state does not persist between Bash tool calls, **prepend this resolution to every Bash invocation** that uses these variables:
+```bash
+SPEC_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/spec-manager.py'))")"
+CAPTURE_DIFF="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/capture-diff.sh'))")"
+```
+Do NOT use `$HOME` directly — it resolves incorrectly on Windows Git Bash.
+For stdin-based writes (`update-body`, `write-artifact`), prefer `--file <tempfile>` over pipe to avoid Windows encoding issues.
 ## Initialization (on /spec trigger)
 When triggered via `/spec <task>`:
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" create --category features --title "<task description>"
+python "$SPEC_MGR" create --category features --title "<task description>"
 ```
 This creates a spec directory under `.spec/03-features/` (or appropriate category) with a `.current-spec` pointer.
 ## Trivial Detection (before Phase 1)
@@ -104,13 +112,10 @@ Complete plan.md ready for user review.
 EOF
 ```
 ### Step 4: Write plan.md
-Pipe the `spec-planner` output through `update-body` to preserve frontmatter, then advance phase:
+Write the `spec-planner` output to a temp file, then use `update-body --file` to preserve frontmatter:
 ```bash
-echo '<spec-planner output>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-body
-# Or from a file:
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-body --file /tmp/plan-body.md
-
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase plan
+python "$SPEC_MGR" update-body --file /tmp/plan-body.md
+python "$SPEC_MGR" update-phase plan
 ```
 Do NOT overwrite `plan.md` directly via Write/cp; direct overwrites break the YAML frontmatter.
 ### Step 5: Plan review (intensity-gated)
@@ -135,7 +140,7 @@ EOF
 **Result handling by intensity:**
 - Save via:
 ```bash
-echo '<plan-reviewer output>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" write-artifact plan-review.md
+python "$SPEC_MGR" write-artifact plan-review.md --file /tmp/plan-review.md
 ```
 - **standard**: Proceed to Step 6 regardless of BLOCKING count (user decides at gate).
 - **full**: Initialize revision counter at 0.
@@ -158,7 +163,7 @@ Develop in a separate worktree? (Isolates changes from main branch)
 ```
 If user chooses worktree:
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" enable-worktree
+python "$SPEC_MGR" enable-worktree
 # Save the DO_WORKTREE_DIR from output
 ```
 If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>` to all Phase 3 `codeagent-wrapper` invocations below (per Hard Constraint #5).
@@ -197,12 +202,12 @@ EOF
 **Fullstack (parallel)**: Use `codeagent-wrapper --parallel` with two `---TASK---` blocks following the same template structure. Backend task uses `spec-develop`, frontend task uses `spec-frontend` with `skills: taste-core,taste-output`. Each task's Acceptance Criteria should end with `Summary: <one sentence>`.
 After implementation completes:
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase implement
+python "$SPEC_MGR" update-phase implement
 ```
 ### Step 3: Generate summary.md
 Summarize: implemented scope, key files changed, test updates. Save via:
 ```bash
-echo '<summary content>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" write-artifact summary.md
+python "$SPEC_MGR" write-artifact summary.md --file /tmp/summary.md
 ```
 ### Step 4: Run tests
 ```bash
@@ -219,7 +224,7 @@ Test report with pass/fail counts, coverage info, and any issues found.
 EOF
 ```
 ```bash
-echo '<spec-tester output>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" write-artifact test-report.md
+python "$SPEC_MGR" write-artifact test-report.md --file /tmp/test-report.md
 ```
 **Handle test results:**
 - All tests pass: proceed to Step 5.
@@ -227,7 +232,7 @@ echo '<spec-tester output>' | python "$HOME/.claude/skills/spec/scripts/spec-man
 ### Step 5: Code review (intensity-gated)
 Read `review_intensity` from plan.md. Capture diff:
 ```bash
-DIFF_OUTPUT=$(bash "$HOME/.claude/skills/spec/scripts/capture-diff.sh")
+DIFF_OUTPUT=$(bash "$CAPTURE_DIFF")
 ```
 Count changed lines and files. If actual counts exceed the next tier's thresholds (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`), upgrade intensity.
 **light intensity**: Skip code review. Log "Code review skipped (light intensity; self-review + tests passed)." Proceed to Step 6.
@@ -253,7 +258,7 @@ Summary: BLOCKING=<n>, MINOR=<n>.
 EOF
 ```
 ```bash
-echo '<review output>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" write-artifact review-report.md
+python "$SPEC_MGR" write-artifact review-report.md --file /tmp/review-report.md
 ```
 **Result handling:**
 - **standard**: If BLOCKING > 0, present to user via `AskUserQuestion` for guidance. Proceed to Step 6.
@@ -261,7 +266,7 @@ echo '<review output>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.
 ### Step 6: Completion gate
 Use `AskUserQuestion` to confirm test and review results with the user.
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase test  # marks implementation+testing complete
+python "$SPEC_MGR" update-phase test  # marks implementation+testing complete
 ```
 ## Phase 4: Wrap-up
 **If trivial**: Skip Step 1 (experience reflection).
@@ -280,7 +285,7 @@ The orchestrator reads spec artifacts (`plan.md`, `summary.md`, `review-report.m
 Present findings to user via `AskUserQuestion`. After confirmation:
 1. Save local artifact:
 ```bash
-echo '<reflection content>' | python "$HOME/.claude/skills/spec/scripts/spec-manager.py" write-artifact experience-reflection.md
+python "$SPEC_MGR" write-artifact experience-reflection.md --file /tmp/experience-reflection.md
 ```
 2. Persist to project memory indexes via Skill tool:
    - Call `/exp-write type=experience` for dilemma-strategy pairs
@@ -294,11 +299,11 @@ Use `AskUserQuestion`:
 - "Keep spec in current location"
 ### Step 3: Archive (if confirmed)
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
+python "$SPEC_MGR" archive
 ```
 This moves the spec directory to `.spec/06-archived/`.
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase end
+python "$SPEC_MGR" update-phase end
 ```
 ### Step 4: Completion summary
 ```

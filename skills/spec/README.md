@@ -95,14 +95,17 @@ spec/
 ## State Management
 
 ```bash
+# Resolve script path (cross-platform, required on Windows)
+SPEC_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/spec-manager.py'))")"
+
 # Check current spec status
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" status
+python "$SPEC_MGR" status
 
 # List all specs
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" list
+python "$SPEC_MGR" list
 
 # Archive current spec
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
+python "$SPEC_MGR" archive
 ```
 
 State tracked via `.spec/.current-spec` pointer file.
@@ -123,12 +126,23 @@ State tracked via `.spec/.current-spec` pointer file.
 | Item | Linux/macOS | Windows |
 |------|-------------|---------|
 | `spec-manager.py` | Fully supported | Fully supported |
-| `$HOME` in SKILL.md | Bash `$HOME` | PowerShell `$HOME` (auto variable) |
+| Script path | `$HOME` or `expanduser` | `expanduser` only (see note) |
 | Heredoc `<<'EOF'` | Bash native | Not supported in PowerShell (see note) |
 | codeagent-wrapper | Fully supported | Fully supported |
-| File encoding | UTF-8 | UTF-8 |
+| stdin pipe encoding | UTF-8 | Use `--file` flag (see note) |
 
-**Windows heredoc note**: SKILL.md examples use Bash heredoc syntax (`<<'EOF'`) to pipe multi-line input to `codeagent-wrapper`. On Windows (PowerShell), Claude Code will adapt to platform-appropriate syntax (here-strings or temp files). The Python scripts (`spec-manager.py`) have no platform-specific issues.
+**Windows path note**: `$HOME` resolves incorrectly in Windows Git Bash (may point to Git installation directory instead of user home). Always use Python's `os.path.expanduser` to resolve the script path:
+```bash
+SPEC_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/spec-manager.py'))")"
+```
+
+**Windows encoding note**: Piping content via stdin (`echo '...' | python spec-manager.py update-body`) can corrupt UTF-8 encoding on Windows due to code page mismatches. Use the `--file` flag instead:
+```bash
+python "$SPEC_MGR" update-body --file /tmp/plan-body.md
+python "$SPEC_MGR" write-artifact summary.md --file /tmp/summary.md
+```
+
+**Windows heredoc note**: SKILL.md examples use Bash heredoc syntax (`<<'EOF'`) to pipe multi-line input to `codeagent-wrapper`. On Windows (PowerShell), Claude Code will adapt to platform-appropriate syntax (here-strings or temp files).
 
 ## Uninstall
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 # capture-diff.sh — Capture tracked and untracked changes for code review
-# Usage: DIFF_OUTPUT=$(bash "$HOME/.claude/skills/spec/scripts/capture-diff.sh")
+# Usage: CAPTURE_DIFF="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/capture-diff.sh'))")"
+#        DIFF_OUTPUT=$(bash "$CAPTURE_DIFF")
 # Env: DO_WORKTREE_DIR (optional) — if set, operates on the worktree directory
 
 if [ -n "$DO_WORKTREE_DIR" ]; then

@@ -21,6 +21,26 @@ import subprocess
 import sys
 from datetime import datetime
 
+
+def _read_stdin_safe() -> str:
+    """Read stdin with robust encoding for Windows pipe compatibility.
+
+    On Windows, piped stdin may use the system code page (e.g. cp936) instead of UTF-8,
+    producing surrogate characters that fail on re-encoding. This function forces UTF-8
+    with surrogate replacement.
+    """
+    if sys.platform == "win32":
+        try:
+            sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
+        try:
+            return sys.stdin.read()
+        except UnicodeDecodeError:
+            raw = sys.stdin.buffer.read()
+            return raw.decode("utf-8", errors="replace")
+    return sys.stdin.read()
+
 # Directory constants
 DIR_SPEC = ".spec"
 FILE_CURRENT_SPEC = ".spec/.current-spec"
@@ -501,7 +521,7 @@ def update_body(body_file: str | None) -> bool:
             with open(body_file, "r", encoding="utf-8") as f:
                 new_body = f.read()
         else:
-            new_body = sys.stdin.read()
+            new_body = _read_stdin_safe()
     except Exception as e:
         print(f"Error reading body: {e}", file=sys.stderr)
         return False
@@ -569,7 +589,7 @@ def write_artifact(filename: str, content_file: str | None) -> bool:
             with open(content_file, "r", encoding="utf-8") as f:
                 content = f.read()
         else:
-            content = sys.stdin.read()
+            content = _read_stdin_safe()
     except Exception as e:
         print(f"Error reading content: {e}", file=sys.stderr)
         return False

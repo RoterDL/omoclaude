@@ -40,7 +40,7 @@ Use `AskUserQuestion`:
 ### Step 4: Archive (if confirmed)
 
 ```bash
-python "$HOME/.claude/skills/spec/scripts/spec-manager.py" archive
+SPEC_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/spec-manager.py'))")" && python "$SPEC_MGR" archive
 ```
 
 This moves the spec directory to `.spec/06-archived/` and clears the `.current-spec` pointer.
