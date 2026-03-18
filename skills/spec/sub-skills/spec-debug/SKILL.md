@@ -1,6 +1,6 @@
 ---
 name: spec-debug
-description: Problem diagnosis and fix delegation sub-skill. Diagnoses issues found during spec execution, creates debug documents for traceability, and delegates fixes to codeagent-wrapper --agent do-develop (or do-frontend for UI issues). Does NOT modify confirmed plan.md. Forms feedback loop with spec-test.
+description: Problem diagnosis and fix delegation sub-skill. Diagnoses issues found during spec execution, creates debug documents for traceability, and delegates fixes to codeagent-wrapper --agent spec-develop (or spec-frontend for UI issues). Does NOT modify confirmed plan.md. Forms feedback loop with spec-test.
 allowed-tools: ["Bash", "Read", "Write", "AskUserQuestion", "Glob", "Grep"]
 ---
 
@@ -19,7 +19,7 @@ spec-test finds bug
     -> spec-debug receives report
     -> Diagnose -> debug-xxx.md
     -> User confirms diagnosis
-    -> Delegate fix to codeagent-wrapper --agent do-develop (or do-frontend)
+    -> Delegate fix to codeagent-wrapper --agent spec-develop (or spec-frontend)
     -> debug-xxx-fix.md (fix summary)
     -> spec-test re-verifies
 ```
@@ -87,7 +87,7 @@ After user confirms diagnosis, delegate the fix.
 
 **Backend fix:**
 ```bash
-codeagent-wrapper --agent do-develop - . <<'EOF'
+codeagent-wrapper --agent spec-develop - . <<'EOF'
 ## Context Pack
 - Plan: <paste plan.md content>
 - Debug diagnosis: <paste debug-xxx.md content>
@@ -105,7 +105,7 @@ EOF
 
 **Frontend fix:**
 ```bash
-codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
+codeagent-wrapper --agent spec-frontend --skills taste-core,taste-output - . <<'EOF'
 ## Context Pack
 - Plan: <paste plan.md content>
 - Debug diagnosis: <paste debug-xxx.md content>

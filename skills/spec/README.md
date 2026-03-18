@@ -10,7 +10,7 @@ python install.py --module spec
 
 Installs:
 - `~/.claude/skills/spec/` - skill files, sub-skills, scripts, references
-- `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-code-reviewer`, and `spec-tester` agent presets merged into `~/.codeagent/models.json`
+- `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-code-reviewer`, `spec-tester`, `spec-develop`, `spec-frontend`, and `spec-reviewer` agent presets merged into `~/.codeagent/models.json`
 - Automatically installs `memory` dependency
 
 ## Usage
@@ -41,8 +41,8 @@ Examples:
 
 | task_type | Agent(s) | Skills Injection |
 |-----------|----------|-----------------|
-| `backend_only` | `do-develop` | (none) |
-| `frontend_only` | `do-frontend` | `taste-core`, `taste-output` |
+| `backend_only` | `spec-develop` | (none) |
+| `frontend_only` | `spec-frontend` | `taste-core`, `taste-output` |
 | `fullstack` | both in parallel | frontend gets taste skills |
 
 ## Relationship to /do and /omo
@@ -51,7 +51,7 @@ Examples:
 - `/do` = code execution orchestration (session-scoped, 5-phase workflow)
 - `/omo` = signal-based agent routing (session-scoped, minimal agent set)
 
-Spec does NOT nest into `/do` or `/omo`. Implementation is always delegated directly to `codeagent-wrapper` agents (`do-develop`, `do-frontend`, `explore`, etc.).
+Spec does NOT nest into `/do` or `/omo`. Implementation is always delegated directly to `codeagent-wrapper` agents (`spec-develop`, `spec-frontend`, `explore`, etc.).
 
 ## Directory Structure
 
@@ -65,6 +65,9 @@ spec/
     spec-code-reviewer.md          # spec-code-reviewer agent prompt
     spec-planner.md                # spec-planner agent prompt
     spec-tester.md                 # spec-tester agent prompt
+    spec-develop.md                # spec-develop agent prompt
+    spec-frontend.md               # spec-frontend agent prompt
+    spec-reviewer.md               # spec-reviewer agent prompt
     plan-template.md               # plan.md template
   scripts/
     spec-manager.py                # Spec lifecycle CLI
@@ -80,10 +83,9 @@ spec/
 
 | Agent | Source Module | Purpose |
 |-------|-------------|---------|
-| `explore` | omo | Codebase analysis |
-| `code-architect` | do | Architecture design |
-| `do-develop` | do | Backend implementation |
-| `do-frontend` | do | Frontend implementation (with taste skills) |
+| `spec-develop` | spec | Backend implementation |
+| `spec-frontend` | spec | Frontend implementation (with taste skills) |
+| `spec-reviewer` | spec | Code review (standard intensity) |
 | `spec-explorer` | spec | Self-contained codebase analysis for spec planning |
 | `spec-planner` | spec | Design specification authoring |
 | `plan-reviewer` | spec | Automated plan.md review before user confirmation |
@@ -108,7 +110,6 @@ State tracked via `.spec/.current-spec` pointer file.
 ## Dependencies
 
 - `memory` module (for exp-search/exp-reflect integration)
-- `do` module agents (`do-develop`, `do-frontend`) for implementation
 - `taste` skills (`taste-core`, `taste-output`) injected into frontend tasks
 
 ## Prerequisites

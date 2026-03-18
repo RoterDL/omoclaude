@@ -289,6 +289,23 @@
           "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/spec/references/spec-tester.md",
           "yolo": true
+        },
+        "spec-develop": {
+          "backend": "codex",
+          "model": "gpt-5.4",
+          "prompt_file": "~/.claude/skills/spec/references/spec-develop.md",
+          "reasoning": "xhigh",
+          "yolo": true
+        },
+        "spec-frontend": {
+          "backend": "claude",
+          "model": "claude-opus-4-6",
+          "prompt_file": "~/.claude/skills/spec/references/spec-frontend.md"
+        },
+        "spec-reviewer": {
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
+          "prompt_file": "~/.claude/skills/spec/references/spec-reviewer.md"
         }
       },
       "operations": [

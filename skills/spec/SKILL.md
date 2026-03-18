@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Spec-driven development lifecycle with gate-controlled phases. Manages design documents (plan.md), test plans, implementation delegation, and archival. Triggers on /spec <task description>. Orchestrates spec-planner, spec-tester agents via codeagent-wrapper, and delegates implementation to do-develop/do-frontend agents with frontend/backend routing.
+description: Spec-driven development lifecycle with gate-controlled phases. Manages design documents (plan.md), test plans, implementation delegation, and archival. Triggers on /spec <task description>. Orchestrates spec-planner, spec-tester agents via codeagent-wrapper, and delegates implementation to spec-develop/spec-frontend agents with frontend/backend routing.
 allowed-tools: ["Bash(~/.claude/skills/spec/scripts/spec-manager.py:*)", "Bash(~/.claude/skills/spec/scripts/capture-diff.sh:*)", "Bash(codeagent-wrapper:*)", "AskUserQuestion", "Read", "Glob", "Grep", "Skill(exp-write:*)", "Skill(exp-reflect:*)"]
 ---
 # spec - Spec-Driven Development Lifecycle
@@ -10,8 +10,8 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
 2. **Gate control.** Each phase transition requires user confirmation via `AskUserQuestion`.
 3. **Document everything.** Each phase produces persistent artifacts in the spec directory.
-4. **Reuse existing agents.** Reuse existing agents where possible: `do-develop`, `do-frontend`, `do-reviewer`, `spec-code-reviewer` for implementation; `spec-explorer`, `spec-planner`, `plan-reviewer` for planning and review; `spec-tester` for testing.
-5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that operate in the worktree (`do-develop`, `do-frontend`, `do-reviewer`, `spec-code-reviewer`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
+4. **Reuse existing agents.** Reuse existing agents where possible: `spec-develop`, `spec-frontend`, `spec-reviewer`, `spec-code-reviewer` for implementation; `spec-explorer`, `spec-planner`, `plan-reviewer` for planning and review; `spec-tester` for testing.
+5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that operate in the worktree (`spec-develop`, `spec-frontend`, `spec-reviewer`, `spec-code-reviewer`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
 6. **Use `codeagent-wrapper` for all agent invocations.** All agent calls in Phase 2 and Phase 3 MUST go through `codeagent-wrapper` via Bash. Do NOT substitute Claude Code's built-in Agent/Explore tools.
 7. **Plan.md content must come from `spec-planner` agent** (exception: trivial complexity). ALWAYS use `spec-manager.py update-body` to preserve YAML frontmatter.
 8. **Review intensity governs review depth.** `spec-planner` sets `review_intensity` in plan.md Task Classification. Phase 2 plan review and Phase 3 code review depth scale with this setting. At `light`, external reviews are skipped (planner/implementer self-review + tests suffice). At `standard`, single-pass reviews with no iteration. At `full`, iterative reviews with max 2 rounds. The orchestrator may upgrade (never downgrade) intensity at Phase 3 based on actual diff size.
@@ -22,7 +22,7 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 -> Phase 1: Intent Confirmation -> restate, clarify, AskUserQuestion gate
 -> Complexity Triage -> light / standard / full
 -> Phase 2: Design & Planning -> exp-search -> spec-explorer -> spec-planner -> plan.md -> plan-reviewer (intensity-gated) -> gate
--> Phase 3: Implementation -> worktree decision -> route do-develop/do-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
+-> Phase 3: Implementation -> worktree decision -> route spec-develop/spec-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
 -> Phase 4: Wrap-up -> /exp-reflect (intensity-gated) -> archive -> update-phase end
 ```
 ## Initialization (on /spec trigger)
@@ -166,10 +166,10 @@ If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>` to all Pha
 Based on `plan.md` `task_type` classification:
 | task_type | Agent | Skills flag | Scope label |
 |-----------|-------|------------|-------------|
-| `backend_only` | `do-develop` | (none) | (omit) |
-| `frontend_only` | `do-frontend` | `--skills taste-core,taste-output` | "frontend" |
+| `backend_only` | `spec-develop` | (none) | (omit) |
+| `frontend_only` | `spec-frontend` | `--skills taste-core,taste-output` | "frontend" |
 | `fullstack` | both in parallel | frontend gets taste skills | "backend"/"frontend" |
-- Missing `task_type`: default to `do-develop`.
+- Missing `task_type`: default to `spec-develop`.
 - **Optional**: append `taste-creative` for creative/premium UI; `taste-redesign` for UI overhaul.
 Select **Review notice** based on `review_intensity`:
 - **light**: `**Review notice:** Your code will be validated by tests. Apply Priority A self-review before outputting.`
@@ -194,7 +194,7 @@ Implement {scope_label} changes according to plan.md. Follow existing patterns. 
 All plan items implemented. Tests pass.
 EOF
 ```
-**Fullstack (parallel)**: Use `codeagent-wrapper --parallel` with two `---TASK---` blocks following the same template structure. Backend task uses `do-develop`, frontend task uses `do-frontend` with `skills: taste-core,taste-output`. Each task's Acceptance Criteria should end with `Summary: <one sentence>`.
+**Fullstack (parallel)**: Use `codeagent-wrapper --parallel` with two `---TASK---` blocks following the same template structure. Backend task uses `spec-develop`, frontend task uses `spec-frontend` with `skills: taste-core,taste-output`. Each task's Acceptance Criteria should end with `Summary: <one sentence>`.
 After implementation completes:
 ```bash
 python "$HOME/.claude/skills/spec/scripts/spec-manager.py" update-phase implement
@@ -223,7 +223,7 @@ echo '<spec-tester output>' | python "$HOME/.claude/skills/spec/scripts/spec-man
 ```
 **Handle test results:**
 - All tests pass: proceed to Step 5.
-- Tests fail: delegate fix to `do-develop` (or `do-frontend` for UI issues), update `summary.md` to reflect fixes, then re-test.
+- Tests fail: delegate fix to `spec-develop` (or `spec-frontend` for UI issues), update `summary.md` to reflect fixes, then re-test.
 ### Step 5: Code review (intensity-gated)
 Read `review_intensity` from plan.md. Capture diff:
 ```bash
@@ -232,7 +232,7 @@ DIFF_OUTPUT=$(bash "$HOME/.claude/skills/spec/scripts/capture-diff.sh")
 Count changed lines and files. If actual counts exceed the next tier's thresholds (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`), upgrade intensity.
 **light intensity**: Skip code review. Log "Code review skipped (light intensity; self-review + tests passed)." Proceed to Step 6.
 **standard or full intensity**: Select reviewer and scope:
-- **standard**: agent=`do-reviewer`, scope="Priority A and B items ONLY. Skip Priority C (Conventions)."
+- **standard**: agent=`spec-reviewer`, scope="Priority A and B items ONLY. Skip Priority C (Conventions)."
 - **full**: agent=`spec-code-reviewer`, scope="all priorities: A (Correctness), B (Optimization), C (Conventions)."
 ```bash
 codeagent-wrapper --agent {reviewer_agent} - . <<'EOF'
@@ -321,4 +321,4 @@ Spec lifecycle complete:
   debug-*.md        # Debug documents (if issues found)
 ```
 ## Additional References
-- Related agents: `spec-explorer`, `spec-planner`, `plan-reviewer`, `do-develop`, `do-frontend`, `do-reviewer`, `spec-code-reviewer`, `spec-tester`.
+- Related agents: `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-develop`, `spec-frontend`, `spec-reviewer`, `spec-code-reviewer`, `spec-tester`.
