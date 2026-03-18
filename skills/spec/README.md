@@ -10,7 +10,7 @@ python install.py --module spec
 
 Installs:
 - `~/.claude/skills/spec/` - skill files, sub-skills, scripts, references
-- `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-code-reviewer`, `spec-tester`, `spec-develop`, `spec-frontend`, and `spec-reviewer` agent presets merged into `~/.codeagent/models.json`
+- `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-reviewer-deep`, `spec-tester`, `spec-develop`, `spec-frontend`, and `spec-reviewer-lite` agent presets merged into `~/.codeagent/models.json`
 - Automatically installs `memory` dependency
 
 ## Usage
@@ -62,12 +62,12 @@ spec/
   references/
     spec-explorer.md               # spec-explorer agent prompt
     plan-reviewer.md               # plan-reviewer agent prompt
-    spec-code-reviewer.md          # spec-code-reviewer agent prompt
+    spec-reviewer-deep.md          # spec-reviewer-deep agent prompt
     spec-planner.md                # spec-planner agent prompt
     spec-tester.md                 # spec-tester agent prompt
     spec-develop.md                # spec-develop agent prompt
     spec-frontend.md               # spec-frontend agent prompt
-    spec-reviewer.md               # spec-reviewer agent prompt
+    spec-reviewer-lite.md          # spec-reviewer-lite agent prompt
     plan-template.md               # plan.md template
   scripts/
     spec-manager.py                # Spec lifecycle CLI
@@ -85,11 +85,11 @@ spec/
 |-------|-------------|---------|
 | `spec-develop` | spec | Backend implementation |
 | `spec-frontend` | spec | Frontend implementation (with taste skills) |
-| `spec-reviewer` | spec | Code review (standard intensity) |
+| `spec-reviewer-lite` | spec | Code review (standard intensity) |
 | `spec-explorer` | spec | Self-contained codebase analysis for spec planning |
 | `spec-planner` | spec | Design specification authoring |
 | `plan-reviewer` | spec | Automated plan.md review before user confirmation |
-| `spec-code-reviewer` | spec | Post-implementation code review (Codex-based) |
+| `spec-reviewer-deep` | spec | Post-implementation code review (deep intensity, Codex-based) |
 | `spec-tester` | spec | Test execution and reporting |
 
 ## State Management

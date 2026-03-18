@@ -10,8 +10,8 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
 2. **Gate control.** Each phase transition requires user confirmation via `AskUserQuestion`.
 3. **Document everything.** Each phase produces persistent artifacts in the spec directory.
-4. **Reuse existing agents.** Reuse existing agents where possible: `spec-develop`, `spec-frontend`, `spec-reviewer`, `spec-code-reviewer` for implementation; `spec-explorer`, `spec-planner`, `plan-reviewer` for planning and review; `spec-tester` for testing.
-5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that operate in the worktree (`spec-develop`, `spec-frontend`, `spec-reviewer`, `spec-code-reviewer`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
+4. **Reuse existing agents.** Reuse existing agents where possible: `spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep` for implementation; `spec-explorer`, `spec-planner`, `plan-reviewer` for planning and review; `spec-tester` for testing.
+5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that operate in the worktree (`spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
 6. **Use `codeagent-wrapper` for all agent invocations.** All agent calls in Phase 2 and Phase 3 MUST go through `codeagent-wrapper` via Bash. Do NOT substitute Claude Code's built-in Agent/Explore tools.
 7. **Plan.md content must come from `spec-planner` agent** (exception: trivial complexity). ALWAYS use `spec-manager.py update-body` to preserve YAML frontmatter.
 8. **Review intensity governs review depth.** `spec-planner` sets `review_intensity` in plan.md Task Classification. Phase 2 plan review and Phase 3 code review depth scale with this setting. At `light`, external reviews are skipped (planner/implementer self-review + tests suffice). At `standard`, single-pass reviews with no iteration. At `full`, iterative reviews with max 2 rounds. The orchestrator may upgrade (never downgrade) intensity at Phase 3 based on actual diff size.
@@ -232,8 +232,8 @@ DIFF_OUTPUT=$(bash "$HOME/.claude/skills/spec/scripts/capture-diff.sh")
 Count changed lines and files. If actual counts exceed the next tier's thresholds (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`), upgrade intensity.
 **light intensity**: Skip code review. Log "Code review skipped (light intensity; self-review + tests passed)." Proceed to Step 6.
 **standard or full intensity**: Select reviewer and scope:
-- **standard**: agent=`spec-reviewer`, scope="Priority A and B items ONLY. Skip Priority C (Conventions)."
-- **full**: agent=`spec-code-reviewer`, scope="all priorities: A (Correctness), B (Optimization), C (Conventions)."
+- **standard**: agent=`spec-reviewer-lite`, scope="Priority A and B items ONLY. Skip Priority C (Conventions)."
+- **full**: agent=`spec-reviewer-deep`, scope="all priorities: A (Correctness), B (Optimization), C (Conventions)."
 ```bash
 codeagent-wrapper --agent {reviewer_agent} - . <<'EOF'
 ## Original User Request
@@ -321,4 +321,4 @@ Spec lifecycle complete:
   debug-*.md        # Debug documents (if issues found)
 ```
 ## Additional References
-- Related agents: `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-develop`, `spec-frontend`, `spec-reviewer`, `spec-code-reviewer`, `spec-tester`.
+- Related agents: `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep`, `spec-tester`.

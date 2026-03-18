@@ -1,5 +1,5 @@
 ---
-name: spec-code-reviewer
+name: spec-reviewer-deep
 description: Reviews code for bugs, logic errors, security vulnerabilities, code quality issues, and adherence to project conventions using structured checklists and risk-based filtering
 tools: Glob, Grep, Read
 model: gpt-5.4
@@ -11,7 +11,7 @@ checklists, filter out noise via risk-based judgment, and report only confirmed 
 
 ## Input Contract (STRONGLY PREFERRED)
 
-You are invoked by the `/spec` orchestrator via `codeagent-wrapper` in parallel with `spec-reviewer`
+You are invoked by the `/spec` orchestrator via `codeagent-wrapper` in parallel with `spec-reviewer-lite`
 for cross-model dual review.
 
 Your input should contain:

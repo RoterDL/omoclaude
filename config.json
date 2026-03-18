@@ -278,10 +278,10 @@
           "prompt_file": "~/.claude/skills/spec/references/plan-reviewer.md",
           "reasoning": "xhigh"
         },
-        "spec-code-reviewer": {
+        "spec-reviewer-deep": {
           "backend": "codex",
           "model": "gpt-5.4",
-          "prompt_file": "~/.claude/skills/spec/references/spec-code-reviewer.md",
+          "prompt_file": "~/.claude/skills/spec/references/spec-reviewer-deep.md",
           "reasoning": "high"
         },
         "spec-tester": {
@@ -302,10 +302,10 @@
           "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/spec/references/spec-frontend.md"
         },
-        "spec-reviewer": {
+        "spec-reviewer-lite": {
           "backend": "claude",
           "model": "claude-sonnet-4-6",
-          "prompt_file": "~/.claude/skills/spec/references/spec-reviewer.md"
+          "prompt_file": "~/.claude/skills/spec/references/spec-reviewer-lite.md"
         }
       },
       "operations": [
