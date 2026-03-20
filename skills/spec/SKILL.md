@@ -10,11 +10,15 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
 2. **Gate control.** Each phase transition requires user confirmation via `AskUserQuestion`.
 3. **Document everything.** Each phase produces persistent artifacts in the spec directory.
-4. **Reuse existing agents.** Reuse existing agents where possible: `spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep` for implementation; `spec-explorer`, `spec-planner`, `plan-reviewer` for planning and review; `spec-tester` for testing.
-5. **Defer worktree decision until Phase 3.** Only ask about worktree mode right before implementation. If enabled, prefix Phase 3 agent calls that operate in the worktree (`spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep`, `spec-tester`) with `DO_WORKTREE_DIR=<path>`.
-6. **Use `codeagent-wrapper` for all agent invocations.** All agent calls in Phase 2 and Phase 3 MUST go through `codeagent-wrapper` via Bash. Do NOT substitute Claude Code's built-in Agent/Explore tools.
-7. **Plan.md content must come from `spec-planner` agent** (exception: trivial complexity). ALWAYS use `spec-manager.py update-body` to preserve YAML frontmatter.
-8. **Review intensity governs review depth.** `spec-planner` sets `review_intensity` in plan.md Task Classification. Phase 2 plan review and Phase 3 code review depth scale with this setting. At `light`, external reviews are skipped (planner/implementer self-review + tests suffice). At `standard`, single-pass reviews with no iteration. At `full`, iterative reviews with max 2 rounds. The orchestrator may upgrade (never downgrade) intensity at Phase 3 based on actual diff size.
+4. **Reuse existing agents.** `spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep` for implementation; `spec-explorer`, `spec-planner`, `plan-reviewer` for planning/review; `spec-tester` for testing.
+5. **Defer worktree decision until Phase 3.** If enabled, prepend `DO_WORKTREE_DIR=<path>` to all Phase 3 `codeagent-wrapper` calls.
+6. **Use `codeagent-wrapper` for all agent invocations.** All agent calls MUST go through `codeagent-wrapper` via Bash. Do NOT use Claude Code's built-in Agent/Explore tools.
+7. **Plan.md content must come from `spec-planner` agent** (trivial exception). ALWAYS use `spec-manager.py update-body` to preserve YAML frontmatter.
+8. **Review intensity governs depth.** `spec-planner` sets `review_intensity` in plan.md. `light`: skip external reviews. `standard`: single-pass, no iteration. `full`: iterative, max 2 rounds. Orchestrator may upgrade (never downgrade) at Phase 3 based on actual diff size.
+9. **Agent failure handling.** If `codeagent-wrapper` fails (non-zero exit, timeout, empty output): check stderr, retry once if transient. If retry fails, surface to user via `AskUserQuestion`. Never silently skip a failed call.
+## Key References
+- **`references/routing-and-templates.md`**: Read when entering review steps (Phase 2 Step 5, Phase 3 Step 5) or fullstack implementation (Phase 3 Step 2). Contains task_type routing, fullstack split-merge, parameterized review pattern, and intensity-based result handling.
+- Agent prompts: `references/spec-explorer.md`, `spec-planner.md`, `plan-reviewer.md`, `spec-develop.md`, `spec-frontend.md`, `spec-reviewer-lite.md`, `spec-reviewer-deep.md`, `spec-tester.md`.
 ## Spec Lifecycle (4 Phases)
 ```text
 /spec <task description>
@@ -23,50 +27,47 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 -> Complexity Triage -> light / standard / full
 -> Phase 2: Design & Planning -> exp-search -> spec-explorer -> spec-planner -> plan.md -> plan-reviewer (intensity-gated) -> gate
 -> Phase 3: Implementation -> worktree decision -> route spec-develop/spec-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
--> Phase 4: Wrap-up -> /exp-reflect (intensity-gated) -> archive -> update-phase end
+-> Phase 4: Wrap-up -> worktree merge -> /exp-reflect (intensity-gated) -> archive -> end
 ```
 ## Script Path Resolution (cross-platform)
-All commands below use `$SPEC_MGR` for the spec-manager.py path and `$CAPTURE_DIFF` for capture-diff.sh. Since shell state does not persist between Bash tool calls, **prepend this resolution to every Bash invocation** that uses these variables:
+All commands use `$SPEC_MGR` and `$CAPTURE_DIFF`. Since shell state doesn't persist, **prepend this to every Bash invocation**:
 ```bash
 SPEC_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/spec-manager.py'))")"
 CAPTURE_DIFF="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/spec/scripts/capture-diff.sh'))")"
 ```
-Do NOT use `$HOME` directly — it resolves incorrectly on Windows Git Bash.
-For stdin-based writes (`update-body`, `write-artifact`), prefer `--file <tempfile>` over pipe to avoid Windows encoding issues.
+Do NOT use `$HOME` directly — fails on Windows Git Bash. Prefer `--file <tempfile>` over pipe for stdin-based writes.
 ## Initialization (on /spec trigger)
-When triggered via `/spec <task>`:
 ```bash
 python "$SPEC_MGR" create --category features --title "<task description>"
 ```
-This creates a spec directory under `.spec/03-features/` (or appropriate category) with a `.current-spec` pointer.
 ## Trivial Detection (before Phase 1)
-After initialization, check if the task is trivial before entering Phase 1:
-- **trivial**: single file named + typo/wording fix or user said "just do it" -> express-path
+After init, check if trivial: single file + typo/wording fix, or user said "just do it".
 
-If not trivial, proceed to Phase 1.
+**Trivial express-path** — consolidated skip rules:
 
-**Trivial express-path**: Skip Phase 1 and Complexity Triage. Phase 2: skip Steps 1-2, orchestrator writes minimal plan at Step 3 (HC#7 exception), skip Step 5, merge Step 6 gate with Phase 3 Step 6. Phase 3: skip Step 0/4/5. Phase 4: skip Step 1.
+| Phase | Skips |
+|-------|-------|
+| Phase 1 + Triage | Entirely skipped |
+| Phase 2 | Steps 1-2 (exp-search, explorer); Step 3: orchestrator writes minimal plan directly (HC#7 exception); Step 5 (review); Step 6 gate merged with Phase 3 gate |
+| Phase 3 | Step 0 (worktree), Step 4 (tester), Step 5 (code review) |
+| Phase 4 | Step 1 (worktree merge), Step 2 (experience reflection) |
+
 ## Phase 1: Intent Confirmation
-Use the intent-confirm sub-skill logic:
 1. Restate user's intent in concrete, actionable terms.
 2. List key understanding points.
 3. Identify ambiguities or multiple interpretations.
-4. Use `AskUserQuestion` to confirm:
-   - "Confirmed, proceed to planning"
-   - "Need to clarify" (with details)
+4. `AskUserQuestion` gate: "Confirmed, proceed to planning" / "Need to clarify" (with details)
 ## Complexity Triage (after Phase 1)
-Evaluate task before Phase 2. Produce `complexity_level` (non-trivial tasks only):
+Evaluate task before Phase 2. Produce `complexity_level`:
 - **light**: narrow scope, few files, low risk -> skip spec-explorer
 - **standard**: default
 - **full**: large scope, high risk, cross-cutting changes
-This is orchestrator judgment, independent of `review_intensity` (set later by `spec-planner`).
+
+Independent of `review_intensity` (set later by `spec-planner`).
 ## Phase 2: Design & Planning
-**If trivial**: Skip Steps 1-2; at Step 3, orchestrator writes minimal plan directly via `update-body`; skip Step 5; merge Step 6 with Phase 3 gate.
-Steps 1-4 and Step 6 are mandatory per Hard Constraints #6-#8. Step 5 (plan review) depth is governed by Hard Constraint #8 (`review_intensity`).
 ### Step 1: Search related experience
 Read `.spec/context/experience/index.md` and `.spec/context/knowledge/index.md` if they exist. Skip if `.spec/context/` absent.
-### Step 2: Explore codebase (via spec-explorer agent)
-Use `codeagent-wrapper --agent spec-explorer` via Bash. Do NOT replace it with the built-in Explore/Agent tool.
+### Step 2: Explore codebase (via spec-explorer)
 ```bash
 codeagent-wrapper --agent spec-explorer - . <<'EOF'
 ## Original User Request
@@ -84,8 +85,7 @@ Thoroughness: medium.
 Output: key files with line numbers, module map, existing patterns to follow.
 EOF
 ```
-### Step 3: Generate design spec (via spec-planner agent)
-Delegate `plan.md` content generation to `codeagent-wrapper --agent spec-planner`; do not author it yourself.
+### Step 3: Generate design spec (via spec-planner)
 ```bash
 codeagent-wrapper --agent spec-planner - . <<'EOF'
 ## Original User Request
@@ -97,153 +97,62 @@ codeagent-wrapper --agent spec-planner - . <<'EOF'
 - Existing spec context: <paste or "None">
 
 ## Current Task
-Create a design specification (plan.md) including:
-1. Overview (background, goals, scope)
-2. Requirements analysis
-3. Design approach (with alternatives considered)
-4. Implementation steps (file touch list)
-5. Task classification
-6. Risks and dependencies
-7. Non-goals
-**Review & self-review:** Plan will be reviewed by plan-reviewer (7-area checklist); BLOCKING issues trigger revision. Self-check all sections for completeness and specificity before outputting.
-Output the full plan.md content.
+Create design specification (plan.md) with: Overview, Requirements, Design approach, Implementation steps, Task classification, Risks, Non-goals.
+**Self-review:** Check all sections for completeness and specificity before outputting.
+
 ## Acceptance Criteria
 Complete plan.md ready for user review.
 EOF
 ```
 ### Step 4: Write plan.md
-Write the `spec-planner` output to a temp file, then use `update-body --file` to preserve frontmatter:
+Write planner output to temp file, then:
 ```bash
 python "$SPEC_MGR" update-body --file /tmp/plan-body.md
 python "$SPEC_MGR" update-phase plan
 ```
-Do NOT overwrite `plan.md` directly via Write/cp; direct overwrites break the YAML frontmatter.
+Do NOT overwrite `plan.md` directly — breaks YAML frontmatter.
 ### Step 5: Plan review (intensity-gated)
-Read plan.md Task Classification to get `review_intensity`. If missing, default to `standard`.
-**light intensity**: Skip plan-reviewer. Log "Plan review skipped (light intensity)." Proceed to Step 6.
-Read `task_type` from plan.md Task Classification. Route review backend by task_type:
-| task_type | --backend flag |
-|-----------|----------------|
-| `backend_only` (or missing) | `--backend codex` |
-| `frontend_only` | `--backend claude` |
-| `fullstack` | both (see below) |
-**standard or full intensity**: Invoke plan-reviewer with the routed backend.
-- **`backend_only` or missing**:
-```bash
-codeagent-wrapper --agent plan-reviewer --backend codex - . <<'EOF'
-## Original User Request
-<user request>
+Read `review_intensity` from plan.md Task Classification. Default to `standard` if missing.
 
-## Context Pack
-- Plan: <paste plan.md content>
+**light**: Skip. Log "Plan review skipped (light intensity)." Go to Step 6.
 
-## Current Task
-Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
-
-## Acceptance Criteria
-Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-- **`frontend_only`**:
-```bash
-codeagent-wrapper --agent plan-reviewer --backend claude - . <<'EOF'
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-
-## Current Task
-Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
-
-## Acceptance Criteria
-Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-- **`fullstack`**: Run both reviews, then merge both outputs into `/tmp/plan-review.md` before saving:
-```bash
-codeagent-wrapper --agent plan-reviewer --backend claude - . <<'EOF' > /tmp/plan-review-frontend.md
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-
-## Current Task
-Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
-Review frontend aspects only.
-
-## Acceptance Criteria
-Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-```bash
-codeagent-wrapper --agent plan-reviewer --backend codex - . <<'EOF' > /tmp/plan-review-backend.md
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md content>
-
-## Current Task
-Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
-Review backend aspects only.
-
-## Acceptance Criteria
-Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-```bash
-{
-  printf '## Frontend Review\n\n'
-  cat /tmp/plan-review-frontend.md
-  printf '\n## Backend Review\n\n'
-  cat /tmp/plan-review-backend.md
-} > /tmp/plan-review.md
-```
-**Result handling by intensity:**
-- Save via:
-```bash
-python "$SPEC_MGR" write-artifact plan-review.md --file /tmp/plan-review.md
-```
-- **standard**: Proceed to Step 6 regardless of BLOCKING count (user decides at gate).
-- **full**: Initialize revision counter at 0.
-  - **BLOCKING=0**: proceed to Step 6.
-  - **BLOCKING>0 and iteration < 2**: re-invoke `spec-planner` with reviewer feedback appended to Context Pack, re-write `plan.md` via `update-body`, then re-run the routed plan-reviewer call(s).
-  - **BLOCKING>0 and iteration >= 2**: present to user via `AskUserQuestion` for guidance.
+**standard or full**: Read `references/routing-and-templates.md`, then apply the **Review Invocation Pattern** with:
+- agent: `plan-reviewer`
+- artifact: `plan-review.md`
+- context: plan.md content
+- task: "Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues."
+- acceptance: "Issue report with BLOCKING/MINOR classification. Summary: BLOCKING=\<n\>, MINOR=\<n\>."
+- Apply task_type routing for backend selection.
+- Apply intensity-based result handling (see reference).
 ### Step 6: User confirmation gate
-Present `plan.md` to the user. Use `AskUserQuestion`:
-- "Approve design and proceed to implementation"
-- "Revise design" (with feedback)
+Present `plan.md` to user. `AskUserQuestion`: "Approve design and proceed to implementation" / "Revise design" (with feedback).
 **Do NOT proceed to Phase 3 until user explicitly approves.**
 ## Phase 3: Implementation
-**If trivial**: Skip Step 0 (no worktree), Step 4 (spec-tester), Step 5 (code review).
 ### Step 0: Decide on worktree mode (ONLY NOW)
-Use `AskUserQuestion` to ask:
-```text
-Develop in a separate worktree? (Isolates changes from main branch)
-- Yes (Recommended for larger changes)
-- No (Work directly in current directory)
-```
-If user chooses worktree:
+`AskUserQuestion`:
+- "Yes, use worktree (Recommended for larger changes)"
+- "No, work directly in current directory"
+
+If yes:
 ```bash
 python "$SPEC_MGR" enable-worktree
-# Save the DO_WORKTREE_DIR from output
+# Save DO_WORKTREE_DIR from output; prepend to all Phase 3 codeagent-wrapper calls per HC#5
 ```
-If worktree mode is enabled, prepend `DO_WORKTREE_DIR=<worktree_dir>` to all Phase 3 `codeagent-wrapper` invocations below (per Hard Constraint #5).
 ### Step 1: Determine implementation strategy
-Based on `plan.md` `task_type` classification:
-| task_type | Agent | Skills flag | Scope label |
-|-----------|-------|------------|-------------|
-| `backend_only` | `spec-develop` | (none) | (omit) |
-| `frontend_only` | `spec-frontend` | `--skills taste-core,taste-output` | "frontend" |
-| `fullstack` | both in parallel | frontend gets taste skills | "backend"/"frontend" |
-- Missing `task_type`: default to `spec-develop`.
-- **Optional**: append `taste-creative` for creative/premium UI; `taste-redesign` for UI overhaul.
-Select **Review notice** based on `review_intensity`:
-- **light**: `**Review notice:** Your code will be validated by tests. Apply Priority A self-review before outputting.`
-- **standard**: `**Review notice:** After implementation, your code will be reviewed (Priority A/B). Write clean, correct code.`
-- **full**: `**Review notice:** After implementation, your code will undergo thorough review (Priority A/B/C). Write clean, correct, minimal code.`
+Based on plan.md `task_type`:
+
+| task_type | Agent | Skills flag |
+|-----------|-------|------------|
+| `backend_only` (default) | `spec-develop` | (none) |
+| `frontend_only` | `spec-frontend` | `--skills taste-core,taste-output` |
+| `fullstack` | both in parallel | frontend gets taste skills |
+
+Optional: append `taste-creative` for premium UI; `taste-redesign` for UI overhaul.
+
+Select **review notice** by `review_intensity`:
+- **light**: "Your code will be validated by tests. Apply Priority A self-review before outputting."
+- **standard**: "After implementation, your code will be reviewed (Priority A/B). Write clean, correct code."
+- **full**: "After implementation, your code will undergo thorough review (Priority A/B/C). Write clean, correct, minimal code."
 ### Step 2: Execute implementation
 **Single agent** (backend_only or frontend_only):
 ```bash
@@ -256,20 +165,22 @@ codeagent-wrapper --agent {agent} {skills_flag} - . <<'EOF'
 - Explore output: <paste>
 
 ## Current Task
-Implement {scope_label} changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
+Implement changes according to plan.md. Follow existing patterns. Add/adjust tests per plan.
 {review_notice}
 
 ## Acceptance Criteria
 All plan items implemented. Tests pass.
 EOF
 ```
-**Fullstack (parallel)**: Use `codeagent-wrapper --parallel` with two `---TASK---` blocks following the same template structure. Backend task uses `spec-develop`, frontend task uses `spec-frontend` with `skills: taste-core,taste-output`. Each task's Acceptance Criteria should end with `Summary: <one sentence>`.
-After implementation completes:
+
+**Fullstack**: Read `references/routing-and-templates.md` "Fullstack Parallel Implementation" section. Use `--parallel` with two `---TASK---` blocks (backend via `spec-develop`, frontend via `spec-frontend` with taste skills).
+
+After implementation:
 ```bash
 python "$SPEC_MGR" update-phase implement
 ```
 ### Step 3: Generate summary.md
-Summarize: implemented scope, key files changed, test updates. Save via:
+Summarize: implemented scope, key files changed, test updates. Save:
 ```bash
 python "$SPEC_MGR" write-artifact summary.md --file /tmp/summary.md
 ```
@@ -290,165 +201,68 @@ EOF
 ```bash
 python "$SPEC_MGR" write-artifact test-report.md --file /tmp/test-report.md
 ```
-**Handle test results:**
-- All tests pass: proceed to Step 5.
-- Tests fail: delegate fix to `spec-develop` (or `spec-frontend` for UI issues), update `summary.md` to reflect fixes, then re-test.
+Tests fail: delegate fix to `spec-develop` (or `spec-frontend` for UI), update `summary.md`, re-test.
 ### Step 5: Code review (intensity-gated)
 Read `review_intensity` from plan.md. Capture diff:
 ```bash
 DIFF_OUTPUT=$(bash "$CAPTURE_DIFF")
 ```
-Count changed lines and files. If actual counts exceed the next tier's thresholds (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`), upgrade intensity.
-**light intensity**: Skip code review. Log "Code review skipped (light intensity; self-review + tests passed)." Proceed to Step 6.
-Read `task_type` from plan.md Task Classification. Route review backend by task_type:
-| task_type | --backend flag |
-|-----------|----------------|
-| `backend_only` (or missing) | `--backend codex` |
-| `frontend_only` | `--backend claude` |
-| `fullstack` | both (see below) |
-**standard or full intensity**: Select reviewer, scope, and backend routing:
-- **standard**: agent=`spec-reviewer-lite`, scope="Priority A and B items ONLY. Skip Priority C (Conventions)."
-- **full**: agent=`spec-reviewer-deep`, scope="all priorities: A (Correctness), B (Optimization), C (Conventions)."
-- **`backend_only` or missing**:
-```bash
-codeagent-wrapper --agent {reviewer_agent} --backend codex - . <<'EOF'
-## Original User Request
-<user request>
+Count changed lines/files. Upgrade intensity if thresholds exceeded (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`).
 
-## Context Pack
-- Plan: <paste plan.md>
-- Summary: <paste summary.md>
-- Diff: <paste DIFF_OUTPUT>
+**light**: Skip. Log "Code review skipped (light intensity; self-review + tests passed)."
 
-## Current Task
-Review implementation against plan.md.
-**Scope: Review {scope_line}.**
-
-## Acceptance Criteria
-Summary: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-- **`frontend_only`**:
-```bash
-codeagent-wrapper --agent {reviewer_agent} --backend claude - . <<'EOF'
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md>
-- Summary: <paste summary.md>
-- Diff: <paste DIFF_OUTPUT>
-
-## Current Task
-Review implementation against plan.md.
-**Scope: Review {scope_line}.**
-
-## Acceptance Criteria
-Summary: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-- **`fullstack`**: Run both reviews, then merge both outputs into `/tmp/review-report.md` before saving:
-```bash
-codeagent-wrapper --agent {reviewer_agent} --backend claude - . <<'EOF' > /tmp/review-report-frontend.md
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md>
-- Summary: <paste summary.md>
-- Diff: <paste DIFF_OUTPUT>
-
-## Current Task
-Review implementation against plan.md.
-**Scope: Review {scope_line}. Frontend scope only.**
-
-## Acceptance Criteria
-Summary: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-```bash
-codeagent-wrapper --agent {reviewer_agent} --backend codex - . <<'EOF' > /tmp/review-report-backend.md
-## Original User Request
-<user request>
-
-## Context Pack
-- Plan: <paste plan.md>
-- Summary: <paste summary.md>
-- Diff: <paste DIFF_OUTPUT>
-
-## Current Task
-Review implementation against plan.md.
-**Scope: Review {scope_line}. Backend scope only.**
-
-## Acceptance Criteria
-Summary: BLOCKING=<n>, MINOR=<n>.
-EOF
-```
-```bash
-{
-  printf '## Frontend Review\n\n'
-  cat /tmp/review-report-frontend.md
-  printf '\n## Backend Review\n\n'
-  cat /tmp/review-report-backend.md
-} > /tmp/review-report.md
-```
-```bash
-python "$SPEC_MGR" write-artifact review-report.md --file /tmp/review-report.md
-```
-**Result handling:**
-- **standard**: If BLOCKING > 0, present to user via `AskUserQuestion` for guidance. Proceed to Step 6.
-- **full**: Initialize `review_iteration=0`. BLOCKING=0 -> proceed. BLOCKING>0 and iteration<2 -> delegate fixes, re-capture diff, then re-run the routed review call(s). BLOCKING>0 and iteration>=2 -> present to user.
+**standard or full**: Read `references/routing-and-templates.md`, then apply the **Review Invocation Pattern** with:
+- agent: `spec-reviewer-lite` (standard) or `spec-reviewer-deep` (full)
+- artifact: `review-report.md`
+- context: plan.md + summary.md + DIFF_OUTPUT
+- task: "Review implementation against plan.md."
+- scope: standard="Priority A and B items ONLY. Skip Priority C." / full="all priorities: A (Correctness), B (Optimization), C (Conventions)."
+- acceptance: "Summary: BLOCKING=\<n\>, MINOR=\<n\>."
+- Apply task_type routing for backend selection.
+- Apply intensity-based result handling (see reference). For standard, if BLOCKING > 0, present to user via `AskUserQuestion`.
 ### Step 6: Completion gate
-Use `AskUserQuestion` to confirm test and review results with the user.
+`AskUserQuestion` to confirm test and review results with the user.
 ```bash
 python "$SPEC_MGR" update-phase test  # marks implementation+testing complete
 ```
 ## Phase 4: Wrap-up
-**If trivial**: Skip Step 1 (experience reflection).
 ### Step 0: Verify completion
-Read the spec directory and verify expected artifacts exist:
-- `plan.md` (confirmed)
-- `summary.md` (implementation complete)
-- `test-report.md` (tests passed; skipped for trivial express-path)
-- `review-report.md` (if review was run)
-If any critical artifact is missing, prompt the user to confirm whether to continue.
-### Step 1: Experience reflection (intensity-gated)
-For `standard` and `full` intensity, this step is **mandatory**. For `light` intensity, default to skip (offer "Run anyway" as secondary choice).
-The orchestrator reads spec artifacts (`plan.md`, `summary.md`, `review-report.md`, `test-report.md`) and extracts reusable lessons:
-1. **Experience (dilemma-strategy pairs)**: implementation problems and resolutions, BLOCKING issues and fix strategies
-2. **Knowledge (project understanding)**: architecture patterns, code conventions
-Present findings to user via `AskUserQuestion`. After confirmation:
-1. Save local artifact:
+Check artifacts exist: `plan.md` (confirmed), `summary.md`, `test-report.md` (skip for trivial), `review-report.md` (if review ran). Prompt user if critical artifact missing.
+### Step 1: Worktree merge (if enabled)
+If worktree was enabled in Phase 3:
+1. Verify all changes are committed in the worktree.
+2. `AskUserQuestion`: "Merge worktree changes to main branch" / "Keep worktree for manual merge" / "Discard worktree changes"
+3. If merge: switch to main repo, merge worktree branch, clean up worktree directory.
+4. If keep: log worktree path for user reference.
+### Step 2: Experience reflection (intensity-gated)
+For `standard`/`full`: mandatory. For `light`: default skip (offer "Run anyway").
+
+The orchestrator reads spec artifacts (`plan.md`, `summary.md`, `review-report.md`, `test-report.md`) and extracts:
+1. **Experience** (dilemma-strategy pairs): implementation problems, BLOCKING resolutions
+2. **Knowledge** (project understanding): architecture patterns, conventions
+
+After user confirmation:
 ```bash
 python "$SPEC_MGR" write-artifact experience-reflection.md --file /tmp/experience-reflection.md
 ```
-2. Persist to project memory indexes via Skill tool:
-   - Call `/exp-write type=experience` for dilemma-strategy pairs
-   - Call `/exp-write type=knowledge` for project understanding
-Use `AskUserQuestion`:
-- For standard/full: "Run experience extraction now" (recommended) / "Skip"
-- For light: "Skip experience extraction (light task)" (recommended) / "Run anyway"
-### Step 2: Archive confirmation
-Use `AskUserQuestion`:
-- "Archive spec and optionally commit"
-- "Keep spec in current location"
-### Step 3: Archive (if confirmed)
+Persist via `/exp-write type=experience` and `/exp-write type=knowledge`.
+### Step 3: Archive confirmation
+`AskUserQuestion`: "Archive spec and optionally commit" / "Keep spec in current location"
+### Step 4: Archive (if confirmed)
 ```bash
 python "$SPEC_MGR" archive
-```
-This moves the spec directory to `.spec/06-archived/`.
-```bash
 python "$SPEC_MGR" update-phase end
 ```
-### Step 4: Completion summary
+### Step 5: Completion summary
 ```
 Spec lifecycle complete:
 - Plan: plan.md (confirmed)
 - Implementation: summary.md
 - Review: review-report.md [pass/iterations]
-- Tests: test-report.md [passed/failed/skipped for trivial]
-- Experience: [captured N items / skipped (reason)]
-- Archive: [archived to 06-archived/ / kept in place]
+- Tests: test-report.md [passed/failed/skipped]
+- Experience: [captured N items / skipped]
+- Worktree: [merged / kept / discarded / not used]
+- Archive: [archived / kept in place]
 ```
 ## Spec Directory Structure
 ```text
@@ -460,5 +274,3 @@ Spec lifecycle complete:
   test-report.md    # Test results (Phase 3)
   debug-*.md        # Debug documents (if issues found)
 ```
-## Additional References
-- Related agents: `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-develop`, `spec-frontend`, `spec-reviewer-lite`, `spec-reviewer-deep`, `spec-tester`.
