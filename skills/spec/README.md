@@ -9,7 +9,7 @@ python install.py --module spec
 ```
 
 Installs:
-- `~/.claude/skills/spec/` - skill files, sub-skills, scripts, references
+- `~/.claude/skills/spec/` - skill files, scripts, references
 - `spec-explorer`, `spec-planner`, `plan-reviewer`, `spec-reviewer-deep`, `spec-tester`, `spec-develop`, `spec-frontend`, and `spec-reviewer-lite` agent presets merged into `~/.codeagent/models.json`
 - Automatically installs `memory` dependency
 
@@ -71,12 +71,6 @@ spec/
     plan-template.md               # plan.md template
   scripts/
     spec-manager.py                # Spec lifecycle CLI
-  sub-skills/
-    intent-confirm/SKILL.md        # Phase 1: intent confirmation
-    spec-plan/SKILL.md             # Phase 2: design planning
-    spec-test/SKILL.md             # Phase 3: test execution
-    spec-debug/SKILL.md            # Issue diagnosis + fix delegation
-    spec-end/SKILL.md              # Phase 4: archive + experience capture
 ```
 
 ## Agents

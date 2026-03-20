@@ -1,17 +1,10 @@
-# know-002: Spec Sub-skills — Exist but Not Invoked
+# know-002: Spec Sub-skills — Removed
 
 ## Type
 Code Analysis
 
 ## Content
-Five sub-skill files exist under `skills/spec/sub-skills/`:
-- `intent-confirm/SKILL.md` — Phase 1 logic
-- `spec-plan/SKILL.md` — Phase 2 logic
-- `spec-test/SKILL.md` — Phase 3 test logic
-- `spec-debug/SKILL.md` — Issue diagnosis and fix delegation
-- `spec-end/SKILL.md` — Archival and experience capture
-
-These are NOT invoked by the main SKILL.md orchestrator. The main file inlines their logic directly. They exist as reference/modular documentation. The Additional References section mentions them for discoverability.
+Previously five sub-skill files existed under `skills/spec/sub-skills/` (intent-confirm, spec-plan, spec-test, spec-debug, spec-end). They were never invoked by the main SKILL.md orchestrator — all logic was inlined. Removed entirely on 2026-03-20.
 
 ## Keywords
-sub-skills, spec, intent-confirm, spec-debug, spec-end, modular
+sub-skills, spec, cleanup
