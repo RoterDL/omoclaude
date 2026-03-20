@@ -29,12 +29,12 @@
           "backend": "codex",
           "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/omo/references/develop.md",
-          "reasoning": "xhigh",
+          "reasoning": "high",
           "yolo": true
         },
         "frontend-ui-ux-engineer": {
-          "backend": "claude",
-          "model": "claude-opus-4-6",
+          "backend": "gemini",
+          "model": "gemini-3.1-pro-preview",
           "prompt_file": "~/.claude/skills/omo/references/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
@@ -66,7 +66,7 @@
           "backend": "codex",
           "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/do/agents/do-develop.md",
-          "reasoning": "xhigh",
+          "reasoning": "high",
           "yolo": true
         },
         "code-explorer": {
@@ -90,8 +90,8 @@
           "prompt_file": "~/.claude/skills/do/agents/do-summarizer.md"
         },
         "do-frontend": {
-          "backend": "claude",
-          "model": "claude-opus-4-6",
+          "backend": "gemini",
+          "model": "gemini-3.1-pro-preview",
           "prompt_file": "~/.claude/skills/do/agents/do-frontend.md"
         }
       },
@@ -276,7 +276,7 @@
           "backend": "codex",
           "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/spec/references/plan-reviewer.md",
-          "reasoning": "xhigh"
+          "reasoning": "high"
         },
         "spec-reviewer-deep": {
           "backend": "codex",
@@ -294,12 +294,12 @@
           "backend": "codex",
           "model": "gpt-5.4",
           "prompt_file": "~/.claude/skills/spec/references/spec-develop.md",
-          "reasoning": "xhigh",
+          "reasoning": "high",
           "yolo": true
         },
         "spec-frontend": {
-          "backend": "claude",
-          "model": "claude-opus-4-6",
+          "backend": "gemini",
+          "model": "gemini-3.1-pro-preview",
           "prompt_file": "~/.claude/skills/spec/references/spec-frontend.md"
         },
         "spec-reviewer-lite": {
