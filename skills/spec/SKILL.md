@@ -121,9 +121,16 @@ Do NOT overwrite `plan.md` directly via Write/cp; direct overwrites break the YA
 ### Step 5: Plan review (intensity-gated)
 Read plan.md Task Classification to get `review_intensity`. If missing, default to `standard`.
 **light intensity**: Skip plan-reviewer. Log "Plan review skipped (light intensity)." Proceed to Step 6.
-**standard or full intensity**: Invoke plan-reviewer:
+Read `task_type` from plan.md Task Classification. Route review backend by task_type:
+| task_type | --backend flag |
+|-----------|----------------|
+| `backend_only` (or missing) | `--backend codex` |
+| `frontend_only` | `--backend claude` |
+| `fullstack` | both (see below) |
+**standard or full intensity**: Invoke plan-reviewer with the routed backend.
+- **`backend_only` or missing**:
 ```bash
-codeagent-wrapper --agent plan-reviewer - . <<'EOF'
+codeagent-wrapper --agent plan-reviewer --backend codex - . <<'EOF'
 ## Original User Request
 <user request>
 
@@ -137,6 +144,63 @@ Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
 Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
 EOF
 ```
+- **`frontend_only`**:
+```bash
+codeagent-wrapper --agent plan-reviewer --backend claude - . <<'EOF'
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+
+## Current Task
+Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
+
+## Acceptance Criteria
+Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+- **`fullstack`**: Run both reviews, then merge both outputs into `/tmp/plan-review.md` before saving:
+```bash
+codeagent-wrapper --agent plan-reviewer --backend claude - . <<'EOF' > /tmp/plan-review-frontend.md
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+
+## Current Task
+Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
+Review frontend aspects only.
+
+## Acceptance Criteria
+Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+```bash
+codeagent-wrapper --agent plan-reviewer --backend codex - . <<'EOF' > /tmp/plan-review-backend.md
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md content>
+
+## Current Task
+Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues.
+Review backend aspects only.
+
+## Acceptance Criteria
+Issue report with BLOCKING/MINOR classification. Summary line: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+```bash
+{
+  printf '## Frontend Review\n\n'
+  cat /tmp/plan-review-frontend.md
+  printf '\n## Backend Review\n\n'
+  cat /tmp/plan-review-backend.md
+} > /tmp/plan-review.md
+```
 **Result handling by intensity:**
 - Save via:
 ```bash
@@ -145,7 +209,7 @@ python "$SPEC_MGR" write-artifact plan-review.md --file /tmp/plan-review.md
 - **standard**: Proceed to Step 6 regardless of BLOCKING count (user decides at gate).
 - **full**: Initialize revision counter at 0.
   - **BLOCKING=0**: proceed to Step 6.
-  - **BLOCKING>0 and iteration < 2**: re-invoke `spec-planner` with reviewer feedback appended to Context Pack, re-write `plan.md` via `update-body`, re-review.
+  - **BLOCKING>0 and iteration < 2**: re-invoke `spec-planner` with reviewer feedback appended to Context Pack, re-write `plan.md` via `update-body`, then re-run the routed plan-reviewer call(s).
   - **BLOCKING>0 and iteration >= 2**: present to user via `AskUserQuestion` for guidance.
 ### Step 6: User confirmation gate
 Present `plan.md` to the user. Use `AskUserQuestion`:
@@ -236,11 +300,18 @@ DIFF_OUTPUT=$(bash "$CAPTURE_DIFF")
 ```
 Count changed lines and files. If actual counts exceed the next tier's thresholds (>3 files or >100 lines -> at least `standard`; >10 files or >500 lines -> `full`), upgrade intensity.
 **light intensity**: Skip code review. Log "Code review skipped (light intensity; self-review + tests passed)." Proceed to Step 6.
-**standard or full intensity**: Select reviewer and scope:
+Read `task_type` from plan.md Task Classification. Route review backend by task_type:
+| task_type | --backend flag |
+|-----------|----------------|
+| `backend_only` (or missing) | `--backend codex` |
+| `frontend_only` | `--backend claude` |
+| `fullstack` | both (see below) |
+**standard or full intensity**: Select reviewer, scope, and backend routing:
 - **standard**: agent=`spec-reviewer-lite`, scope="Priority A and B items ONLY. Skip Priority C (Conventions)."
 - **full**: agent=`spec-reviewer-deep`, scope="all priorities: A (Correctness), B (Optimization), C (Conventions)."
+- **`backend_only` or missing**:
 ```bash
-codeagent-wrapper --agent {reviewer_agent} - . <<'EOF'
+codeagent-wrapper --agent {reviewer_agent} --backend codex - . <<'EOF'
 ## Original User Request
 <user request>
 
@@ -257,12 +328,76 @@ Review implementation against plan.md.
 Summary: BLOCKING=<n>, MINOR=<n>.
 EOF
 ```
+- **`frontend_only`**:
+```bash
+codeagent-wrapper --agent {reviewer_agent} --backend claude - . <<'EOF'
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md>
+- Summary: <paste summary.md>
+- Diff: <paste DIFF_OUTPUT>
+
+## Current Task
+Review implementation against plan.md.
+**Scope: Review {scope_line}.**
+
+## Acceptance Criteria
+Summary: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+- **`fullstack`**: Run both reviews, then merge both outputs into `/tmp/review-report.md` before saving:
+```bash
+codeagent-wrapper --agent {reviewer_agent} --backend claude - . <<'EOF' > /tmp/review-report-frontend.md
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md>
+- Summary: <paste summary.md>
+- Diff: <paste DIFF_OUTPUT>
+
+## Current Task
+Review implementation against plan.md.
+**Scope: Review {scope_line}. Frontend scope only.**
+
+## Acceptance Criteria
+Summary: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+```bash
+codeagent-wrapper --agent {reviewer_agent} --backend codex - . <<'EOF' > /tmp/review-report-backend.md
+## Original User Request
+<user request>
+
+## Context Pack
+- Plan: <paste plan.md>
+- Summary: <paste summary.md>
+- Diff: <paste DIFF_OUTPUT>
+
+## Current Task
+Review implementation against plan.md.
+**Scope: Review {scope_line}. Backend scope only.**
+
+## Acceptance Criteria
+Summary: BLOCKING=<n>, MINOR=<n>.
+EOF
+```
+```bash
+{
+  printf '## Frontend Review\n\n'
+  cat /tmp/review-report-frontend.md
+  printf '\n## Backend Review\n\n'
+  cat /tmp/review-report-backend.md
+} > /tmp/review-report.md
+```
 ```bash
 python "$SPEC_MGR" write-artifact review-report.md --file /tmp/review-report.md
 ```
 **Result handling:**
 - **standard**: If BLOCKING > 0, present to user via `AskUserQuestion` for guidance. Proceed to Step 6.
-- **full**: Initialize `review_iteration=0`. BLOCKING=0 -> proceed. BLOCKING>0 and iteration<2 -> delegate fixes, re-capture diff, re-review. BLOCKING>0 and iteration>=2 -> present to user.
+- **full**: Initialize `review_iteration=0`. BLOCKING=0 -> proceed. BLOCKING>0 and iteration<2 -> delegate fixes, re-capture diff, then re-run the routed review call(s). BLOCKING>0 and iteration>=2 -> present to user.
 ### Step 6: Completion gate
 Use `AskUserQuestion` to confirm test and review results with the user.
 ```bash
