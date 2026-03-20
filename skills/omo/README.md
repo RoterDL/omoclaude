@@ -173,6 +173,39 @@ Agent-model mappings in `~/.codeagent/models.json`:
 4. **No external docs guessing** - use `librarian`
 5. **Use fewest agents possible** - skipping is normal
 
+## Analysis Archival
+
+Optionally persist analysis and development results for cross-session reference.
+
+### Save an analysis
+
+```bash
+OMO_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/omo/scripts/omo-manager.py'))")"
+python "$OMO_MGR" save --title "Fix auth bug" --agents "explore,develop" --task-type development --file /tmp/omo-analysis.md
+```
+
+### List saved analyses
+
+```bash
+python "$OMO_MGR" list --limit 10
+```
+
+### Cross-session recovery
+
+1. Run `list` to find the target analysis
+2. Read `.spec/07-analysis/<dir>/analysis.md`
+3. Include content in the Context Pack for subsequent agents
+
+### Directory structure
+
+```
+.spec/07-analysis/
+  20260320-1430-fix-auth-bug/
+    analysis.md          # YAML frontmatter + structured body
+  20260319-0900-add-stripe/
+    analysis.md
+```
+
 ## Requirements
 
 - codeagent-wrapper with `--agent` support

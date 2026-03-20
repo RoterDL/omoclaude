@@ -69,7 +69,7 @@ Each skill lives under `skills/<name>/` with a `SKILL.md` (the prompt loaded by 
 | Skill | Trigger | Description |
 |-------|---------|-------------|
 | `do` | `/do` | 5-phase feature development (Understand -> Clarify -> Design -> Implement -> Complete). Orchestrates `code-explorer`, `code-architect`, `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`. Has its own hooks (`stop-hook.py`, `verify-loop.py`) and state management (`scripts/task.py`). |
-| `omo` | `/omo` | Signal-based routing to agents: `explore`, `librarian`, `oracle`, `develop`, `frontend-ui-ux-engineer`, `document-writer`, `code-reviewer`. Routing-first, not a fixed pipeline. |
+| `omo` | `/omo` | Signal-based routing to agents: `explore`, `librarian`, `oracle`, `develop`, `frontend-ui-ux-engineer`, `document-writer`, `code-reviewer`. Routing-first, not a fixed pipeline. Optional analysis archival to `.spec/07-analysis/`. |
 | `codeagent` | `skill:codeagent` | Thin wrapper for direct `codeagent-wrapper` invocation |
 | `research-pro` | `/research-pro` | Academic paper reading, review, literature search with `content-extractor`, `paper-reviewer`, `literature-scout`, etc. |
 | `cr` | (dependency) | Code review checklists; auto-installed as dependency of `do` and `omo` |
@@ -123,6 +123,10 @@ codeagent-wrapper/
 - `exp-write`: Persistence to `.spec/context/experience/` and `.spec/context/knowledge/` with index updates
 
 Memory is independent of spec/do/omo and can be used from any workflow. Files use English naming: `exp-001-websocket-timeout.md`, `know-001-project-architecture.md`.
+
+### Analysis Archival
+
+`/omo` can optionally archive session outputs to `.spec/07-analysis/{YYYYMMDD-HHMM-slug}/analysis.md`. Managed by `skills/omo/scripts/omo-manager.py` (save/list). Archives are for cross-session reference; develop agents do not read them automatically.
 
 ## Commit Convention
 

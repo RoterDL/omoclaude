@@ -21,6 +21,7 @@ SPEC_DIRS = [
     ".spec/04-bugfix",
     ".spec/05-testing",
     ".spec/06-archived",
+    ".spec/07-analysis",
     ".spec/context/experience",
     ".spec/context/knowledge",
 ]
