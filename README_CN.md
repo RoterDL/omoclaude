@@ -25,7 +25,7 @@ python install.py
 | [omo](skills/omo/README.md) | 多智能体编排 + 智能路由 | `/omo` 命令 |
 | [codeagent](skills/codeagent/SKILL.md) | 面向实现任务的精简技能，依赖 codeagent-wrapper | `skill:codeagent` 或 `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | 多智能体学术研究编排 | `/research-pro` 命令 |
-| [taste](skills/taste/) | 前端设计质量规则（skill 注入，供 `do-frontend` 使用） | `do` 的依赖 |
+| [taste](skills/taste/) | 前端设计质量规则 — 规划阶段设计范式 + 实现阶段代码护栏 | `do` 的依赖 |
 | [cr](skills/cr/README.md) | 自动代码审查，支持单智能体和多智能体模式 | `/cr` 命令 |
 | [spec](skills/spec/README.md) | Spec 驱动开发生命周期，4 阶段门控 | `/spec` 命令 |
 | [memory](skills/memory/README.md) | 双层结构化记忆系统（经验/知识） | `/exp-search`、`/exp-reflect`、`/exp-write` |
@@ -41,7 +41,7 @@ python install.py
 | omo | 多智能体编排工作流 |
 | codeagent | 基于 codeagent-wrapper 的实现型技能 |
 | research-pro | 多智能体学术研究编排 |
-| taste | 前端设计质量规则 — 4 个可注入子技能（`taste-core`、`taste-output`、`taste-creative`、`taste-redesign`） |
+| taste | 前端设计质量规则 — 6 个可注入子技能：规划阶段（`taste-creative`、`taste-brutalist`、`taste-minimalist`）+ 实现阶段（`taste-core`、`taste-output`、`taste-redesign`） |
 | cr | 自动代码审查 — 单智能体交互式修复或多智能体对抗式审查 + 自动修复 |
 | spec | Spec 驱动开发生命周期：意图确认 -> 设计规划 -> 实现 -> 收尾 |
 | memory | 双层结构化记忆 — 3 个技能（`exp-search`、`exp-reflect`、`exp-write`） |
@@ -140,7 +140,9 @@ python uninstall.py --module do,omo
 │   ├── taste-core/
 │   ├── taste-output/
 │   ├── taste-creative/
-│   └── taste-redesign/
+│   ├── taste-redesign/
+│   ├── taste-brutalist/
+│   └── taste-minimalist/
 ├── settings.json          (自动生成，hooks 配置)
 └── installed_modules.json (自动生成，记录已装模块)
 ```

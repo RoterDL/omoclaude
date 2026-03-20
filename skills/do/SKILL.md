@@ -195,8 +195,15 @@ Note: `codeagent-wrapper --parallel` defaults to structured summary output. Avoi
 
 This `code-architect` invocation must use the Bash tool's `run_in_background: true` parameter. After starting it, use `TaskOutput` to wait for completion and read back the design result. Example Bash tool usage around this command: set `run_in_background: true` on the Bash call, then read the completed output via `TaskOutput` before presenting the design to the user.
 
+**Taste skill injection (plan phase):** For tasks involving frontend UI, inject design paradigm skills into the architect so design decisions appear in the design output:
+- Default creative/premium UI: `--skills taste-creative`
+- Industrial/brutalist style: `--skills taste-creative,taste-brutalist`
+- Minimalist/editorial style: `--skills taste-creative,taste-minimalist`
+- Backend-only tasks: no `--skills`
+
 ```bash
-codeagent-wrapper --agent code-architect - . <<'EOF'
+# Example: frontend task with creative design paradigm
+codeagent-wrapper --agent code-architect --skills taste-creative - . <<'EOF'
 Design minimal-change implementation:
 - Reuse existing abstractions
 - Minimize new files
@@ -207,6 +214,7 @@ Output:
 - Build sequence
 - Test plan
 - Risks and mitigations
+- **Design Specification**: paradigm choice, color palette, typography, layout approach, motion strategy, component patterns
 
 Include a `## Task Classification` section:
 - `task_type`: "backend_only" | "frontend_only" | "fullstack"
@@ -255,7 +263,8 @@ python "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
 - `frontend_only`: invoke only `do-frontend` agent with `--skills taste-core,taste-output`
 - `fullstack`: invoke both agents in parallel; `do-frontend` with `--skills taste-core,taste-output`, `do-develop` without `--skills`
 - Missing `task_type`: default to `do-develop` agent only
-- **Optional add-on:** When the task is explicitly creative/premium UI, append `taste-creative`; when it is a UI redesign/overhaul, append `taste-redesign`
+- **Optional implement-phase add-on:** Append `taste-redesign` for existing UI overhaul tasks
+- Note: design paradigm skills (`taste-creative`, `taste-brutalist`, `taste-minimalist`) are injected in Phase 3 (design), not here
 
 For full-stack projects, split into backend/frontend tasks with per-task `skills:` injection. Use `--parallel` when tasks can be split; use single agent when the change is small or single-domain.
 
@@ -325,8 +334,9 @@ EOF
 # Without worktree: remove DO_WORKTREE_DIR prefix
 ```
 
-Note: `do-frontend` invocations always inject `taste-core,taste-output`.
-Append `taste-creative` for creative/premium UI tasks; append `taste-redesign` for existing UI overhaul tasks.
+Note: `do-frontend` invocations always inject `taste-core,taste-output` (implement-phase guardrails).
+Append `taste-redesign` for existing UI overhaul tasks.
+Design paradigm skills (`taste-creative`, `taste-brutalist`, `taste-minimalist`) are injected into `code-architect` in Phase 3 (design phase), not into implementation agents.
 `do-develop` does not use `--skills`; auto-detect handles tech stack skills.
 
 **Step 3: Configure verification commands (Recommended)**

@@ -25,6 +25,21 @@ The following patterns are hard failures. Never produce them:
 2. **Build** — Generate every deliverable completely. No partial drafts, no "you can extend this later."
 3. **Cross-check** — Before output, re-read the original request. Compare your deliverable count against the scope count. If anything is missing, add it before responding.
 
+## Handling Long Outputs
+
+When a response approaches the token limit:
+
+- Do not compress remaining sections to squeeze them in.
+- Do not skip ahead to a conclusion.
+- Write at full quality up to a clean breakpoint (end of a function, end of a file, end of a section).
+- End with:
+
+```
+[PAUSED — X of Y complete. Send "continue" to resume from: next section name]
+```
+
+On "continue", pick up exactly where you stopped. No recap, no repetition.
+
 ## Quick Check
 
 Before finalizing any response, verify:

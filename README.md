@@ -26,7 +26,7 @@ Original upstream project: https://github.com/cexll/myclaude
 | [omo](skills/omo/README.md) | Multi-agent orchestration with intelligent routing | `/omo` command |
 | [codeagent](skills/codeagent/SKILL.md) | Focused implementation skill using codeagent-wrapper | `skill:codeagent` or `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | Multi-agent academic research orchestration | `/research-pro` command |
-| [taste](skills/taste/) | Frontend design quality rules (skill injection for `do-frontend`) | Dependency of `do` |
+| [taste](skills/taste/) | Frontend design quality rules — plan-phase paradigms + implement-phase guardrails | Dependency of `do` |
 | [cr](skills/cr/README.md) | Automated code review with single-agent and multi-agent modes | `/cr` command |
 | [spec](skills/spec/README.md) | Spec-driven development lifecycle with gate-controlled phases | `/spec` command |
 | [memory](skills/memory/README.md) | Dual-layer structured memory system (experience/knowledge) | `/exp-search`, `/exp-reflect`, `/exp-write` |
@@ -42,7 +42,7 @@ Installable skills in this repository:
 | omo | Multi-agent orchestration workflow |
 | codeagent | Focused implementation with codeagent-wrapper |
 | research-pro | Multi-agent academic research orchestration |
-| taste | Frontend design quality rules — 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) |
+| taste | Frontend design quality rules — 6 injectable sub-skills: plan-phase (`taste-creative`, `taste-brutalist`, `taste-minimalist`) + implement-phase (`taste-core`, `taste-output`, `taste-redesign`) |
 | cr | Automated code review — single-agent interactive fix or multi-agent adversarial review with auto-fix |
 | spec | Spec-driven development lifecycle: Intent -> Plan -> Implement -> End |
 | memory | Dual-layer structured memory — 3 skills (`exp-search`, `exp-reflect`, `exp-write`) |
@@ -141,7 +141,9 @@ Edit `config.json` to enable/disable modules:
 │   ├── taste-core/
 │   ├── taste-output/
 │   ├── taste-creative/
-│   └── taste-redesign/
+│   ├── taste-redesign/
+│   ├── taste-brutalist/
+│   └── taste-minimalist/
 ├── settings.json          (auto-generated, hooks config)
 └── installed_modules.json (auto-generated, tracks modules)
 ```

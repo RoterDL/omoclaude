@@ -11,7 +11,7 @@ description: Core frontend design quality rules. Enforces metric-based design en
 * MOTION_INTENSITY: 6 (1=Static, 10=Cinematic)
 * VISUAL_DENSITY: 4 (1=Art Gallery, 10=Cockpit)
 
-Default baseline is strictly (8, 6, 4). Adapt dynamically based on explicit user requests. These values drive Sections 2-5 logic.
+Default baseline is strictly (8, 6, 4). If the plan-phase design spec (plan.md) specifies dial values, use those instead. Adapt dynamically based on explicit user requests. These values drive Sections 2-5 logic.
 
 ## 2. Architecture & Conventions
 
@@ -61,18 +61,31 @@ Default baseline is strictly (8, 6, 4). Adapt dynamically based on explicit user
 **Rule 6: Data & Form Patterns**
 * Label above input. Helper text optional. Error text below. Standard `gap-2` for input blocks.
 
-## 4. Performance Guardrails
+## 4. Motion & Animation Implementation Rules
+
+* **Magnetic Hover [CRITICAL]:** NEVER use `useState` for magnetic hover or continuous animations. Use EXCLUSIVELY Framer Motion `useMotionValue` + `useTransform` outside the React render cycle to prevent performance collapse on mobile.
+* **Spring Physics:** Apply `type: "spring", stiffness: 100, damping: 20` to all interactive elements. No linear easing.
+* **Layout Transitions:** Use Framer Motion `layout` and `layoutId` for smooth re-ordering, resizing, and shared element transitions.
+* **Staggered Orchestration:** Never mount lists instantly. Use `staggerChildren` (Framer) or CSS cascade (`animation-delay: calc(var(--index) * 100ms)`). **CRITICAL:** Parent (`variants`) and Children MUST reside in the same Client Component tree.
+* **GSAP/ThreeJS Isolation:** Never mix GSAP/ThreeJS with Framer Motion in the same component tree. Default to Framer Motion for UI. Use GSAP/ThreeJS exclusively for isolated full-page scrolltelling or canvas backgrounds in strict `useEffect` cleanup blocks.
+* **Liquid Glass:** Beyond `backdrop-blur`: add `border-white/10` inner border + `shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]` inner shadow for physical edge refraction.
+
+## 5. Performance Guardrails
 
 * **DOM Cost:** Grain/noise filters exclusively on `fixed inset-0 z-50 pointer-events-none` pseudo-elements. NEVER on scrolling containers.
 * **Hardware Acceleration:** Never animate `top`, `left`, `width`, `height`. Use `transform` and `opacity` only.
 * **Z-Index Restraint:** Use z-indexes strictly for systemic layers (Sticky Navbars, Modals, Overlays).
+* **Blur Constraints:** Apply `backdrop-blur` only to fixed/sticky elements. Never on scrolling content areas.
+* **Perpetual Animation Isolation:** Any perpetual motion or infinite loop MUST be `React.memo`-isolated in its own microscopic Client Component. Never trigger parent re-renders.
 
-## 5. AI Tells (Forbidden Patterns)
+## 6. AI Tells (Forbidden Patterns)
 
 ### Visual & CSS
 * NO neon/outer glows. Use inner borders or subtle tinted shadows.
 * NO pure `#000000`. Use Off-Black, Zinc-950, or Charcoal.
 * NO oversaturated accents. Desaturate to blend with neutrals.
+* NO excessive gradient text. Do not use text-fill gradients for large headers.
+* NO custom mouse cursors. They are outdated and ruin performance/accessibility.
 
 ### Typography
 * NO Inter font. Use `Geist`, `Outfit`, `Cabinet Grotesk`, or `Satoshi`.
@@ -93,8 +106,9 @@ Default baseline is strictly (8, 6, 4). Adapt dynamically based on explicit user
 ### External Resources
 * NO broken Unsplash links. Use `https://picsum.photos/seed/{random}/800/600` or SVG avatars.
 * shadcn/ui: NEVER use in generic default state. MUST customize radii, colors, shadows.
+* **Production-Ready Cleanliness:** Code must be extremely clean, visually striking, and meticulously refined.
 
-## 6. Pre-Flight Check
+## 7. Pre-Flight Check
 
 Before outputting, verify:
 - [ ] Global state used appropriately (not arbitrarily)?

@@ -87,8 +87,16 @@ Output: key files with line numbers, module map, existing patterns to follow.
 EOF
 ```
 ### Step 3: Generate design spec (via spec-planner)
+
+**Taste skill injection (plan phase):** For tasks involving frontend UI, inject design paradigm skills into the planner so design decisions appear in plan.md:
+- Default creative/premium UI: `--skills taste-creative`
+- Industrial/brutalist style: `--skills taste-creative,taste-brutalist`
+- Minimalist/editorial style: `--skills taste-creative,taste-minimalist`
+- Backend-only tasks: no `--skills`
+
 ```bash
-codeagent-wrapper --agent spec-planner - . <<'EOF'
+# Example: frontend task with creative design paradigm
+codeagent-wrapper --agent spec-planner --skills taste-creative - . <<'EOF'
 ## Original User Request
 <user request>
 
@@ -99,6 +107,7 @@ codeagent-wrapper --agent spec-planner - . <<'EOF'
 
 ## Current Task
 Create design specification (plan.md) with: Overview, Requirements, Design approach, Implementation steps, Task classification, Risks, Non-goals.
+For frontend tasks: include a **Design Specification** section covering paradigm choice, color palette, typography, layout approach, motion strategy, component patterns.
 **Self-review:** Check all sections for completeness and specificity before outputting.
 
 ## Acceptance Criteria
@@ -146,9 +155,10 @@ Based on plan.md `task_type`:
 |-----------|-------|------------|
 | `backend_only` (default) | `spec-develop` | (none) |
 | `frontend_only` | `spec-frontend` | `--skills taste-core,taste-output` |
-| `fullstack` | both in parallel | frontend gets taste skills |
+| `fullstack` | both in parallel | frontend gets `taste-core,taste-output` |
 
-Optional: append `taste-creative` for premium UI; `taste-redesign` for UI overhaul.
+Optional implement-phase add-on: append `taste-redesign` for existing UI overhaul tasks.
+Note: design paradigm skills (`taste-creative`, `taste-brutalist`, `taste-minimalist`) are injected in Phase 2 (planning), not here.
 
 Select **review notice** by `review_intensity`:
 - **light**: "Your code will be validated by tests. Apply Priority A self-review before outputting."

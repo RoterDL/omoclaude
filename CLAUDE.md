@@ -73,7 +73,7 @@ Each skill lives under `skills/<name>/` with a `SKILL.md` (the prompt loaded by 
 | `codeagent` | `skill:codeagent` | Thin wrapper for direct `codeagent-wrapper` invocation |
 | `research-pro` | `/research-pro` | Academic paper reading, review, literature search with `content-extractor`, `paper-reviewer`, `literature-scout`, etc. |
 | `cr` | (dependency) | Code review checklists; auto-installed as dependency of `do` and `omo` |
-| `taste` | (dependency) | Frontend design quality rules; 4 injectable sub-skills (`taste-core`, `taste-output`, `taste-creative`, `taste-redesign`) injected into `do-frontend` via `--skills` |
+| `taste` | (dependency) | Frontend design quality rules; 6 injectable sub-skills — plan-phase: `taste-creative`, `taste-brutalist`, `taste-minimalist` (injected into planner/architect); implement-phase: `taste-core`, `taste-output`, `taste-redesign` (injected into `do-frontend`/`spec-frontend` via `--skills`) |
 | `project-init` | `/project-init` | One-time project initialization: creates `.spec/` directory structure, memory indexes, coding rules templates. Idempotent. |
 | `memory` | `/exp-search`, `/exp-reflect`, `/exp-write` | Dual-layer structured memory system. `exp-search` retrieves across 5 memory layers; `exp-reflect` analyzes conversations to extract memories; `exp-write` persists to `.spec/context/`. Independent of spec/do/omo. |
 | `spec` | `/spec` | Spec-driven development lifecycle with 4 gate-controlled phases (Intent -> Plan -> Implement -> End). Manages design documents (`plan.md`), delegates implementation to `codeagent-wrapper` agents or `/do`. Depends on `memory`. |

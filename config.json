@@ -118,31 +118,43 @@
     },
     "taste": {
       "enabled": true,
-      "description": "Frontend design quality rules for codeagent-wrapper skill injection",
+      "description": "Frontend design quality rules: plan-phase paradigms (creative, brutalist, minimalist) + implement-phase guardrails (core, output, redesign)",
       "operations": [
         {
           "type": "copy_dir",
           "source": "skills/taste/taste-core",
           "target": "skills/taste-core",
-          "description": "Install taste-core skill"
+          "description": "Install taste-core skill (implement-phase guardrails)"
         },
         {
           "type": "copy_dir",
           "source": "skills/taste/taste-output",
           "target": "skills/taste-output",
-          "description": "Install taste-output skill"
+          "description": "Install taste-output skill (implement-phase completeness)"
         },
         {
           "type": "copy_dir",
           "source": "skills/taste/taste-creative",
           "target": "skills/taste-creative",
-          "description": "Install taste-creative skill"
+          "description": "Install taste-creative skill (plan-phase design paradigm)"
         },
         {
           "type": "copy_dir",
           "source": "skills/taste/taste-redesign",
           "target": "skills/taste-redesign",
-          "description": "Install taste-redesign skill"
+          "description": "Install taste-redesign skill (implement-phase UI audit)"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/taste/taste-brutalist",
+          "target": "skills/taste-brutalist",
+          "description": "Install taste-brutalist skill (plan-phase design paradigm)"
+        },
+        {
+          "type": "copy_dir",
+          "source": "skills/taste/taste-minimalist",
+          "target": "skills/taste-minimalist",
+          "description": "Install taste-minimalist skill (plan-phase design paradigm)"
         }
       ]
     },

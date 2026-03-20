@@ -6,7 +6,7 @@ This repository currently includes these skills:
 - `do`
 - `omo`
 - `research-pro`
-- `taste` — Frontend design quality rules (4 injectable sub-skills: `taste-core`, `taste-output`, `taste-creative`, `taste-redesign`)
+- `taste` — Frontend design quality rules (6 injectable sub-skills: plan-phase `taste-creative`, `taste-brutalist`, `taste-minimalist` + implement-phase `taste-core`, `taste-output`, `taste-redesign`)
 - `cr` — Automated code review with single-agent and multi-agent modes (also dependency of `do` / `omo`), trigger: `/cr`
 - `spec` — Spec-driven development lifecycle with gate-controlled phases (depends on `memory`)
 - `memory` — Dual-layer structured memory system: 3 skills (`exp-search`, `exp-reflect`, `exp-write`)
