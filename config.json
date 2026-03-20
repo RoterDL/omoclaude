@@ -33,8 +33,8 @@
           "yolo": true
         },
         "frontend-ui-ux-engineer": {
-          "backend": "gemini",
-          "model": "gemini-3.1-pro-preview",
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/omo/references/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
@@ -90,8 +90,8 @@
           "prompt_file": "~/.claude/skills/do/agents/do-summarizer.md"
         },
         "do-frontend": {
-          "backend": "gemini",
-          "model": "gemini-3.1-pro-preview",
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/do/agents/do-frontend.md"
         }
       },
@@ -298,8 +298,8 @@
           "yolo": true
         },
         "spec-frontend": {
-          "backend": "gemini",
-          "model": "gemini-3.1-pro-preview",
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/spec/references/spec-frontend.md"
         },
         "spec-reviewer-lite": {
