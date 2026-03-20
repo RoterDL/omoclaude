@@ -18,7 +18,8 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 9. **Agent failure handling.** If `codeagent-wrapper` fails (non-zero exit, timeout, empty output): check stderr, retry once if transient. If retry fails, surface to user via `AskUserQuestion`. Never silently skip a failed call.
 ## Key References
 - **`references/routing-and-templates.md`**: Read when entering review steps (Phase 2 Step 5, Phase 3 Step 5) or fullstack implementation (Phase 3 Step 2). Contains task_type routing, fullstack split-merge, parameterized review pattern, and intensity-based result handling.
-- Agent prompts: `references/spec-explorer.md`, `spec-planner.md`, `plan-reviewer.md`, `spec-develop.md`, `spec-frontend.md`, `spec-reviewer-lite.md`, `spec-reviewer-deep.md`, `spec-tester.md`.
+- **`references/plan-template.md`**: Plan.md output format template. Referenced by `spec-planner` agent.
+- Agent prompts (`references/spec-*.md`, `plan-reviewer.md`) are auto-loaded by `codeagent-wrapper` via config.json. The orchestrator does not read them directly.
 ## Spec Lifecycle (4 Phases)
 ```text
 /spec <task description>
