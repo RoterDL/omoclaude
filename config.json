@@ -38,8 +38,8 @@
           "prompt_file": "~/.claude/skills/omo/references/frontend-ui-ux-engineer.md"
         },
         "document-writer": {
-          "backend": "gemini",
-          "model": "gemini-3-flash-preview",
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/omo/references/document-writer.md"
         },
         "code-reviewer": {
@@ -207,8 +207,8 @@
           "reasoning": "high"
         },
         "format-writer": {
-          "backend": "gemini",
-          "model": "gemini-3-flash-preview",
+          "backend": "claude",
+          "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/research-pro/references/format-writer.md"
         }
       },

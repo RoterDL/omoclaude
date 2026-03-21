@@ -64,7 +64,7 @@ Execute in shell tool, timeout 2h.
 | `oracle` | Risky changes, tradeoffs, unclear requirements, or after failed attempts |
 | `develop` | Backend/logic code implementation |
 | `frontend-ui-ux-engineer` | UI/styling/frontend component implementation |
-| `document-writer` | Documentation/README writing |
+| `document-writer` | Documentation writing and editing: README, API docs, architecture docs, user guides, changelogs, config references |
 | `librarian` | Need to lookup external library docs or OSS examples |
 | `code-reviewer` | Post-implementation review, or user explicitly requests code review |
 

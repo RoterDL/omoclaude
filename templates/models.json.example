@@ -45,8 +45,8 @@
       "model": "gemini-3-pro-preview"
     },
     "document-writer": {
-      "backend": "gemini",
-      "model": "gemini-3-flash-preview"
+      "backend": "claude",
+      "model": "claude-sonnet-4-6"
     }
   }
 }
