@@ -24,7 +24,7 @@ Skip pre-implementation agents when ALL conditions hold:
 - Low risk (no public API, no concurrency, no security)
 - User intent is unambiguous
 
-Flow: **confirm** → `develop` (or `frontend-ui-ux-engineer`). Skip archival.
+Flow: **confirm** → `develop` (if logic/backend) or `frontend-ui-ux-engineer` (if visual/UI). Skip archival.
 
 ## Routing Summary (Quick Reference)
 
@@ -33,7 +33,9 @@ Flow: **confirm** → `develop` (or `frontend-ui-ux-engineer`). Skip archival.
 | Code unclear | `explore` |
 | External lib/API | `librarian` |
 | Risky/tradeoff | `oracle` |
-| Implementation | `develop` / `frontend-ui-ux-engineer` / `document-writer` |
+| Implementation: backend, API, logic, CLI, config | `develop` |
+| Implementation: UI, styling, layout, animation, visual | `frontend-ui-ux-engineer` |
+| Implementation: docs, README, guides | `document-writer` |
 | Post-impl review | `code-reviewer` |
 
 Full routing details, recipes, invocation format, and examples: read `references/routing-and-templates.md`.

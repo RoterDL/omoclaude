@@ -11,7 +11,9 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 | Code location/behavior unclear | `explore` |
 | External library/API usage unclear | `librarian` |
 | Risky change: multi-file/module, public API, data format/config, concurrency, security/perf, or unclear tradeoffs | `oracle` |
-| Implementation required | `develop` (or `frontend-ui-ux-engineer` / `document-writer`) |
+| Implementation: backend logic, API, data processing, CLI, config, infra | `develop` |
+| Implementation: UI layout, styling, CSS, animation, component visual, UX interaction, responsive design | `frontend-ui-ux-engineer` |
+| Implementation: documentation (README, API docs, guides, changelogs) | `document-writer` |
 | Post-implementation quality check requested, or implementation touched multiple files / public API | `code-reviewer` |
 
 ## Skipping Heuristics (Prefer Explicit Risk Signals)
@@ -27,11 +29,12 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 - Small localized fix with exact location: **confirm** → `develop`
 - Bug fix, location unknown: `explore` → **confirm** → `develop`
 - Cross-cutting refactor / high risk: `explore → oracle` → **confirm** → `develop` (optionally `oracle` again for review)
-- External API integration: `explore` + `librarian` (can run in parallel) → `oracle` (if risk) → **confirm** → implementation agent
+- External API integration: `explore` + `librarian` (parallel) → `oracle` (if risk) → **confirm** → `develop` (backend/logic) or `frontend-ui-ux-engineer` (if primarily UI integration)
 - UI-only change: `explore` → **confirm** → `frontend-ui-ux-engineer` (split logic to `develop` if needed)
+- Full-stack feature (backend + UI): `explore` → `oracle` (if risk) → **confirm** → `develop` (logic first) → `frontend-ui-ux-engineer` (visual/UI second)
 - Docs-only change: `explore` → **confirm** → `document-writer`
 - Post-implementation review: `code-reviewer` (after `develop` / `frontend-ui-ux-engineer`)
-- Review + fix: `code-reviewer` → **confirm** → `develop` (fix reported issues)
+- Review + fix: `code-reviewer` → **confirm** → `develop` (logic issues) or `frontend-ui-ux-engineer` (visual/UI issues)
 - Resume from saved analysis: Read `.spec/07-analysis/<dir>/analysis.md` → build Context Pack → route agents
 
 ## Agent Invocation Format
@@ -62,8 +65,8 @@ Execute in shell tool, timeout 2h.
 |-------|---------------|
 | `explore` | Need to locate code position or understand code structure |
 | `oracle` | Risky changes, tradeoffs, unclear requirements, or after failed attempts |
-| `develop` | Backend/logic code implementation |
-| `frontend-ui-ux-engineer` | UI/styling/frontend component implementation |
+| `develop` | Backend logic, API endpoints, data processing, CLI tools, config/infra, non-visual JS/TS logic. Also handles frontend **business logic** (state management, data fetching, validation rules) when no visual change is involved |
+| `frontend-ui-ux-engineer` | Visual/UI work: layout, styling, CSS/Tailwind, animations, component appearance, responsive design, UX interactions, design system changes. Use when the primary deliverable is **how it looks or feels** |
 | `document-writer` | Documentation writing and editing: README, API docs, architecture docs, user guides, changelogs, config references |
 | `librarian` | Need to lookup external library docs or OSS examples |
 | `code-reviewer` | Post-implementation review, or user explicitly requests code review |
@@ -256,6 +259,59 @@ Analyze function implementation and call chain
 Output: function signature, core logic, call relationship diagram
 EOF
 ```
+</example>
+
+<example>
+User: /omo redesign the dashboard card layout and add hover animations
+
+Sisyphus executes:
+
+**Step 1: explore** (understand current UI structure)
+```bash
+codeagent-wrapper --agent explore - /path/to/project <<'EOF'
+## Original User Request
+redesign the dashboard card layout and add hover animations
+
+## Context Pack
+None
+
+## Current Task
+Find dashboard card components, current layout/styling approach, design tokens/theme in use.
+
+## Acceptance Criteria
+Output: component file paths, current CSS/styling approach, design system constraints.
+EOF
+```
+
+**Step 2: User Confirmation Gate**
+
+Present explore findings to user:
+- Current card component structure
+- Styling approach (CSS modules, Tailwind, styled-components, etc.)
+- Proposed redesign approach
+
+Use `AskUserQuestion`:
+- "Approve and proceed with redesign"
+- "Revise approach"
+
+**Step 3: frontend-ui-ux-engineer** (after user approval — visual/UI work)
+```bash
+codeagent-wrapper --agent frontend-ui-ux-engineer - /path/to/project <<'EOF'
+## Original User Request
+redesign the dashboard card layout and add hover animations
+
+## Context Pack
+- Explore output: [paste explore output]
+
+## Current Task
+Redesign card layout with modern grid, add smooth hover animations. Maintain existing design tokens.
+
+## Acceptance Criteria
+Cards render correctly; hover animations are smooth; responsive on mobile; no visual regressions elsewhere.
+EOF
+```
+
+Note: This is a visual/UI task — card layout + animations = `frontend-ui-ux-engineer`, not `develop`.
 </example>
 
 ## Anti-Examples
