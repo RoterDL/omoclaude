@@ -59,10 +59,24 @@ Before invoking any implementation agent (develop, frontend-ui-ux-engineer, docu
 - `references/routing-and-templates.md` — routing signals, recipes, invocation format, examples
 - `references/archival-guide.md` — post-task archival flow (read at task wrap-up)
 
-## Script Path Resolution
+## Agent Invocation (How to Call Agents)
 
-OMO_MGR variable must be set in each Bash call (shell state does not persist):
+Agents are invoked via `codeagent-wrapper`, **NOT** via `omo-manager.py`:
+
+```bash
+codeagent-wrapper --agent <agent_name> - <workdir> <<'EOF'
+<prompt content>
+EOF
+```
+
+**FORBIDDEN**: `python "$OMO_MGR" invoke ...` — OMO_MGR has no `invoke` command.
+
+## Script Path Resolution (Archival Only)
+
+`OMO_MGR` is **only** for archival operations (`save` / `list`), used at task wrap-up. It is NOT for agent invocation.
 
 ```bash
 OMO_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/omo/scripts/omo-manager.py'))")"
+python "$OMO_MGR" save --title "..." --file /tmp/omo-analysis.md
+python "$OMO_MGR" list
 ```
