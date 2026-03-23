@@ -11,8 +11,8 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 | Code location/behavior unclear | `explore` |
 | External library/API usage unclear | `librarian` |
 | Risky change: multi-file/module, public API, data format/config, concurrency, security/perf, or unclear tradeoffs | `oracle` |
-| Implementation: backend logic, API, data processing, CLI, config, infra | `develop` |
-| Implementation: UI layout, styling, CSS, animation, component visual, UX interaction, responsive design | `frontend-ui-ux-engineer` |
+| Implementation: backend (server-side logic, API, data processing, CLI, config, infra) | `develop` |
+| Implementation: frontend (components, pages, hooks, state management, styling, layout, animation, interactions) | `frontend-ui-ux-engineer` |
 | Implementation: documentation (README, API docs, guides, changelogs) | `document-writer` |
 | Post-implementation quality check requested, or implementation touched multiple files / public API | `code-reviewer` |
 
@@ -29,12 +29,12 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 - Small localized fix with exact location: **confirm** → `develop`
 - Bug fix, location unknown: `explore` → **confirm** → `develop`
 - Cross-cutting refactor / high risk: `explore → oracle` → **confirm** → `develop` (optionally `oracle` again for review)
-- External API integration: `explore` + `librarian` (parallel) → `oracle` (if risk) → **confirm** → `develop` (backend/logic) or `frontend-ui-ux-engineer` (if primarily UI integration)
-- UI-only change: `explore` → **confirm** → `frontend-ui-ux-engineer` (split logic to `develop` if needed)
-- Full-stack feature (backend + UI): `explore` → `oracle` (if risk) → **confirm** → `develop` (logic first) → `frontend-ui-ux-engineer` (visual/UI second)
+- External API integration: `explore` + `librarian` (parallel) → `oracle` (if risk) → **confirm** → `develop` (backend) or `frontend-ui-ux-engineer` (frontend)
+- UI-only change: `explore` → **confirm** → `frontend-ui-ux-engineer`
+- Full-stack feature (backend + UI): `explore` → `oracle` (if risk) → **confirm** → `develop` (backend first) → `frontend-ui-ux-engineer` (frontend second)
 - Docs-only change: `explore` → **confirm** → `document-writer`
 - Post-implementation review: `code-reviewer` (after `develop` / `frontend-ui-ux-engineer`)
-- Review + fix: `code-reviewer` → **confirm** → `develop` (logic issues) or `frontend-ui-ux-engineer` (visual/UI issues)
+- Review + fix: `code-reviewer` → **confirm** → `develop` (backend issues) or `frontend-ui-ux-engineer` (frontend issues)
 - Resume from saved analysis: Read `.spec/07-analysis/<dir>/analysis.md` → build Context Pack → route agents
 
 ## Agent Invocation Format
@@ -65,8 +65,8 @@ Execute in shell tool, timeout 2h.
 |-------|---------------|
 | `explore` | Need to locate code position or understand code structure |
 | `oracle` | Risky changes, tradeoffs, unclear requirements, or after failed attempts |
-| `develop` | Backend logic, API endpoints, data processing, CLI tools, config/infra, non-visual JS/TS logic. Also handles frontend **business logic** (state management, data fetching, validation rules) when no visual change is involved |
-| `frontend-ui-ux-engineer` | Visual/UI work: layout, styling, CSS/Tailwind, animations, component appearance, responsive design, UX interactions, design system changes. Use when the primary deliverable is **how it looks or feels** |
+| `develop` | Backend/server-side code: API endpoints, server logic, data processing, CLI tools, config/infra, database operations, Go/Python/Java and other server-side languages |
+| `frontend-ui-ux-engineer` | All frontend/client-side code: components, pages, hooks, state management, data fetching, styling, layout, animation, interactions, responsive design. Any file that belongs to a frontend project goes through this agent |
 | `document-writer` | Documentation writing and editing: README, API docs, architecture docs, user guides, changelogs, config references |
 | `librarian` | Need to lookup external library docs or OSS examples |
 | `code-reviewer` | Post-implementation review, or user explicitly requests code review |
@@ -311,7 +311,7 @@ Cards render correctly; hover animations are smooth; responsive on mobile; no vi
 EOF
 ```
 
-Note: This is a visual/UI task — card layout + animations = `frontend-ui-ux-engineer`, not `develop`.
+Note: This is a frontend task — card layout + animations = `frontend-ui-ux-engineer`, not `develop`.
 </example>
 
 ## Anti-Examples
