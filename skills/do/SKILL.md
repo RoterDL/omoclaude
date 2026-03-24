@@ -8,6 +8,10 @@ allowed-tools: ["Bash(~/.claude/skills/do/scripts/setup-do.py:*)", "Bash(~/.clau
 
 An orchestrator for systematic feature development. Invoke agents via `codeagent-wrapper`, never write code directly.
 
+## Key References
+
+- **`references/invocation-templates.md`**: Read when entering Phase 1, 3, 4, or 5. Contains Context Pack template, issue severity definitions, taste skill injection rules, and all agent invocation templates.
+
 ## Loop Initialization (REQUIRED)
 
 When triggered via `/do <task>`, initialize the task directory immediately without asking about worktree:
@@ -32,7 +36,7 @@ TASK_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/do/s
 SETUP_DO="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/do/scripts/setup-do.py'))")"
 ```
 
-Do NOT use `$HOME` directly — fails on Windows Git Bash. Prefer `--file <tempfile>` over pipe for stdin-based writes.
+Do NOT use `$HOME` directly -- fails on Windows Git Bash. Prefer `--file <tempfile>` over pipe for stdin-based writes.
 
 ## Task Directory Management
 
@@ -53,30 +57,16 @@ python "$TASK_MGR" list
 
 The worktree is created **only when needed** (right before Phase 4: Implement). If the user chooses worktree mode:
 
-1. Enable worktree for the current task (creates worktree without resetting task context):
-   ```bash
-   python "$TASK_MGR" enable-worktree
-   ```
+1. Enable worktree: `python "$TASK_MGR" enable-worktree`
+2. Use the `DO_WORKTREE_DIR` from output to prefix all Phase 4-5 agent calls that depend on repo state.
 
-2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct `codeagent-wrapper` do-develop agent into the worktree:
-
-```bash
-# Prefix all do-develop/do-frontend calls with DO_WORKTREE_DIR:
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
-...
-EOF
-```
-
-Phases 1-3 are read-only and do not require `DO_WORKTREE_DIR` (e.g. `code-explorer`, `code-architect`).
-Once worktree is enabled in Phase 4, prefix any agent invocation that must read diffs/files from the
-changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with
-`DO_WORKTREE_DIR=<worktree_dir>`.
+Phases 1-3 are read-only and do not require `DO_WORKTREE_DIR`. See `references/invocation-templates.md` "Worktree Prefix Rule" for details.
 
 ## Trivial Detection (before Phase 1)
 
 After init, check if trivial: single file + typo/wording fix, clear scope, or user said "just do it".
 
-**Trivial express-path** — skip rules:
+**Trivial express-path** -- skip rules:
 
 | Phase | Action |
 |-------|--------|
@@ -88,7 +78,7 @@ After init, check if trivial: single file + typo/wording fix, clear scope, or us
 
 Context Pack is not used for trivial tasks; pass the user request directly as the agent prompt.
 
-Flow: init → confirm change with user via AskUserQuestion → implement → `<promise>DO_COMPLETE</promise>`
+Flow: init -> confirm change with user via AskUserQuestion -> implement -> `<promise>DO_COMPLETE</promise>`
 
 ## Pre-Task Experience Check (before Phase 1)
 
@@ -96,8 +86,8 @@ Flow: init → confirm change with user via AskUserQuestion → implement → `<
 **Skip**: Trivial express-path tasks, no `.spec/context/` directory.
 
 Read index files directly (no agent needed):
-1. Read `.spec/context/experience/index.md` (if exists) — scan for matching dilemma-strategy pairs
-2. Read `.spec/context/knowledge/index.md` (if exists) — scan for relevant project knowledge
+1. Read `.spec/context/experience/index.md` (if exists) -- scan for matching dilemma-strategy pairs
+2. Read `.spec/context/knowledge/index.md` (if exists) -- scan for relevant project knowledge
 3. If matches found, include as context in Phase 1 agent prompts (Context Pack)
 
 This is a lightweight read-only step. If no `.spec/context/` directory exists, skip silently.
@@ -105,12 +95,12 @@ This is a lightweight read-only step. If no `.spec/context/` directory exists, s
 ## Hard Constraints
 
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
-2. **Pass complete context forward.** Every agent invocation includes the Context Pack.
+2. **Pass complete context forward.** Every agent invocation includes the Context Pack (see `references/invocation-templates.md`).
 3. **Parallel-first.** Run independent tasks via `codeagent-wrapper --parallel`.
 4. **Update phase after each phase.** Use `task.py update-phase <N>`.
-5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; for calls that may exceed the Bash tool timeout, invoke the Bash tool with `run_in_background: true` and fetch the final result via `TaskOutput` instead of relying on the foreground call to stay open. Stay in the orchestrator role and wait for agents to complete.
-6. **Agent failure handling.** If `codeagent-wrapper` fails (non-zero exit, timeout, empty output): check stderr, retry once if transient (network, timeout). If retry fails, surface the error to user via `AskUserQuestion` with context. Never silently skip a failed agent call; never switch to direct implementation.
-7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix any Phase 4-5 agent call that depends on repo state (`do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
+5. **Expect long-running `codeagent-wrapper` calls.** For calls that may exceed the Bash tool timeout, invoke with `run_in_background: true` and fetch via `TaskOutput`.
+6. **Agent failure handling.** If `codeagent-wrapper` fails: check stderr, retry once if transient. If retry fails, surface error to user via `AskUserQuestion`. Never silently skip a failed agent call; never switch to direct implementation.
+7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation.
 
 ## Task Cancellation
 
@@ -123,50 +113,13 @@ When the user requests to cancel or abort the current task:
 ## Agents
 
 | Agent | Purpose | Needs worktree |
-|-------|---------|------------------|
-| `code-explorer` | Trace code, map architecture, find patterns | No (read-only) |
-| `code-architect` | Design approaches, file plans, build sequences | No (read-only) |
-| `do-reviewer` | Review for bugs, simplicity, conventions | **Yes** — when worktree is enabled, use `DO_WORKTREE_DIR` |
-| `do-summarizer` | Completion summary (Phase 5) | **Yes** — when worktree is enabled, use `DO_WORKTREE_DIR` |
-| `do-develop` | Implement backend code, run tests | **Yes** — use `DO_WORKTREE_DIR` env prefix |
-| `do-frontend` | Frontend implementation and UI/UX interactions | **Yes** — use `DO_WORKTREE_DIR` env prefix |
-
-## Issue Severity Definitions
-
-**Blocking issues** (require user input):
-- Impacts core functionality or correctness
-- Security vulnerabilities
-- Architectural conflicts with existing patterns
-- Ambiguous requirements with multiple valid interpretations
-
-**Minor issues** (auto-fix without asking):
-- Code style inconsistencies
-- Naming improvements
-- Missing documentation
-- Non-critical test coverage gaps
-
-## Context Pack Template
-
-```text
-## Original User Request
-<verbatim request>
-
-## Context Pack
-- Phase: <1-5 name>
-- Decisions: <requirements/constraints/choices>
-- Code-explorer output: <paste or "None">
-- Code-architect output: <paste or "None">
-- Do-reviewer output: <paste or "None">
-- Backend (do-develop) output: <paste or "None">
-- Frontend (UI/UX) output: <paste or "None">
-- Open questions: <list or "None">
-
-## Current Task
-<specific task>
-
-## Acceptance Criteria
-<checkable outputs>
-```
+|-------|---------|----------------|
+| `code-explorer` | Trace code, map architecture, find patterns | No |
+| `code-architect` | Design approaches, file plans, build sequences | No |
+| `do-reviewer` | Review for bugs, simplicity, conventions | Yes (if enabled) |
+| `do-summarizer` | Completion summary (Phase 5) | Yes (if enabled) |
+| `do-develop` | Implement backend code, run tests | Yes |
+| `do-frontend` | Frontend implementation and UI/UX interactions | Yes |
 
 ## 5-Phase Workflow
 
@@ -174,301 +127,72 @@ When the user requests to cancel or abort the current task:
 
 **Goal:** Understand requirements and map codebase simultaneously.
 
-**Actions:** Run `code-architect` and 2-3 `code-explorer` tasks in parallel.
-
-Because `codeagent-wrapper --parallel` can run for a long time, prefer invoking this Bash tool call with `run_in_background: true`, then use `TaskOutput` to wait for and retrieve the final report.
-
-```bash
-codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: p1_requirements
-agent: code-architect
-workdir: .
----CONTENT---
-Analyze requirements completeness (score 1-10):
-1. Extract explicit requirements, constraints, acceptance criteria
-2. Identify blocking questions (issues that prevent implementation)
-3. Identify minor clarifications (nice-to-have but can proceed without)
-
-Output format:
-- Completeness score: X/10
-- Requirements: [list]
-- Non-goals: [list]
-- Blocking questions: [list, if any]
-
-End with: Summary: <one sentence>
-
----TASK---
-id: p1_similar_features
-agent: code-explorer
-workdir: .
----CONTENT---
-Find 1-3 similar features, trace end-to-end. Return: key files with line numbers, call flow, extension points.
-
-End with: Summary: <one sentence>
-
----TASK---
-id: p1_architecture
-agent: code-explorer
-workdir: .
----CONTENT---
-Map architecture for relevant subsystem. Return: module map + 5-10 key files.
-
-End with: Summary: <one sentence>
-
----TASK---
-id: p1_conventions
-agent: code-explorer
-workdir: .
----CONTENT---
-Identify testing patterns, conventions, config. Return: test commands + file locations.
-
-End with: Summary: <one sentence>
-EOF
-```
-
-Note: `codeagent-wrapper --parallel` defaults to structured summary output. Avoid `--full-output` unless debugging a specific failure; it switches to legacy full-stdout output and can bloat context. If you need deeper details, use the `Log:` paths from the report.
+Read `references/invocation-templates.md` "Phase 1: Parallel Exploration Template". Run `code-architect` + 2-3 `code-explorer` tasks in parallel using `run_in_background: true`. Use `TaskOutput` to retrieve results.
 
 ### Phase 2: Clarify (Conditional)
 
 **Goal:** Resolve blocking ambiguities only.
 
-**Actions:**
 1. Review `p1_requirements` output for blocking questions
-2. IF completeness >= 8 AND blocking questions list is empty → Skip to Phase 3
-3. OTHERWISE → Use AskUserQuestion to resolve blocking questions, then proceed
+2. IF completeness >= 8 AND blocking questions list is empty -> Skip to Phase 3
+3. OTHERWISE -> Use AskUserQuestion to resolve blocking questions, then proceed
 
 ### Phase 3: Design (User Confirmation Required)
 
 **Goal:** Produce minimal-change implementation plan with task classification.
 
-This `code-architect` invocation must use the Bash tool's `run_in_background: true` parameter. After starting it, use `TaskOutput` to wait for completion and read back the design result. Example Bash tool usage around this command: set `run_in_background: true` on the Bash call, then read the completed output via `TaskOutput` before presenting the design to the user.
-
-**Taste skill injection (plan phase):** For tasks involving frontend UI, inject design paradigm skills into the architect so design decisions appear in the design output:
-- Default creative/premium UI: `--skills taste-creative`
-- Industrial/brutalist style: `--skills taste-creative,taste-brutalist`
-- Minimalist/editorial style: `--skills taste-creative,taste-minimalist`
-- Backend-only tasks: no `--skills`
-
-```bash
-# Example: frontend task with creative design paradigm
-codeagent-wrapper --agent code-architect --skills taste-creative - . <<'EOF'
-Design minimal-change implementation:
-- Reuse existing abstractions
-- Minimize new files
-- Follow established patterns from Phase 1 exploration
-
-Output:
-- File touch list with specific changes
-- Build sequence
-- Test plan
-- Risks and mitigations
-- **Design Specification**: paradigm choice, color palette, typography, layout approach, motion strategy, component patterns
-
-Include a `## Task Classification` section:
-- `task_type`: "backend_only" | "frontend_only" | "fullstack"
-- `backend_tasks`: list backend implementation tasks (if any)
-- `frontend_tasks`: list frontend implementation tasks (if any)
-EOF
-```
+Read `references/invocation-templates.md` "Taste Skill Injection Rules" (plan phase) and "Phase 3: Design Invocation Template". Invoke `code-architect` with `run_in_background: true`; for frontend tasks, inject the appropriate taste skill via `--skills`.
 
 **After code-architect completes, present the design to the user for confirmation:**
 
-1. Display the full design output from code-architect, including:
-   - File touch list with specific changes
-   - Build sequence
-   - Test plan
-   - Risks and mitigations
-   - Task classification
+1. Display the full design output including: file touch list, build sequence, test plan, risks, task classification
 2. Use `AskUserQuestion` to get explicit approval:
-   - "Approve design and proceed to implementation" — continue to Phase 4
-   - "Revise design" — adjust based on user feedback and re-run code-architect
+   - "Approve design and proceed to implementation" -> continue to Phase 4
+   - "Revise design" -> adjust based on feedback and re-run code-architect
 3. **Do NOT enter Phase 4 until the user explicitly approves the design.**
 
 ### Phase 4: Implement + Review
 
-**Goal:** Build feature and review in one phase, using task classification from Phase 3.
+**Goal:** Build feature and review in one phase.
+
+Read `references/invocation-templates.md` for all Phase 4 templates before proceeding.
 
 **Step 1: Decide on worktree mode (ONLY NOW)**
 
-Use AskUserQuestion to ask:
+Use AskUserQuestion: "Develop in a separate worktree? (Yes / No)"
 
-```
-Develop in a separate worktree? (Isolates changes from main branch)
-- Yes (Recommended for larger changes)
-- No (Work directly in current directory)
-```
-
-If user chooses worktree:
-```bash
-python "$TASK_MGR" enable-worktree
-# Save the DO_WORKTREE_DIR from output
-```
+If yes: `python "$TASK_MGR" enable-worktree` and save `DO_WORKTREE_DIR` from output. All subsequent agent calls in Phase 4-5 must be prefixed with `DO_WORKTREE_DIR=<path>`.
 
 **Step 2: Invoke implementation agent(s)**
 
-**Execution Rules (based on Phase 3 `task_type`):**
-- `backend_only`: invoke only `do-develop` agent (no `--skills`; auto-detect handles tech stack)
-- `frontend_only`: invoke only `do-frontend` agent with `--skills taste-core,taste-output`
-- `fullstack`: invoke both agents in parallel; `do-frontend` with `--skills taste-core,taste-output`, `do-develop` without `--skills`
-- Missing `task_type`: default to `do-develop` agent only
-- **Optional implement-phase add-on:** Append `taste-redesign` for existing UI overhaul tasks
-- Note: design paradigm skills (`taste-creative`, `taste-brutalist`, `taste-minimalist`) are injected in Phase 3 (design), not here
-
-For full-stack projects, split into backend/frontend tasks with per-task `skills:` injection. Use `--parallel` when tasks can be split; use single agent when the change is small or single-domain.
-
-**Single-domain example** (prefix with `DO_WORKTREE_DIR` if worktree enabled):
-
-```bash
-# do-develop (with worktree):
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-develop - . <<'EOF'
-Implement with minimal change set following the Phase 3 blueprint.
-- Follow Phase 1 patterns
-- Add/adjust tests per Phase 3 plan
-- Run narrowest relevant tests
-After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
-EOF
-
-# do-develop (without worktree):
-codeagent-wrapper --agent do-develop - . <<'EOF'
-Implement with minimal change set following the Phase 3 blueprint.
-- Follow Phase 1 patterns
-- Add/adjust tests per Phase 3 plan
-- Run narrowest relevant tests
-After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
-EOF
-
-# do-frontend (with worktree):
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
-Implement with minimal change set following the Phase 3 blueprint.
-- Follow Phase 1 patterns
-- Add/adjust tests per Phase 3 plan
-- Run narrowest relevant tests
-After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
-EOF
-
-# do-frontend (without worktree):
-codeagent-wrapper --agent do-frontend --skills taste-core,taste-output - . <<'EOF'
-Implement with minimal change set following the Phase 3 blueprint.
-- Follow Phase 1 patterns
-- Add/adjust tests per Phase 3 plan
-- Run narrowest relevant tests
-After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
-EOF
-```
-
-**Full-stack parallel example** (adapt task IDs, skills, and content based on Phase 3 design):
-
-```bash
-# With worktree:
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: p4_backend
-agent: do-develop
-workdir: .
----CONTENT---
-Implement backend changes following Phase 3 blueprint.
-- Follow Phase 1 patterns
-- Add/adjust tests per Phase 3 plan
-After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
-End with: Summary: <one sentence>
-
----TASK---
-id: p4_frontend
-agent: do-frontend
-workdir: .
-skills: taste-core,taste-output
----CONTENT---
-Implement frontend changes following Phase 3 blueprint.
-- Follow Phase 1 patterns
-- Add/adjust tests per Phase 3 plan
-After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
-End with: Summary: <one sentence>
-EOF
-
-# Without worktree: remove DO_WORKTREE_DIR prefix
-```
-
-Note: `do-frontend` invocations always inject `taste-core,taste-output` (implement-phase guardrails).
-Append `taste-redesign` for existing UI overhaul tasks.
-Design paradigm skills (`taste-creative`, `taste-brutalist`, `taste-minimalist`) are injected into `code-architect` in Phase 3 (design phase), not into implementation agents.
-`do-develop` does not use `--skills`; auto-detect handles tech stack skills.
+Route based on Phase 3 `task_type` -- see `references/invocation-templates.md` "Execution Rules" table and "Implementation Templates" section. Use `--parallel` for fullstack; single agent for single-domain.
 
 **Step 3: Configure verification commands (Recommended)**
-
-If you want the `verify-loop` hook to block the review from completing until verification passes,
-set `verify_commands` for the current task:
 
 ```bash
 python "$TASK_MGR" set-verify --cmd "<command>" --cmd "<command2>"
 ```
 
-Notes:
-- Commands run in the worktree directory if worktree is enabled; otherwise in the project root.
-- Use `--append` to add commands; use `--clear` to disable the gate.
+Use `--append` to add commands; `--clear` to disable the gate.
 
 **Step 4: Review**
 
-First capture the implementation diff for review context:
-```bash
-REVIEW_DIFF=$(cd "${DO_WORKTREE_DIR:-.}" && git diff HEAD~1 --stat && echo "---" && git diff HEAD~1)
-```
-
-Run parallel reviews:
-
-```bash
-# With worktree: keep the DO_WORKTREE_DIR prefix; without worktree: remove it.
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --parallel <<'EOF'
----TASK---
-id: p4_correctness
-agent: do-reviewer
-workdir: .
----CONTENT---
-Review for correctness, edge cases, failure modes.
-Classify each issue as BLOCKING or MINOR.
-
-Implementation diff:
-$REVIEW_DIFF
-End with: Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>
-
----TASK---
-id: p4_simplicity
-agent: do-reviewer
-workdir: .
----CONTENT---
-Review for KISS: remove bloat, collapse needless abstractions.
-Classify each issue as BLOCKING or MINOR.
-
-Implementation diff:
-$REVIEW_DIFF
-End with: Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>
-EOF
-```
+Capture diff and run parallel reviews -- see `references/invocation-templates.md` "Phase 4: Review Templates".
 
 **Step 5: Handle review results**
 
-- **MINOR issues only** → Auto-fix via `do-develop`/`do-frontend` (with `DO_WORKTREE_DIR` if enabled), no user interaction
-- **BLOCKING issues** → Use AskUserQuestion: "Fix now / Proceed as-is"
+- **MINOR issues only** -> Auto-fix via `do-develop`/`do-frontend`, no user interaction
+- **BLOCKING issues** -> Use AskUserQuestion: "Fix now / Proceed as-is"
 
 ### Phase 5: Complete (No Interaction)
 
 **Goal:** Document what was built.
 
-```bash
-# With worktree: keep the DO_WORKTREE_DIR prefix; without worktree: remove it.
-DO_WORKTREE_DIR=<worktree_dir> codeagent-wrapper --agent do-summarizer - . <<'EOF'
-Write completion summary:
-- What was built
-- Key decisions/tradeoffs
-- Files modified (paths)
-- How to verify (commands)
-- Follow-ups (optional)
-EOF
-```
+Read `references/invocation-templates.md` "Phase 5: Summarizer Template". Invoke `do-summarizer` (with `DO_WORKTREE_DIR` prefix if worktree enabled).
 
 **Auto Experience Reflection:**
 
-After summarizer completes, automatically invoke experience reflection to persist learnings. No user prompt needed.
+After summarizer completes, automatically invoke experience reflection. No user prompt needed.
 
 **Trigger** (any one):
 - Task involved 3+ phases (non-trivial)
@@ -482,9 +206,7 @@ When triggered, invoke:
 Skill(exp-reflect)
 ```
 
-Then proceed to output the completion signal.
-
-Output the completion signal:
+Then output the completion signal:
 ```
 <promise>DO_COMPLETE</promise>
 ```
