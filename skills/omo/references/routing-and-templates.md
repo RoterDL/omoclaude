@@ -27,14 +27,14 @@ This skill is **routing-first**, not a mandatory `explore → oracle → develop
 
 - Explain code: `explore`
 - Small localized fix with exact location: **confirm** → `develop`
-- Bug fix, location unknown: `explore` → **confirm** → `develop`
-- Cross-cutting refactor / high risk: `explore → oracle` → **confirm** → `develop` (optionally `oracle` again for review)
-- External API integration: `explore` + `librarian` (parallel) → `oracle` (if risk) → **confirm** → `develop` (backend) or `frontend-ui-ux-engineer` (frontend)
-- UI-only change: `explore` → **confirm** → `frontend-ui-ux-engineer`
-- Full-stack feature (backend + UI): `explore` → `oracle` (if risk) → **confirm** → `develop` (backend first) → `frontend-ui-ux-engineer` (frontend second)
+- Bug fix, location unknown: exp-check → `explore` → **confirm** → `develop` → `code-reviewer` (if 2+ files) → wrap-up
+- Cross-cutting refactor / high risk: exp-check → `explore → oracle` → **confirm** → `develop` → `code-reviewer` → wrap-up
+- External API integration: exp-check → `explore` + `librarian` (parallel) → `oracle` (if risk) → **confirm** → `develop`/`frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
+- UI-only change: exp-check → `explore` → **confirm** → `frontend-ui-ux-engineer` → `code-reviewer` (if 2+ files) → wrap-up
+- Full-stack feature (backend + UI): exp-check → `explore` → `oracle` (if risk) → **confirm** → `develop` → `frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
 - Docs-only change: `explore` → **confirm** → `document-writer`
-- Post-implementation review: `code-reviewer` (after `develop` / `frontend-ui-ux-engineer`)
-- Review + fix: `code-reviewer` → **confirm** → `develop` (backend issues) or `frontend-ui-ux-engineer` (frontend issues)
+- Post-implementation review: `code-reviewer` (auto-triggered after implement; see SKILL.md trigger conditions)
+- Review feedback loop: `code-reviewer` (BLOCKING) → **confirm** → `develop`/`frontend-ui-ux-engineer` (fix) → `code-reviewer` (verify, optional)
 - Resume from saved analysis: Read `.spec/07-analysis/<dir>/analysis.md` → build Context Pack → route agents
 
 ## Agent Invocation Format
@@ -147,6 +147,33 @@ EOF
 ```
 
 Note: If explore shows a multi-file or high-risk change, consult `oracle` before `develop`.
+
+**Step 4: code-reviewer** (auto-triggered — develop touched 2+ files)
+```bash
+codeagent-wrapper --agent code-reviewer - /path/to/project <<'EOF'
+## Original User Request
+analyze this bug and fix it
+
+## Context Pack
+- Explore output: [paste explore output]
+- Develop output: [paste develop output — files changed, summary]
+
+## Current Task
+Review the implementation for correctness, regressions, and code quality.
+
+## Acceptance Criteria
+Output: BLOCKING/MINOR issue list with file:line citations, or "No issues found".
+EOF
+```
+
+**Step 5: Wrap-up** (2+ agents used — trigger archival decision)
+
+Use `AskUserQuestion`:
+- "归档并总结经验"
+- "仅归档"
+- "结束"
+
+Note: If code-reviewer reports BLOCKING issues, present to user and re-route to `develop` for fixes before wrap-up.
 </example>
 
 <example>
@@ -236,6 +263,34 @@ Implement feature X using the established internal patterns and library Y guidan
 Feature works end-to-end; tests pass; no unrelated refactors.
 EOF
 ```
+
+**Step 5: code-reviewer** (auto-triggered — multi-file feature implementation)
+```bash
+codeagent-wrapper --agent code-reviewer - /path/to/project <<'EOF'
+## Original User Request
+add feature X using library Y
+
+## Context Pack
+- Explore output: [paste explore output]
+- Librarian output: [paste librarian output]
+- Develop output: [paste develop output — files changed, summary]
+
+## Current Task
+Review the implementation for correctness, API misuse, and integration quality.
+
+## Acceptance Criteria
+Output: BLOCKING/MINOR issue list with file:line citations, or "No issues found".
+EOF
+```
+
+**Step 6: Wrap-up** (4 agents used — trigger archival decision)
+
+Use `AskUserQuestion`:
+- "归档并总结经验"
+- "仅归档"
+- "结束"
+
+Note: If code-reviewer reports BLOCKING issues, present to user and re-route to `develop` for fixes before wrap-up.
 </example>
 
 <example>

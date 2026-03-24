@@ -1,6 +1,7 @@
 ---
 name: omo
 description: Use this skill when you see `/omo`. Multi-agent orchestration for "code analysis / bug investigation / fix planning / implementation". Choose the minimal agent set and order based on task type + risk; recipes below show common patterns.
+allowed-tools: ["Bash(codeagent-wrapper:*)", "Bash(~/.claude/skills/omo/scripts/omo-manager.py:*)", "AskUserQuestion", "Read", "Glob", "Grep", "Skill(exp-reflect:*)"]
 ---
 
 # OmO - Multi-Agent Orchestrator
@@ -24,7 +25,21 @@ Skip pre-implementation agents when ALL conditions hold:
 - Low risk (no public API, no concurrency, no security)
 - User intent is unambiguous
 
-Flow: **confirm** → `develop` (backend) or `frontend-ui-ux-engineer` (frontend). Skip archival.
+Flow: **confirm** → `develop` (backend) or `frontend-ui-ux-engineer` (frontend). Skip review and archival.
+
+## Pre-Task Experience Check (Optional)
+
+Before routing pre-implementation agents, Sisyphus checks for related experience in project memory.
+
+**Trigger**: Task is non-trivial (would invoke explore or oracle).
+**Skip**: Express-Path tasks, analysis-only queries, no `.spec/context/` directory.
+
+**Flow**: Read index files directly (no agent needed):
+1. Read `.spec/context/experience/index.md` (if exists) — scan for matching dilemma-strategy pairs
+2. Read `.spec/context/knowledge/index.md` (if exists) — scan for relevant project knowledge
+3. If matches found, include as context when routing subsequent agents (explore, oracle, develop)
+
+This is a lightweight read-only step. If no `.spec/context/` directory exists, skip silently.
 
 ## Routing Summary (Quick Reference)
 
@@ -56,10 +71,48 @@ Before invoking any implementation agent (develop, frontend-ui-ux-engineer, docu
 
 **Exception:** This gate is skipped only when the user explicitly indicates no confirmation is needed (e.g., "just do it", "skip confirmation").
 
+## Post-Implementation Review (Auto-Triggered)
+
+After any implementation agent (develop, frontend-ui-ux-engineer) completes, Sisyphus evaluates whether to invoke `code-reviewer`.
+
+**Trigger** (any one):
+- Implementation touched 2+ files
+- Changes involve public API, data format, or security-sensitive code
+- User explicitly requests review
+
+**Skip** (all must hold):
+- Single-file, low-risk change
+- No public API / concurrency / security concern
+- Document-only changes (`document-writer` output)
+
+**Review feedback loop**: If `code-reviewer` reports BLOCKING issues:
+1. Present BLOCKING findings to user
+2. `AskUserQuestion`: "Fix blocking issues" / "Accept as-is"
+3. If fix: re-route to the same implementation agent with review findings as context
+4. After fix: optionally re-run `code-reviewer` for verification
+
+## Task Wrap-up
+
+After implementation (and review if triggered), Sisyphus evaluates whether to archive.
+
+**Trigger** (any one):
+- Task involved 2+ agents
+- An implementation agent was invoked
+- User explicitly asks to save/archive
+
+**Skip**: Single-agent explore queries, trivial fixes, Express-Path tasks.
+
+**Flow**: Use `AskUserQuestion` with three options:
+- **"归档并总结经验"** — write analysis, then invoke `/exp-reflect`
+- **"仅归档"** — write analysis only
+- **"结束"** — skip archival
+
+If archiving, follow the detailed template and save flow in `references/archival-guide.md`.
+
 ## Key References
 
 - `references/routing-and-templates.md` — routing signals, recipes, invocation format, examples
-- `references/archival-guide.md` — post-task archival flow (read at task wrap-up)
+- `references/archival-guide.md` — archival template and save commands (referenced from Task Wrap-up above)
 
 ## Agent Invocation (How to Call Agents)
 

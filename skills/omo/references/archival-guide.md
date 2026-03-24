@@ -55,6 +55,14 @@ python "$OMO_MGR" save --title "<title>" --agents "<agent1,agent2>" --task-type 
 
 4. If user chose "归档并总结经验", invoke `/exp-reflect` after save completes.
 
+When invoking `/exp-reflect`, Sisyphus should provide session context:
+- Which agents were invoked and their key findings
+- What implementation changes were made (files, scope)
+- Any BLOCKING issues found by code-reviewer and how they were resolved
+- Decisions or tradeoffs made during the task
+
+This helps `/exp-reflect` extract meaningful dilemma-strategy pairs and project knowledge.
+
 ### Cross-Session Recovery
 
 To resume from a previous analysis:
