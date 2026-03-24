@@ -1,7 +1,7 @@
 ---
 name: do
 description: This skill should be used for structured feature development with codebase understanding. Triggers on /do command. Provides a 5-phase workflow (Understand, Clarify, Design, Implement, Complete) using codeagent-wrapper to orchestrate code-explorer, code-architect, do-reviewer, do-develop, and do-frontend agents in parallel.
-allowed-tools: ["Bash(~/.claude/skills/do/scripts/setup-do.py:*)", "Bash(~/.claude/skills/do/scripts/task.py:*)"]
+allowed-tools: ["Bash(~/.claude/skills/do/scripts/setup-do.py:*)", "Bash(~/.claude/skills/do/scripts/task.py:*)", "Skill(exp-reflect:*)"]
 ---
 
 # do - Feature Development Orchestrator
@@ -12,10 +12,10 @@ An orchestrator for systematic feature development. Invoke agents via `codeagent
 
 When triggered via `/do <task>`, initialize the task directory immediately without asking about worktree:
 
-Use `python` and `$HOME` for home directory:
+Use `$SETUP_DO` (see Script Path Resolution below):
 
 ```bash
-python "$HOME/.claude/skills/do/scripts/setup-do.py" "<task description>"
+python "$SETUP_DO" "<task description>"
 ```
 
 This creates a task directory under `.claude/do-tasks/` with:
@@ -23,19 +23,30 @@ This creates a task directory under `.claude/do-tasks/` with:
 
 **Worktree decision is deferred until Phase 4 (Implement).** Phases 1-3 are read-only and do not require worktree isolation.
 
+## Script Path Resolution (cross-platform)
+
+All commands use `$TASK_MGR` and `$SETUP_DO`. Since shell state doesn't persist, **prepend this to every Bash invocation that uses these scripts**:
+
+```bash
+TASK_MGR="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/do/scripts/task.py'))")"
+SETUP_DO="$(python -c "import os;print(os.path.expanduser('~/.claude/skills/do/scripts/setup-do.py'))")"
+```
+
+Do NOT use `$HOME` directly — fails on Windows Git Bash. Prefer `--file <tempfile>` over pipe for stdin-based writes.
+
 ## Task Directory Management
 
 Use `task.py` to manage task state:
 
 ```bash
 # Update phase
-python "$HOME/.claude/skills/do/scripts/task.py" update-phase 2
+python "$TASK_MGR" update-phase 2
 
 # Check status
-python "$HOME/.claude/skills/do/scripts/task.py" status
+python "$TASK_MGR" status
 
 # List all tasks
-python "$HOME/.claude/skills/do/scripts/task.py" list
+python "$TASK_MGR" list
 ```
 
 ## Worktree Mode
@@ -44,7 +55,7 @@ The worktree is created **only when needed** (right before Phase 4: Implement). 
 
 1. Enable worktree for the current task (creates worktree without resetting task context):
    ```bash
-   python "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
+   python "$TASK_MGR" enable-worktree
    ```
 
 2. Use the `DO_WORKTREE_DIR` environment variable from the output to direct `codeagent-wrapper` do-develop agent into the worktree:
@@ -61,6 +72,34 @@ Once worktree is enabled in Phase 4, prefix any agent invocation that must read 
 changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with
 `DO_WORKTREE_DIR=<worktree_dir>`.
 
+## Trivial Detection (before Phase 1)
+
+After init, check if trivial: single file + typo/wording fix, clear scope, or user said "just do it".
+
+**Trivial express-path** — skip rules:
+
+| Phase | Action |
+|-------|--------|
+| Phase 1 (Understand) | Skip parallel exploration |
+| Phase 2 (Clarify) | Skip |
+| Phase 3 (Design) | Skip architect; orchestrator states the change directly to user |
+| Phase 4 (Implement) | Execute `do-develop`/`do-frontend` only (skip worktree question, skip review) |
+| Phase 5 (Complete) | Skip summarizer and experience reflection; orchestrator outputs brief summary |
+
+Flow: init → confirm change with user via AskUserQuestion → implement → `<promise>DO_COMPLETE</promise>`
+
+## Pre-Task Experience Check (before Phase 1)
+
+**Trigger**: Task is non-trivial (would proceed to Phase 1 parallel exploration).
+**Skip**: Trivial express-path tasks, no `.spec/context/` directory.
+
+Read index files directly (no agent needed):
+1. Read `.spec/context/experience/index.md` (if exists) — scan for matching dilemma-strategy pairs
+2. Read `.spec/context/knowledge/index.md` (if exists) — scan for relevant project knowledge
+3. If matches found, include as context in Phase 1 agent prompts (Context Pack)
+
+This is a lightweight read-only step. If no `.spec/context/` directory exists, skip silently.
+
 ## Hard Constraints
 
 1. **Never write code directly.** Delegate all code changes to `codeagent-wrapper` agents.
@@ -68,7 +107,7 @@ changed tree (e.g. `do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) 
 3. **Parallel-first.** Run independent tasks via `codeagent-wrapper --parallel`.
 4. **Update phase after each phase.** Use `task.py update-phase <N>`.
 5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; for calls that may exceed the Bash tool timeout, invoke the Bash tool with `run_in_background: true` and fetch the final result via `TaskOutput` instead of relying on the foreground call to stay open. Stay in the orchestrator role and wait for agents to complete.
-6. **Timeouts are not an escape hatch.** If a `codeagent-wrapper` invocation times out/errors, retry (split/narrow the task if needed); never switch to direct implementation.
+6. **Agent failure handling.** If `codeagent-wrapper` fails (non-zero exit, timeout, empty output): check stderr, retry once if transient (network, timeout). If retry fails, surface the error to user via `AskUserQuestion` with context. Never silently skip a failed agent call; never switch to direct implementation.
 7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix any Phase 4-5 agent call that depends on repo state (`do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
 
 ## Agents
@@ -252,7 +291,7 @@ Develop in a separate worktree? (Isolates changes from main branch)
 
 If user chooses worktree:
 ```bash
-python "$HOME/.claude/skills/do/scripts/task.py" enable-worktree
+python "$TASK_MGR" enable-worktree
 # Save the DO_WORKTREE_DIR from output
 ```
 
@@ -277,6 +316,7 @@ Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
 - Run narrowest relevant tests
+After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
 EOF
 
 # do-develop (without worktree):
@@ -285,6 +325,7 @@ Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
 - Run narrowest relevant tests
+After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
 EOF
 
 # do-frontend (with worktree):
@@ -293,6 +334,7 @@ Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
 - Run narrowest relevant tests
+After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
 EOF
 
 # do-frontend (without worktree):
@@ -301,6 +343,7 @@ Implement with minimal change set following the Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
 - Run narrowest relevant tests
+After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
 EOF
 ```
 
@@ -317,6 +360,7 @@ workdir: .
 Implement backend changes following Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
+After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
 End with: Summary: <one sentence>
 
 ---TASK---
@@ -328,6 +372,7 @@ skills: taste-core,taste-output
 Implement frontend changes following Phase 3 blueprint.
 - Follow Phase 1 patterns
 - Add/adjust tests per Phase 3 plan
+After implementation, your code will be reviewed for correctness and simplicity. Write clean, correct code.
 End with: Summary: <one sentence>
 EOF
 
@@ -345,7 +390,7 @@ If you want the `verify-loop` hook to block the review from completing until ver
 set `verify_commands` for the current task:
 
 ```bash
-python "$HOME/.claude/skills/do/scripts/task.py" set-verify --cmd "<command>" --cmd "<command2>"
+python "$TASK_MGR" set-verify --cmd "<command>" --cmd "<command2>"
 ```
 
 Notes:
@@ -353,6 +398,11 @@ Notes:
 - Use `--append` to add commands; use `--clear` to disable the gate.
 
 **Step 4: Review**
+
+First capture the implementation diff for review context:
+```bash
+REVIEW_DIFF=$(cd "${DO_WORKTREE_DIR:-.}" && git diff HEAD~1 --stat && echo "---" && git diff HEAD~1)
+```
 
 Run parallel reviews:
 
@@ -366,6 +416,9 @@ workdir: .
 ---CONTENT---
 Review for correctness, edge cases, failure modes.
 Classify each issue as BLOCKING or MINOR.
+
+Implementation diff:
+$REVIEW_DIFF
 End with: Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>
 
 ---TASK---
@@ -375,6 +428,9 @@ workdir: .
 ---CONTENT---
 Review for KISS: remove bloat, collapse needless abstractions.
 Classify each issue as BLOCKING or MINOR.
+
+Implementation diff:
+$REVIEW_DIFF
 End with: Summary: BLOCKING=<n>, MINOR=<n> — <one sentence>
 EOF
 ```
@@ -399,6 +455,24 @@ Write completion summary:
 - Follow-ups (optional)
 EOF
 ```
+
+**Auto Experience Reflection:**
+
+After summarizer completes, automatically invoke experience reflection to persist learnings. No user prompt needed.
+
+**Trigger** (any one):
+- Task involved 3+ phases (non-trivial)
+- Implementation touched 3+ files
+- Review found BLOCKING issues that were resolved
+
+**Skip**: Trivial express-path, single-file changes, no `.spec/context/` directory.
+
+When triggered, invoke:
+```
+Skill(exp-reflect)
+```
+
+Then proceed to output the completion signal.
 
 Output the completion signal:
 ```
