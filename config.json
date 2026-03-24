@@ -8,7 +8,7 @@
       "description": "OmO multi-agent orchestration with Sisyphus coordinator",
       "dependencies": ["cr"],
       "agents": {
-        "oracle": {
+        "omo-oracle": {
           "backend": "claude",
           "model": "claude-opus-4-6",
           "prompt_file": "~/.claude/skills/omo/references/oracle.md",
@@ -20,7 +20,7 @@
           "prompt_file": "~/.claude/skills/omo/references/librarian.md",
           "yolo": true
         },
-        "explore": {
+        "omo-explore": {
           "backend": "claude",
           "model": "claude-sonnet-4-6",
           "prompt_file": "~/.claude/skills/omo/references/explore.md"

@@ -4,7 +4,7 @@
 
 You are invoked by Sisyphus orchestrator. Your input MUST contain:
 - `## Original User Request` - What the user asked for
-- `## Context Pack` - Prior outputs from explore (may be "None")
+- `## Context Pack` - Prior outputs from omo-explore (may be "None")
 - `## Current Task` - Your specific task
 - `## Acceptance Criteria` - How to verify completion
 

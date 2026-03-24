@@ -4,35 +4,35 @@ Read this file when routing agents. Contains signal table, recipes, invocation f
 
 ## Routing Signals (No Fixed Pipeline)
 
-This skill is **routing-first**, not a mandatory `explore → oracle → develop` conveyor belt.
+This skill is **routing-first**, not a mandatory `omo-explore → omo-oracle → develop` conveyor belt.
 
 | Signal | Add this agent |
 |--------|----------------|
-| Code location/behavior unclear | `explore` |
+| Code location/behavior unclear | `omo-explore` |
 | External library/API usage unclear | `librarian` |
-| Risky change: multi-file/module, public API, data format/config, concurrency, security/perf, or unclear tradeoffs | `oracle` |
+| Risky change: multi-file/module, public API, data format/config, concurrency, security/perf, or unclear tradeoffs | `omo-oracle` |
 | Implementation: backend (server-side logic, API, data processing, CLI, config, infra) | `develop` |
 | Implementation: frontend (components, pages, hooks, state management, styling, layout, animation, interactions) | `frontend-ui-ux-engineer` |
-| Implementation: documentation (README, API docs, guides, changelogs) | `document-writer` |
+| Implementation: documentation, config, prompt files (README, API docs, guides, changelogs, SKILL.md, JSON config) | `document-writer` |
 | Post-implementation quality check requested, or implementation touched multiple files / public API | `code-reviewer` |
 
 ## Skipping Heuristics (Prefer Explicit Risk Signals)
 
-- Skip `explore` when the user already provided exact file path + line number, or you already have it from context.
-- Skip `oracle` when the change is **local + low-risk** (single area, clear fix, no tradeoffs). Line count is a weak signal; risk is the real gate.
+- Skip `omo-explore` when the user already provided exact file path + line number, or you already have it from context.
+- Skip `omo-oracle` when the change is **local + low-risk** (single area, clear fix, no tradeoffs). Line count is a weak signal; risk is the real gate.
 - Skip `code-reviewer` when the change is trivial (single-line fix, comment-only, config tweak) and the user did not request review.
-- Skip implementation agents when the user only wants analysis/answers (stop after `explore`/`librarian`).
+- Skip implementation agents when the user only wants analysis/answers (stop after `omo-explore`/`librarian`).
 
 ## Common Recipes (Examples, Not Rules)
 
-- Explain code: `explore`
+- Explain code: `omo-explore`
 - Small localized fix with exact location: **confirm** → `develop`
-- Bug fix, location unknown: exp-check → `explore` → **confirm** → `develop` → `code-reviewer` (if 2+ files) → wrap-up
-- Cross-cutting refactor / high risk: exp-check → `explore → oracle` → **confirm** → `develop` → `code-reviewer` → wrap-up
-- External API integration: exp-check → `explore` + `librarian` (parallel) → `oracle` (if risk) → **confirm** → `develop`/`frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
-- UI-only change: exp-check → `explore` → **confirm** → `frontend-ui-ux-engineer` → `code-reviewer` (if 2+ files) → wrap-up
-- Full-stack feature (backend + UI): exp-check → `explore` → `oracle` (if risk) → **confirm** → `develop` → `frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
-- Docs-only change: `explore` → **confirm** → `document-writer`
+- Bug fix, location unknown: exp-check → `omo-explore` → **confirm** → `develop` → `code-reviewer` (if 2+ files) → wrap-up
+- Cross-cutting refactor / high risk: exp-check → `omo-explore → omo-oracle` → **confirm** → `develop` → `code-reviewer` → wrap-up
+- External API integration: exp-check → `omo-explore` + `librarian` (parallel) → `omo-oracle` (if risk) → **confirm** → `develop`/`frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
+- UI-only change: exp-check → `omo-explore` → **confirm** → `frontend-ui-ux-engineer` → `code-reviewer` (if 2+ files) → wrap-up
+- Full-stack feature (backend + UI): exp-check → `omo-explore` → `omo-oracle` (if risk) → **confirm** → `develop` → `frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
+- Docs-only change: `omo-explore` → **confirm** → `document-writer`
 - Post-implementation review: `code-reviewer` (auto-triggered after implement; see SKILL.md trigger conditions)
 - Review feedback loop: `code-reviewer` (BLOCKING) → **confirm** → `develop`/`frontend-ui-ux-engineer` (fix) → `code-reviewer` (verify, optional)
 - Resume from saved analysis: Read `.spec/07-analysis/<dir>/analysis.md` → build Context Pack → route agents
@@ -63,11 +63,11 @@ Execute in shell tool, timeout 2h.
 
 | Agent | When to Use |
 |-------|---------------|
-| `explore` | Need to locate code position or understand code structure |
-| `oracle` | Risky changes, tradeoffs, unclear requirements, or after failed attempts |
+| `omo-explore` | Need to locate code position or understand code structure |
+| `omo-oracle` | Risky changes, tradeoffs, unclear requirements, or after failed attempts |
 | `develop` | Backend/server-side code: API endpoints, server logic, data processing, CLI tools, config/infra, database operations, Go/Python/Java and other server-side languages |
 | `frontend-ui-ux-engineer` | All frontend/client-side code: components, pages, hooks, state management, data fetching, styling, layout, animation, interactions, responsive design. Any file that belongs to a frontend project goes through this agent |
-| `document-writer` | Documentation writing and editing: README, API docs, architecture docs, user guides, changelogs, config references |
+| `document-writer` | Documentation and text file editing: README, API docs, architecture docs, user guides, changelogs, config files, prompt files (SKILL.md), JSON config |
 | `librarian` | Need to lookup external library docs or OSS examples |
 | `code-reviewer` | Post-implementation review, or user explicitly requests code review |
 
@@ -101,9 +101,9 @@ User: /omo analyze this bug and fix it (location unknown)
 
 Sisyphus executes:
 
-**Step 1: explore**
+**Step 1: omo-explore**
 ```bash
-codeagent-wrapper --agent explore - /path/to/project <<'EOF'
+codeagent-wrapper --agent omo-explore - /path/to/project <<'EOF'
 ## Original User Request
 analyze this bug and fix it
 
@@ -146,7 +146,7 @@ Fix is implemented; tests pass; no regressions introduced.
 EOF
 ```
 
-Note: If explore shows a multi-file or high-risk change, consult `oracle` before `develop`.
+Note: If explore shows a multi-file or high-risk change, consult `omo-oracle` before `develop`.
 
 **Step 4: code-reviewer** (auto-triggered — develop touched 2+ files)
 ```bash
@@ -181,9 +181,9 @@ User: /omo add feature X using library Y (need internal context + external docs)
 
 Sisyphus executes:
 
-**Step 1a: explore** (internal codebase)
+**Step 1a: omo-explore** (internal codebase)
 ```bash
-codeagent-wrapper --agent explore - /path/to/project <<'EOF'
+codeagent-wrapper --agent omo-explore - /path/to/project <<'EOF'
 ## Original User Request
 add feature X using library Y
 
@@ -215,9 +215,9 @@ Output: minimal usage pattern; API pitfalls; version constraints; links to autho
 EOF
 ```
 
-**Step 2: oracle** (optional but recommended if multi-file/risky)
+**Step 2: omo-oracle** (optional but recommended if multi-file/risky)
 ```bash
-codeagent-wrapper --agent oracle - /path/to/project <<'EOF'
+codeagent-wrapper --agent omo-oracle - /path/to/project <<'EOF'
 ## Original User Request
 add feature X using library Y
 
@@ -298,9 +298,9 @@ User: /omo how does this function work?
 
 Sisyphus executes:
 
-**Only explore needed** (analysis task, no code changes)
+**Only omo-explore needed** (analysis task, no code changes)
 ```bash
-codeagent-wrapper --agent explore - /path/to/project <<'EOF'
+codeagent-wrapper --agent omo-explore - /path/to/project <<'EOF'
 ## Original User Request
 how does this function work?
 
@@ -321,9 +321,9 @@ User: /omo redesign the dashboard card layout and add hover animations
 
 Sisyphus executes:
 
-**Step 1: explore** (understand current UI structure)
+**Step 1: omo-explore** (understand current UI structure)
 ```bash
-codeagent-wrapper --agent explore - /path/to/project <<'EOF'
+codeagent-wrapper --agent omo-explore - /path/to/project <<'EOF'
 ## Original User Request
 redesign the dashboard card layout and add hover animations
 
@@ -375,14 +375,14 @@ Note: This is a frontend task — card layout + animations = `frontend-ui-ux-eng
 User: /omo fix this type error
 
 Wrong approach:
-- Always run `explore → oracle → develop` mechanically
+- Always run `omo-explore → omo-oracle → develop` mechanically
 - Use grep to find files yourself
 - Modify code yourself
 - Invoke develop without passing context
 
 Correct approach:
 - Route based on signals: if location is known and low-risk, invoke `develop` directly
-- Otherwise invoke `explore` to locate the problem (or to confirm scope), then delegate implementation
+- Otherwise invoke `omo-explore` to locate the problem (or to confirm scope), then delegate implementation
 - Invoke the implementation agent with a complete Context Pack
 </anti_example>
 
@@ -391,4 +391,5 @@ Correct approach:
 - **FORBIDDEN** to write code yourself (must delegate to implementation agent)
 - **FORBIDDEN** to invoke an agent without the original request and relevant Context Pack
 - **FORBIDDEN** to skip agents and use grep/glob for complex analysis
-- **FORBIDDEN** to treat `explore → oracle → develop` as a mandatory workflow
+- **FORBIDDEN** to use Claude's built-in `Agent` tool (subagent_type=Explore/Plan/etc.) as a substitute for omo agents
+- **FORBIDDEN** to treat `omo-explore → omo-oracle → develop` as a mandatory workflow

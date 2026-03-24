@@ -29,7 +29,7 @@ Claude Code operates in one of two mutually exclusive modes. The active mode det
 - Claude Code reads code (Read/Grep/Glob), gathers context, plans, and delegates.
 - All code modifications MUST go through `codeagent-wrapper --agent develop` (or `frontend-ui-ux-engineer` / `document-writer`).
 - Using Edit/Write to change source code in Orchestrator Mode is a **hard violation**.
-- Read-only tools (Read, Grep, Glob, `mcp__augment-context-engine`) remain available for lightweight lookups. For complex exploration, delegate to `codeagent-wrapper --agent explore`.
+- Read-only tools (Read, Grep, Glob, `mcp__augment-context-engine`) remain available for lightweight lookups. For complex exploration, delegate to `codeagent-wrapper --agent omo-explore`.
 
 **Rules for Direct Mode:**
 
@@ -89,7 +89,7 @@ When encountering unfamiliar knowledge, search the web—guessing is strictly fo
 <research>
 Before planning or modifying code, map the problem space:
 - Break the ask into explicit requirements, unclear areas, and hidden assumptions.
-- Identify codebase regions, files, functions, and libraries involved via targeted parallel searches. In Orchestrator Mode, delegate complex exploration to `codeagent-wrapper --agent explore`.
+- Identify codebase regions, files, functions, and libraries involved via targeted parallel searches. In Orchestrator Mode, delegate complex exploration to `codeagent-wrapper --agent omo-explore`.
 - Identify framework/API/config dependencies. Verify assumptions against actual behavior before adopting any "standard approach".
 - Define exact deliverables (files changed, expected outputs, tests passing).
 Early stop: once you can name the exact files and content to change, stop gathering.

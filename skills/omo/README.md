@@ -18,9 +18,9 @@ python install.py --module omo
 
 | Agent | Role | Backend | Model |
 |-------|------|---------|-------|
-| `oracle` | Technical advisor | claude | claude-opus-4-6 |
+| `omo-oracle` | Technical advisor | claude | claude-opus-4-6 |
 | `librarian` | External research | claude | claude-sonnet-4-6 |
-| `explore` | Codebase search | claude | claude-sonnet-4-6 |
+| `omo-explore` | Codebase search | claude | claude-sonnet-4-6 |
 | `develop` | Code implementation | codex | gpt-5.4 |
 | `frontend-ui-ux-engineer` | UI/UX specialist | claude | claude-opus-4-6 |
 | `document-writer` | Documentation | gemini | gemini-3-flash-preview |
@@ -32,30 +32,30 @@ This skill is **routing-first**, not a mandatory conveyor belt.
 
 | Signal | Add Agent |
 |--------|----------|
-| Code location/behavior unclear | `explore` |
+| Code location/behavior unclear | `omo-explore` |
 | External library/API usage unclear | `librarian` |
-| Risky change (multi-file, public API, security, perf) | `oracle` |
+| Risky change (multi-file, public API, security, perf) | `omo-oracle` |
 | Implementation required | `develop` / `frontend-ui-ux-engineer` |
 | Documentation needed | `document-writer` |
 | Post-implementation quality check or user requests review | `code-reviewer` |
 
 ### Skipping Heuristics
 
-- Skip `explore` when exact file path + line number is known
-- Skip `oracle` when change is local + low-risk (single area, clear fix)
+- Skip `omo-explore` when exact file path + line number is known
+- Skip `omo-oracle` when change is local + low-risk (single area, clear fix)
 - Skip implementation agents when user only wants analysis
 
 ## Common Recipes
 
 | Task | Recipe |
 |------|--------|
-| Explain code | `explore` |
+| Explain code | `omo-explore` |
 | Small fix with known location | `develop` directly |
-| Bug fix, location unknown | `explore → develop` |
-| Cross-cutting refactor | `explore → oracle → develop` |
-| External API integration | `explore + librarian → oracle → develop` |
-| UI-only change | `explore → frontend-ui-ux-engineer` |
-| Docs-only change | `explore → document-writer` |
+| Bug fix, location unknown | `omo-explore → develop` |
+| Cross-cutting refactor | `omo-explore → omo-oracle → develop` |
+| External API integration | `omo-explore + librarian → omo-oracle → develop` |
+| UI-only change | `omo-explore → frontend-ui-ux-engineer` |
+| Docs-only change | `omo-explore → document-writer` |
 | Post-implementation review | `code-reviewer` |
 | Review + fix | `code-reviewer → develop` |
 
@@ -105,19 +105,19 @@ Timeout: 2 hours.
 ```bash
 # Analysis only
 /omo how does this function work?
-# → explore
+# → omo-explore
 
 # Bug fix with unknown location
 /omo fix the authentication bug
-# → explore → develop
+# → omo-explore → develop
 
 # Feature with external API
 /omo add Stripe payment integration
-# → explore + librarian → oracle → develop
+# → omo-explore + librarian → omo-oracle → develop
 
 # UI change
 /omo redesign the dashboard layout
-# → explore → frontend-ui-ux-engineer
+# → omo-explore → frontend-ui-ux-engineer
 ```
 
 ## Configuration
@@ -129,7 +129,7 @@ Agent-model mappings in `~/.codeagent/models.json`:
   "default_backend": "codex",
   "default_model": "gpt-5.4",
   "agents": {
-    "oracle": {
+    "omo-oracle": {
       "backend": "claude",
       "model": "claude-opus-4-6",
       "yolo": true
@@ -139,7 +139,7 @@ Agent-model mappings in `~/.codeagent/models.json`:
       "model": "claude-sonnet-4-6",
       "yolo": true
     },
-    "explore": {
+    "omo-explore": {
       "backend": "claude",
       "model": "claude-sonnet-4-6"
     },
@@ -169,7 +169,7 @@ Agent-model mappings in `~/.codeagent/models.json`:
 
 1. **Never write code yourself** - delegate to implementation agents
 2. **Always pass context forward** - include original request + prior outputs
-3. **No direct grep/glob for non-trivial exploration** - use `explore`
+3. **No direct grep/glob for non-trivial exploration** - use `omo-explore`
 4. **No external docs guessing** - use `librarian`
 5. **Use fewest agents possible** - skipping is normal
 

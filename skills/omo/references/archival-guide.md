@@ -13,7 +13,7 @@ Archive when **any** of these hold:
 - An implementation agent (develop, frontend-ui-ux-engineer) was invoked
 - User explicitly asks to save/archive
 
-**Do not trigger** for single-agent explore queries or trivial fixes.
+**Do not trigger** for single-agent omo-explore queries or trivial fixes.
 
 ### Wrap-up Flow
 
@@ -31,7 +31,7 @@ Archive when **any** of these hold:
 <Original user request>
 
 ## Analysis Summary
-<Key findings from explore/librarian, condensed>
+<Key findings from omo-explore/librarian, condensed>
 
 ## Implementation Summary
 <What was changed, files touched — skip if analysis-only>
