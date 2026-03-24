@@ -86,6 +86,8 @@ After init, check if trivial: single file + typo/wording fix, clear scope, or us
 | Phase 4 (Implement) | Execute `do-develop`/`do-frontend` only (skip worktree question, skip review) |
 | Phase 5 (Complete) | Skip summarizer and experience reflection; orchestrator outputs brief summary |
 
+Context Pack is not used for trivial tasks; pass the user request directly as the agent prompt.
+
 Flow: init → confirm change with user via AskUserQuestion → implement → `<promise>DO_COMPLETE</promise>`
 
 ## Pre-Task Experience Check (before Phase 1)
@@ -109,6 +111,14 @@ This is a lightweight read-only step. If no `.spec/context/` directory exists, s
 5. **Expect long-running `codeagent-wrapper` calls.** High-reasoning modes can take a long time; for calls that may exceed the Bash tool timeout, invoke the Bash tool with `run_in_background: true` and fetch the final result via `TaskOutput` instead of relying on the foreground call to stay open. Stay in the orchestrator role and wait for agents to complete.
 6. **Agent failure handling.** If `codeagent-wrapper` fails (non-zero exit, timeout, empty output): check stderr, retry once if transient (network, timeout). If retry fails, surface the error to user via `AskUserQuestion` with context. Never silently skip a failed agent call; never switch to direct implementation.
 7. **Defer worktree decision until Phase 4.** Only ask about worktree mode right before implementation. If enabled, prefix any Phase 4-5 agent call that depends on repo state (`do-develop`, `do-frontend`, `do-reviewer`, `do-summarizer`) with `DO_WORKTREE_DIR=<path>`. Never pass `--worktree` after initialization.
+
+## Task Cancellation
+
+When the user requests to cancel or abort the current task:
+
+1. Run: `python "$TASK_MGR" cancel`
+2. Confirm to the user that the task has been cancelled
+3. Do NOT continue to subsequent phases
 
 ## Agents
 
@@ -225,8 +235,8 @@ Note: `codeagent-wrapper --parallel` defaults to structured summary output. Avoi
 
 **Actions:**
 1. Review `p1_requirements` output for blocking questions
-2. **IF blocking questions exist** → Use AskUserQuestion
-3. **IF no blocking questions (completeness >= 8)** → Skip to Phase 3
+2. IF completeness >= 8 AND blocking questions list is empty → Skip to Phase 3
+3. OTHERWISE → Use AskUserQuestion to resolve blocking questions, then proceed
 
 ### Phase 3: Design (User Confirmation Required)
 

@@ -10,6 +10,7 @@ Commands:
   status                      - Show current task status
   update-phase <N>            - Update current phase
   enable-worktree             - Enable worktree for current task
+  cancel                      - Cancel current task
   set-verify                  - Set verify commands for verify-loop hook
 """
 
@@ -55,7 +56,7 @@ def get_current_task_file(project_root: str) -> str:
 
 def generate_task_id() -> str:
     """Generate short task ID: MMDD-XXXX format."""
-    date_part = datetime.now().strftime("%m%d")
+    date_part = datetime.now().strftime("%y%m%d")
     random_part = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
     return f"{date_part}-{random_part}"
 
@@ -361,6 +362,13 @@ def list_tasks() -> list[dict]:
     return tasks
 
 
+def get_task_info(project_root: str, task_dir: str) -> dict | None:
+    """Read task metadata from task.md frontmatter."""
+    task_md_path = os.path.join(project_root, task_dir, FILE_TASK_MD)
+    parsed = read_task_md(task_md_path)
+    return parsed["frontmatter"] if parsed else None
+
+
 def get_status() -> dict | None:
     """Get current task status."""
     project_root = get_project_root()
@@ -379,6 +387,34 @@ def get_status() -> dict | None:
     task_data = parsed["frontmatter"]
     task_data["path"] = current_task
     return task_data
+
+
+def cancel_task() -> bool:
+    """Cancel current task: set status to cancelled and clear pointer."""
+    project_root = get_project_root()
+    current_task = get_current_task(project_root)
+
+    if not current_task:
+        print("Error: No active task.", file=sys.stderr)
+        return False
+
+    task_dir = os.path.join(project_root, current_task)
+    task_md_path = os.path.join(task_dir, FILE_TASK_MD)
+
+    parsed = read_task_md(task_md_path)
+    if not parsed:
+        print("Error: task.md not found or invalid.", file=sys.stderr)
+        return False
+
+    frontmatter = parsed["frontmatter"]
+    frontmatter["status"] = "cancelled"
+
+    if not write_task_md(task_md_path, frontmatter, parsed["body"]):
+        print("Error: Failed to write task.md.", file=sys.stderr)
+        return False
+
+    finish_task()
+    return True
 
 
 def enable_worktree() -> bool:
@@ -512,6 +548,9 @@ def main():
     # finish command
     subparsers.add_parser("finish", help="Clear current task")
 
+    # cancel command
+    subparsers.add_parser("cancel", help="Cancel current task")
+
     # list command
     subparsers.add_parser("list", help="List all tasks")
 
@@ -557,6 +596,12 @@ def main():
     elif args.command == "finish":
         if finish_task():
             print("Task finished, current task cleared.")
+        else:
+            sys.exit(1)
+
+    elif args.command == "cancel":
+        if cancel_task():
+            print("Task cancelled.")
         else:
             sys.exit(1)
 

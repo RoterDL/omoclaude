@@ -12,13 +12,9 @@ import os
 import sys
 from pathlib import Path
 
-# Import shared task.md parser from scripts/
+# Import shared helpers from scripts/
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from task import read_task_md
-
-DIR_TASKS = ".claude/do-tasks"
-FILE_CURRENT_TASK = ".current-task"
-FILE_TASK_MD = "task.md"
+from task import get_current_task, get_task_info, read_task_md
 
 PHASE_NAMES = {
     1: "Understand",
@@ -31,26 +27,6 @@ PHASE_NAMES = {
 
 def phase_name_for(n: int) -> str:
     return PHASE_NAMES.get(n, f"Phase {n}")
-
-
-def get_current_task(project_dir: str) -> str | None:
-    """Read current task directory path."""
-    current_task_file = os.path.join(project_dir, DIR_TASKS, FILE_CURRENT_TASK)
-    if not os.path.exists(current_task_file):
-        return None
-    try:
-        with open(current_task_file, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            return content if content else None
-    except Exception:
-        return None
-
-
-def get_task_info(project_dir: str, task_dir: str) -> dict | None:
-    """Read task metadata from task.md frontmatter."""
-    task_md_path = os.path.join(project_dir, task_dir, FILE_TASK_MD)
-    parsed = read_task_md(task_md_path)
-    return parsed["frontmatter"] if parsed else None
 
 
 def check_task_complete(project_dir: str, task_dir: str) -> str:

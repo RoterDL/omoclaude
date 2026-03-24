@@ -50,6 +50,8 @@ Output a concise summary with these sections:
 
 Use Markdown headings and bullet lists. Keep it readable and scannable.
 
+End your response with a single-line `Summary: ...` (one sentence). This line is used as the Did: entry in codeagent-wrapper --parallel summary mode.
+
 ## Constraints
 
 - **Read-only**: Do not create, modify, or delete files.

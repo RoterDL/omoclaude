@@ -16,6 +16,7 @@ If any section is missing, proceed anyway:
 - Determine scope from the available task text plus git state (prefer `git diff HEAD`)
 - Be explicit about what you inferred vs. what was given
 
+<!-- Sync: identical section in do-frontend.md -->
 ## Worktree Rule (Repo Root)
 
 If `DO_WORKTREE_DIR` is set and points to a valid directory, treat it as the repo root:
@@ -93,6 +94,7 @@ Before producing your final output, review your own changes against Priority A c
 - A1: Code correctness in all branches
 - A2: Boundary conditions (null, empty, overflow, out-of-bounds)
 - A3: Error handling (I/O, parsing, async)
+- A4: Injection (SQL, command, template, path traversal, unsanitized input)
 - A5: Resource management (handles, connections, cleanup)
 If you find issues, fix them before outputting. Do not report self-found issues -- just fix them.
 
@@ -106,6 +108,7 @@ If you find issues, fix them before outputting. Do not report self-found issues 
 - Never speculate about unread code
 </Hard_Blocks>
 
+<!-- Sync: identical section in do-frontend.md -->
 ## Shell Commands (IMPORTANT)
 
 Claude Code and codeagent-wrapper run in a bash shell environment, even on Windows. **Always use bash/Unix commands**, not Windows CMD commands:

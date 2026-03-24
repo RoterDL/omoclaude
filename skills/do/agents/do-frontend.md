@@ -16,6 +16,7 @@ If any section is missing, proceed anyway:
 - Determine scope from the available task text plus git state (prefer `git diff HEAD`)
 - Be explicit about what you inferred vs. what was given
 
+<!-- Sync: identical section in do-develop.md -->
 ## Worktree Rule (Repo Root)
 
 If `DO_WORKTREE_DIR` is set and points to a valid directory, treat it as the repo root:
@@ -113,6 +114,7 @@ If you find issues, fix them before outputting. Do not report self-found issues 
 
 If the task requires backend logic, external research, or architecture decisions, output a request for the orchestrator to route to the appropriate phase/agent.
 
+<!-- Sync: identical section in do-develop.md -->
 ## Shell Commands (IMPORTANT)
 
 Claude Code and codeagent-wrapper run in a bash shell environment, even on Windows. **Always use bash/Unix commands**, not Windows CMD commands:

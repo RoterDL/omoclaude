@@ -11,27 +11,7 @@ import os
 import sys
 from pathlib import Path
 
-from task import read_task_md
-
-DIR_TASKS = ".claude/do-tasks"
-FILE_CURRENT_TASK = ".current-task"
-FILE_TASK_MD = "task.md"
-
-
-def get_project_root() -> str:
-    return os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
-
-
-def get_current_task(project_root: str) -> str | None:
-    current_task_file = os.path.join(project_root, DIR_TASKS, FILE_CURRENT_TASK)
-    if not os.path.exists(current_task_file):
-        return None
-    try:
-        with open(current_task_file, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-            return content if content else None
-    except Exception:
-        return None
+from task import get_current_task, get_project_root, get_task_info, read_task_md
 
 
 def read_file_content(base_path: str, file_path: str) -> str | None:
@@ -89,13 +69,6 @@ def get_agent_context(project_root: str, task_dir: str, agent_type: str) -> str:
         context_parts.append(f"=== {task_dir}/prd.md (Requirements) ===\n{prd_content}")
 
     return "\n\n".join(context_parts)
-
-
-def get_task_info(project_root: str, task_dir: str) -> dict | None:
-    """Get task metadata from task.md frontmatter."""
-    task_md_path = os.path.join(project_root, task_dir, FILE_TASK_MD)
-    parsed = read_task_md(task_md_path)
-    return parsed["frontmatter"] if parsed else None
 
 
 def main():
