@@ -101,16 +101,19 @@ Design minimal-change implementation:
 - Reuse existing abstractions
 - Minimize new files
 - Follow established patterns from Phase 1 exploration
-Output:
+
+**FIRST**, output a `## Task Classification` section (this determines which agent runs in Phase 4):
+- `task_type`: "backend_only" | "frontend_only" | "fullstack"
+- Classification rule: if ALL touched files are frontend (HTML, CSS, SCSS, LESS, JS, JSX, TS, TSX, Vue, Svelte, or template files), use "frontend_only". If ALL are backend, use "backend_only". If mixed, use "fullstack".
+- `backend_tasks`: list backend implementation tasks (if any)
+- `frontend_tasks`: list frontend implementation tasks (if any)
+
+**THEN**, output:
 - File touch list with specific changes
 - Build sequence
 - Test plan
 - Risks and mitigations
-- **Design Specification**: paradigm choice, color palette, typography, layout approach, motion strategy, component patterns
-Include a `## Task Classification` section:
-- `task_type`: "backend_only" | "frontend_only" | "fullstack"
-- `backend_tasks`: list backend implementation tasks (if any)
-- `frontend_tasks`: list frontend implementation tasks (if any)
+- **Design Specification** (for frontend tasks): paradigm choice, color palette, typography, layout approach, motion strategy, component patterns
 EOF
 ```
 
@@ -173,7 +176,9 @@ EOF
 | `backend_only` | `do-develop` only | none |
 | `frontend_only` | `do-frontend` only | `taste-core,taste-output` |
 | `fullstack` | both in `--parallel` | `do-frontend` gets `taste-core,taste-output` |
-| missing | default to `do-develop` | none |
+| missing | **infer from file touch list** (see below) | per inferred type |
+
+**Fallback when `task_type` is missing:** inspect the Phase 3 file touch list extensions. If all files are frontend (.html, .css, .scss, .less, .js, .jsx, .ts, .tsx, .vue, .svelte), use `do-frontend` with `taste-core,taste-output`. If mixed, use `--parallel`. Otherwise use `do-develop`.
 
 ## Phase 4: Review Templates
 

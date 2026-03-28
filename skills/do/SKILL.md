@@ -165,7 +165,15 @@ If yes: `python "$TASK_MGR" enable-worktree` and save `DO_WORKTREE_DIR` from out
 
 **Step 2: Invoke implementation agent(s)**
 
-Route based on Phase 3 `task_type` -- see `references/invocation-templates.md` "Execution Rules" table and "Implementation Templates" section. Use `--parallel` for fullstack; single agent for single-domain.
+Route based on Phase 3 `task_type` (see `references/invocation-templates.md` "Implementation Templates"):
+
+| task_type | Agent(s) | --skills |
+|-----------|----------|----------|
+| `frontend_only` | `do-frontend` | `taste-core,taste-output` |
+| `backend_only` | `do-develop` | none |
+| `fullstack` | both via `--parallel` | `do-frontend` gets `taste-core,taste-output` |
+
+**If `task_type` is missing from architect output:** infer from the file touch list — if all files are frontend (.html, .css, .scss, .js, .jsx, .ts, .tsx, .vue, .svelte), use `do-frontend`; mixed → `--parallel`; otherwise `do-develop`. **Never default to `do-develop` for tasks touching only frontend files.**
 
 **Step 3: Configure verification commands (Recommended)**
 
