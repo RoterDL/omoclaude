@@ -23,16 +23,32 @@ This skill is **routing-first**, not a mandatory `omo-explore → omo-oracle →
 - Skip `code-reviewer` when the change is trivial (single-line fix, comment-only, config tweak) and the user did not request review.
 - Skip implementation agents when the user only wants analysis/answers (stop after `omo-explore`/`librarian`).
 
+## Exploration Depth Policy
+
+Use `omo-explore` in **quick-first** mode unless there is a concrete reason to go deeper.
+
+| Depth | Use When | Expected Output |
+|------|----------|-----------------|
+| `quick` | Need to locate files, symbols, entry points, or likely hook points | Relevant file:line candidates, short rationale, explicit unknowns |
+| `medium` | Need root-cause analysis, cross-file call chain, or implementation-ready context | File list, call flow, constraints, likely fix/extension points |
+| `very thorough` | Broad/high-risk investigation across modules, or user explicitly asks for exhaustive analysis | Comprehensive sweep across naming variants, modules, and edge cases |
+
+Rules:
+- Default to `quick` for the first `omo-explore` pass.
+- Upgrade to `medium` only if `quick` leaves material uncertainty.
+- Use `very thorough` only when the task is broad enough to justify the cost.
+- Prefer `quick locate → confirm/escalate` over a single heavy search.
+
 ## Common Recipes (Examples, Not Rules)
 
-- Explain code: `omo-explore`
+- Explain code: `omo-explore` (`quick` for local explanation, `medium` if call-chain tracing is required)
 - Small localized fix with exact location: **confirm** → `develop`
-- Bug fix, location unknown: exp-check → `omo-explore` → **confirm** → `develop` → `code-reviewer` (if 2+ files) → wrap-up
-- Cross-cutting refactor / high risk: exp-check → `omo-explore → omo-oracle` → **confirm** → `develop` → `code-reviewer` → wrap-up
-- External API integration: exp-check → `omo-explore` + `librarian` (parallel) → `omo-oracle` (if risk) → **confirm** → `develop`/`frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
-- UI-only change: exp-check → `omo-explore` → **confirm** → `frontend-ui-ux-engineer` → `code-reviewer` (if 2+ files) → wrap-up
-- Full-stack feature (backend + UI): exp-check → `omo-explore` → `omo-oracle` (if risk) → **confirm** → `develop` → `frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
-- Docs-only change: `omo-explore` → **confirm** → `document-writer`
+- Bug fix, location unknown: exp-check → `omo-explore` (`quick` locate first; upgrade to `medium` only if root cause remains unclear) → **confirm** → `develop` → `code-reviewer` (if 2+ files) → wrap-up
+- Cross-cutting refactor / high risk: exp-check → `omo-explore` (`medium`) → `omo-oracle` → **confirm** → `develop` → `code-reviewer` → wrap-up
+- External API integration: exp-check → `omo-explore` (`quick`) + `librarian` (parallel) → `omo-oracle` (if risk) → **confirm** → `develop`/`frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
+- UI-only change: exp-check → `omo-explore` (`quick`) → **confirm** → `frontend-ui-ux-engineer` → `code-reviewer` (if 2+ files) → wrap-up
+- Full-stack feature (backend + UI): exp-check → `omo-explore` (`quick`, then `medium` only if needed) → `omo-oracle` (if risk) → **confirm** → `develop` → `frontend-ui-ux-engineer` → `code-reviewer` → wrap-up
+- Docs-only change: `omo-explore` (`quick`) → **confirm** → `document-writer`
 - Post-implementation review: `code-reviewer` (auto-triggered after implement; see SKILL.md trigger conditions)
 - Review feedback loop: `code-reviewer` (BLOCKING) → **confirm** → `develop`/`frontend-ui-ux-engineer` (fix) → `code-reviewer` (verify, optional)
 - Resume from saved analysis: Read `.spec/07-analysis/<dir>/analysis.md` → build Context Pack → route agents

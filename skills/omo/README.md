@@ -45,6 +45,15 @@ This skill is **routing-first**, not a mandatory conveyor belt.
 - Skip `omo-oracle` when change is local + low-risk (single area, clear fix)
 - Skip implementation agents when user only wants analysis
 
+### Exploration Strategy
+
+`omo-explore` uses a **quick-first** strategy for speed and stability:
+
+- Default to `quick` to locate likely files, symbols, entry points, and hook points.
+- Escalate to `medium` only when root cause, cross-file flow, or implementation-ready context is still unclear.
+- Use `very thorough` only for broad or high-risk investigations.
+- Prefer a two-step search (`quick` locate → deepen only if needed) over a single heavy pass.
+
 ## Common Recipes
 
 | Task | Recipe |

@@ -22,7 +22,7 @@ python install.py
 | 模块 | 描述 | 文档 |
 |------|------|------|
 | [do](skills/do/README.md) | 推荐：5 阶段功能开发 + codeagent 编排 | `/do` 命令 |
-| [omo](skills/omo/README.md) | 多智能体编排 + 智能路由 | `/omo` 命令 |
+| [omo](skills/omo/README.md) | 多智能体编排 + 智能路由 + quick-first 检索策略 | `/omo` 命令 |
 | [codeagent](skills/codeagent/SKILL.md) | 面向实现任务的精简技能，依赖 codeagent-wrapper | `skill:codeagent` 或 `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | 多智能体学术研究编排 | `/research-pro` 命令 |
 | [taste](skills/taste/) | 前端设计质量规则 — 规划阶段设计范式 + 实现阶段代码护栏 | `do` 的依赖 |

@@ -23,7 +23,7 @@ Original upstream project: https://github.com/cexll/myclaude
 | Module | Description | Documentation |
 |--------|-------------|---------------|
 | [do](skills/do/README.md) | **Recommended** - 5-phase feature development with codeagent orchestration | `/do` command |
-| [omo](skills/omo/README.md) | Multi-agent orchestration with intelligent routing | `/omo` command |
+| [omo](skills/omo/README.md) | Multi-agent orchestration with intelligent routing and quick-first exploration | `/omo` command |
 | [codeagent](skills/codeagent/SKILL.md) | Focused implementation skill using codeagent-wrapper | `skill:codeagent` or `module:codeagent` |
 | [research-pro](skills/research-pro/README.md) | Multi-agent academic research orchestration | `/research-pro` command |
 | [taste](skills/taste/) | Frontend design quality rules — plan-phase paradigms + implement-phase guardrails | Dependency of `do` |
