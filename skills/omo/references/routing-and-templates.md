@@ -25,7 +25,7 @@ This skill is **routing-first**, not a mandatory `omo-explore → omo-oracle →
 
 ## Exploration Depth Policy
 
-Use `omo-explore` in **quick-first** mode unless there is a concrete reason to go deeper.
+Invoke `omo-explore` via `codeagent-wrapper --agent omo-explore` in **quick-first** mode unless there is a concrete reason to go deeper. Never substitute the system's `Agent(subagent_type=Explore)` — it lacks omo-explore's prompt and output contract.
 
 | Depth | Use When | Expected Output |
 |------|----------|-----------------|
@@ -407,5 +407,5 @@ Correct approach:
 - **FORBIDDEN** to write code yourself (must delegate to implementation agent)
 - **FORBIDDEN** to invoke an agent without the original request and relevant Context Pack
 - **FORBIDDEN** to skip agents and use grep/glob for complex analysis
-- **FORBIDDEN** to use Claude's built-in `Agent` tool (subagent_type=Explore/Plan/etc.) as a substitute for omo agents
+- **FORBIDDEN** to use the system's built-in `Agent` tool (`subagent_type=Explore`/`Plan`/etc.) — the system `Explore` agent produces free-form output that cannot feed Context Packs; always use `codeagent-wrapper --agent omo-explore` instead
 - **FORBIDDEN** to treat `omo-explore → omo-oracle → develop` as a mandatory workflow
