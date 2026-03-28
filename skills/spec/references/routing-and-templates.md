@@ -73,7 +73,7 @@ Parameterized pattern for plan review (Phase 2 Step 5) and code review (Phase 3 
 | agent | `plan-reviewer` | `spec-reviewer-lite` (standard) or `spec-reviewer-deep` (full) |
 | artifact | `plan-review.md` | `review-report.md` |
 | context | plan.md content | plan.md + summary.md + diff |
-| task | Review against 7-area checklist | Review implementation against plan |
+| task | Review for request coverage, implementation grounding, execution readiness | Review implementation against plan |
 | scope | (none) | standard: "Priority A/B only. Skip C." / full: "all priorities A/B/C" |
 
 **Steps:**
@@ -109,11 +109,13 @@ python "$SPEC_MGR" write-artifact <artifact> --file /tmp/<artifact>.md
 
 After review completes, handle by `review_intensity`:
 
-- **standard**: Proceed to next gate regardless of BLOCKING count (user decides at gate). For code review: if BLOCKING > 0, present to user via `AskUserQuestion` for guidance before proceeding.
-- **full**: Initialize revision counter at 0.
-  - BLOCKING=0: proceed.
-  - BLOCKING>0 and iteration < 2: re-invoke the producing agent with reviewer feedback appended to Context Pack, re-write artifact, re-run review.
-  - BLOCKING>0 and iteration >= 2: present to user via `AskUserQuestion` for guidance.
+- **standard**: Proceed to next gate regardless of BLOCKING count (user decides at gate). Do not auto-revise plan.md or implementation output. For code review: if BLOCKING > 0, present to user via `AskUserQuestion` for guidance before proceeding.
+- **full**:
+  - **Phase 2 (plan review)**: single-pass only. Do not auto-revise plan.md. Present BLOCKING issues to the user at the gate.
+  - **Phase 3 (code review)**: initialize revision counter at 0.
+    - BLOCKING=0: proceed.
+    - BLOCKING>0 and iteration < 2: re-invoke the producing agent with reviewer feedback appended to Context Pack, re-write artifact, re-run review.
+    - BLOCKING>0 and iteration >= 2: present to user via `AskUserQuestion` for guidance.
 
 ## Fullstack Parallel Implementation
 

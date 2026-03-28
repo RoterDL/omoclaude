@@ -14,7 +14,7 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 5. **Defer worktree decision until Phase 3.** If enabled, prepend `DO_WORKTREE_DIR=<path>` to all Phase 3 `codeagent-wrapper` calls.
 6. **Use `codeagent-wrapper` for all agent invocations.** All agent calls MUST go through `codeagent-wrapper` via Bash. Do NOT use Claude Code's built-in Agent/Explore tools.
 7. **Plan.md content must come from `spec-planner` agent** (trivial exception). ALWAYS use `spec-manager.py update-body` to preserve YAML frontmatter.
-8. **Review intensity governs depth.** `spec-planner` sets `review_intensity` in plan.md. `light`: skip external reviews. `standard`: single-pass, no iteration. `full`: iterative, max 2 rounds. Orchestrator may upgrade (never downgrade) at Phase 3 based on actual diff size.
+8. **Review intensity governs depth.** `spec-planner` sets `review_intensity` in plan.md. `light`: skip external reviews. `standard`: Phase 2 uses single-pass external plan review; Phase 3 uses single-pass code review. `full`: Phase 2 uses single-pass external plan review; Phase 3 is iterative, max 2 rounds. Orchestrator may upgrade (never downgrade) at Phase 3 based on actual diff size.
 9. **Agent failure handling.** If `codeagent-wrapper` fails (non-zero exit, timeout, empty output): check stderr, retry once if transient. If retry fails, surface to user via `AskUserQuestion`. Never silently skip a failed call.
 ## Key References
 - **`references/routing-and-templates.md`**: Read when entering review steps (Phase 2 Step 5, Phase 3 Step 5) or fullstack implementation (Phase 3 Step 2). Contains task_type routing, fullstack split-merge, parameterized review pattern, and intensity-based result handling.
@@ -26,7 +26,7 @@ You are the Spec lifecycle orchestrator. Manage the full lifecycle of a design d
 -> Trivial detection -> if trivial: express-path (skip to Phase 2 minimal)
 -> Phase 1: Intent Confirmation -> restate, clarify, AskUserQuestion gate
 -> Complexity Triage -> light / standard / full
--> Phase 2: Design & Planning -> exp-search -> spec-explorer -> spec-planner -> plan.md -> plan-reviewer (intensity-gated) -> gate
+-> Phase 2: Design & Planning -> exp-search -> spec-explorer -> spec-planner -> plan.md -> plan review (intensity-gated) -> gate
 -> Phase 3: Implementation -> worktree decision -> route spec-develop/spec-frontend -> summary.md -> spec-tester -> code review (intensity-gated) -> gate
 -> Phase 4: Wrap-up -> worktree merge -> /exp-reflect (intensity-gated) -> archive -> end
 ```
@@ -122,7 +122,7 @@ python "$SPEC_MGR" update-phase plan
 ```
 Do NOT overwrite `plan.md` directly — breaks YAML frontmatter.
 ### Step 5: Plan review (intensity-gated)
-Read `review_intensity` from plan.md Task Classification. Default to `standard` if missing.
+Read `review_intensity` from plan.md Task Classification. Default to `light` if missing.
 
 **light**: Skip. Log "Plan review skipped (light intensity)." Go to Step 6.
 
@@ -130,8 +130,8 @@ Read `review_intensity` from plan.md Task Classification. Default to `standard` 
 - agent: `plan-reviewer`
 - artifact: `plan-review.md`
 - context: plan.md content
-- task: "Review plan.md against the 7-area checklist. Report BLOCKING and MINOR issues."
-- acceptance: "Issue report with BLOCKING/MINOR classification. Summary: BLOCKING=\<n\>, MINOR=\<n\>."
+- task: "Review plan.md for request coverage, implementation grounding, and execution readiness. Report BLOCKING and MINOR issues only when supported by evidence."
+- acceptance: "Issue report with BLOCKING/MINOR classification. Summary: BLOCKING=<n>, MINOR=<n>."
 - Apply task_type routing for backend selection.
 - Apply intensity-based result handling (see reference).
 ### Step 6: User confirmation gate
