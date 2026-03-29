@@ -16,7 +16,7 @@ python install.py
 ```
 
 Project repository: https://github.com/RoterDL/omoclaude  
-Original upstream project: https://github.com/cexll/myclaude
+Original upstream project: https://github.com/stellarlinkco/myclaude
 
 ## Modules Overview
 
@@ -152,7 +152,6 @@ Edit `config.json` to enable/disable modules:
 
 - [skills](skills/README.md)
 - [codeagent-wrapper](codeagent-wrapper/README.md)
-- [Plugin System](PLUGIN_README.md)
 
 ## Troubleshooting
 
@@ -170,13 +169,17 @@ which gemini && gemini --version
 which opencode && opencode --version
 ```
 
+## Acknowledgments
+
+The skills in this project are primarily inspired by the following repositories:
+
+- [stellarlinkco/myclaude](https://github.com/stellarlinkco/myclaude)
+- [HHU3637kr/skills](https://github.com/HHU3637kr/skills)
+- [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)
+
 ## License
 
 AGPL-3.0 - see [LICENSE](LICENSE)
-
-### Commercial Licensing
-
-For commercial use without AGPL obligations, contact: evanxian9@gmail.com
 
 ## Support
 

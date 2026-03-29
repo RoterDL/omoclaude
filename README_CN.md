@@ -15,7 +15,7 @@ python install.py
 ```
 
 本项目仓库：https://github.com/RoterDL/omoclaude  
-原始上游项目：https://github.com/cexll/myclaude
+原始上游项目：https://github.com/stellarlinkco/myclaude
 
 ## 模块概览
 
@@ -151,7 +151,6 @@ python uninstall.py --module do,omo
 
 - [skills](skills/README.md)
 - [codeagent-wrapper](codeagent-wrapper/README.md)
-- [插件系统](PLUGIN_README.md)
 
 ## 故障排查
 
@@ -169,13 +168,17 @@ which gemini && gemini --version
 which opencode && opencode --version
 ```
 
+## 致谢
+
+本项目中的 skills 主要参考了以下仓库：
+
+- [stellarlinkco/myclaude](https://github.com/stellarlinkco/myclaude)
+- [HHU3637kr/skills](https://github.com/HHU3637kr/skills)
+- [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)
+
 ## 许可证
 
 AGPL-3.0，见 [LICENSE](LICENSE)
-
-### 商业授权
-
-如需商业授权（无需遵守 AGPL 义务），请联系：evanxian9@gmail.com
 
 ## 支持
 
