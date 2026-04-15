@@ -56,6 +56,18 @@ Search targets (prioritize):
 - If a link cannot be verified, mark it with `[UNVERIFIED]`
 - Never fabricate or hallucinate URLs
 
+### Step 4.5: Quality Weighting and Source Format
+
+Within the set of topically relevant papers, apply these weighting signals when ordering and when the user asks for "top picks":
+
+- **Venue Tier**: Papers published at top venues for the sub-field (for ML/CV/NLP: CVPR, ICCV, ECCV, ICML, NeurIPS, ICLR, ACL, EMNLP, NAACL; for systems/security: OSDI, SOSP, S&P, USENIX Security; etc.) carry higher signal. Use venue as a tie-breaker, not a gate — seminal arXiv-only work still counts.
+- **Open-Source Code**: Papers with a linked, working code repository (GitHub, GitLab) carry higher signal because they are far more useful for baseline reproduction downstream. When you can detect code availability from the abstract, paper page, or a "Code" link, record it.
+- **Source Format Availability**: For each paper, note whether arXiv LaTeX source or an HTML/Markdown rendering (e.g., ar5iv, alphaxiv) is available. Downstream extraction strongly prefers source/markdown over PDF — PDFs waste tokens and are often skim-read by models. Record a `Source Format` field: `latex` / `html` / `pdf-only`.
+
+Add these two columns to the per-paper output:
+- `Code`: URL to code repo, or `None detected`.
+- `Source Format`: `latex` | `html` | `pdf-only`.
+
 ### Step 5: Output
 
 For each paper found:
@@ -69,6 +81,8 @@ For each paper found:
 | Link | Real, accessible URL (DOI preferred) |
 | Abstract | Paper abstract (required; typically available from search result snippets) |
 | Citation Count | Number of citations if available; note source (e.g., Semantic Scholar). Write "N/A" if unavailable |
+| Code | Linked code repository URL, or `None detected` |
+| Source Format | `latex` / `html` / `pdf-only` |
 | Relevance | 1-2 sentence relevance note |
 
 Group papers by subtopic when results exceed 10.

@@ -26,7 +26,13 @@ Examples:
 /research-pro review my draft and include responses to reviewer comments
 /research-pro search recent literature on multimodal LLM safety
 /research-pro read this paper and also find related work
+/research-pro brainstorm 10 ideas building on this baseline and help me pick one
+/research-pro write a research contract for this chosen idea
 ```
+
+## Guiding Principle: Context Is All You Need
+
+Every agent invocation gets the minimum context needed. Per-idea review is strictly isolated (one idea per `idea-reviewer` invocation). No mutual-review loops — Athena is the final arbiter. See `SKILL.md` for the full discipline.
 
 ## Routing Signals
 
@@ -37,6 +43,8 @@ Examples:
 | Search related literature | `literature-scout` -> `literature-filter` -> confirm -> `format-writer` |
 | Combined (read + search) | `content-extractor` + `literature-scout` (parallel) -> `literature-filter` -> confirm -> `format-writer` |
 | Download filtered papers (PDF) | `literature-filter` -> confirm -> `paper-downloader` |
+| Brainstorm ideas from baseline + literature | `literature-scout` (if needed) -> `idea-generator` -> per-idea `idea-reviewer` (isolated) -> Athena arbitrates -> optional targeted `literature-scout` |
+| Freeze a chosen idea into a research contract | `research-contract` |
 | Analysis only (no output file needed) | Stop after analysis agent(s), present results directly |
 
 ## Input Source Handling
@@ -65,7 +73,10 @@ Before invoking `format-writer` or `paper-downloader`, the orchestrator must:
 | `literature-scout` | Online literature search with verified links | codex | gpt-5.4 |
 | `literature-filter` | Screen and rank search results with tiered recommendations | codex | gpt-5.4 |
 | `paper-downloader` | Batch download paper PDFs from open-access sources | codex | gpt-5.4 |
-| `format-writer` | Generate formatted output documents | gemini | gemini-3-flash-preview |
+| `idea-generator` | Clean-context divergent brainstormer (10 ideas from baseline + literature) | gemini | gemini-3-pro-preview |
+| `idea-reviewer` | Isolated per-idea scorer; invoked once per idea with only that idea + baseline | codex | gpt-5.4 (xhigh) |
+| `research-contract` | Pre-experiment contract writer (hypothesis, success/failure signals, ablation expectations) | claude | claude-opus-4-6 |
+| `format-writer` | Generate formatted output documents | claude | claude-sonnet-4-6 |
 
 ## Hard Constraints
 
@@ -147,9 +158,25 @@ Agent-model mappings in `~/.codeagent/models.json`:
       "reasoning": "high"
     },
     "format-writer": {
-      "backend": "gemini",
-      "model": "gemini-3-flash-preview",
+      "backend": "claude",
+      "model": "claude-sonnet-4-6",
       "prompt_file": "~/.claude/skills/research-pro/references/format-writer.md"
+    },
+    "idea-generator": {
+      "backend": "gemini",
+      "model": "gemini-3-pro-preview",
+      "prompt_file": "~/.claude/skills/research-pro/references/idea-generator.md"
+    },
+    "idea-reviewer": {
+      "backend": "codex",
+      "model": "gpt-5.4",
+      "prompt_file": "~/.claude/skills/research-pro/references/idea-reviewer.md",
+      "reasoning": "xhigh"
+    },
+    "research-contract": {
+      "backend": "claude",
+      "model": "claude-opus-4-6",
+      "prompt_file": "~/.claude/skills/research-pro/references/research-contract.md"
     }
   }
 }
