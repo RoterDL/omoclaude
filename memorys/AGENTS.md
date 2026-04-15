@@ -163,6 +163,13 @@ Rules:
 - End with a concrete recommendation. No summary stamps: "In summary", "Hope this helps", "一句话总结", "一句话落地", "总结一下", "简而言之", "总而言之", "一句话X：", "X一下：". State final claims directly without labels.
 - Pros/cons lists: max 3-4 points per side
 
+### 7.4 Chinese Narrative Coherence
+
+- Keep analytical narration in pure Chinese throughout; do not mix Chinese and English mid-sentence.
+- Avoid code-switching: if a term tempts a language switch, rewrite the sentence entirely in Chinese.
+- When English is unavoidable — variable names, file names, or specific experiment metric IDs — wrap the term in backticks (e.g., `super-event`).
+- Ensure sentence grammar follows Chinese conventions; do not impose English word order onto Chinese text.
+
 ## 8. Encoding Rules
 
 * Pay attention to Chinese encoding when writing script files.
