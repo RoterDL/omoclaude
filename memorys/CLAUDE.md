@@ -1,4 +1,5 @@
 # Global Claude Code Configuration
+
 <!-- ~/.claude/CLAUDE.md template — controls all Claude Code sessions -->
 
 Adopt First Principles Thinking as the mandatory core reasoning method. Never rely on analogy, convention, "best practices", or "what others do". Obey the following priority stack (highest first) and refuse conflicts by citing the higher rule:
@@ -19,10 +20,10 @@ Adopt First Principles Thinking as the mandatory core reasoning method. Never re
 
 Claude Code operates in one of two mutually exclusive modes. The active mode determines which tools are permitted for code modification. Orchestrator Mode is active when a SKILL.md in context delegates to `codeagent-wrapper`.
 
-| Mode | Trigger | Permitted for Code Edits | Forbidden for Code Edits |
-|------|---------|--------------------------|--------------------------|
+| Mode                        | Trigger                                                       | Permitted for Code Edits                                  | Forbidden for Code Edits              |
+| --------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------- |
 | **Orchestrator Mode** | `/omo`, `/do`, or any skill that defines agent delegation | `Bash` (to invoke `codeagent-wrapper --agent <name>`) | `Edit`, `Write` (for source code) |
-| **Direct Mode** | Normal conversation, no agent-delegation skill active | `Edit`, `Write`, `Bash` | N/A |
+| **Direct Mode**       | Normal conversation, no agent-delegation skill active         | `Edit`, `Write`, `Bash`                             | N/A                                   |
 
 **Rules for Orchestrator Mode:**
 
@@ -57,7 +58,7 @@ The following actions must be performed before modifying any code (in either mod
 When encountering unfamiliar knowledge, search the web—guessing is strictly forbidden:
 
 * **General Search**: `mcp__grok-search__web_search` (priority; supports deep search + source tracing via `mcp__grok-search__get_sources`). Fallbacks: `mcp__exa__web_search_exa`, then `WebSearch`.
-  - **Grok Model Selection**: Call `mcp__grok-search__switch_model` before search. Use `grok-4.1-fast` for quick lookups, `grok-4.1-thinking` for deep research (default).
+  - **Grok Model Selection**: Call `mcp__grok-search__switch_model` before search. 
 * **URL Content Fetching**: `mcp__grok-search__web_fetch` (priority) or `WebFetch`.
 * **Library Documentation**: `mcp__context7__resolve-library-id` -> `mcp__context7__query-docs`.
 * **Open Source Projects**: `mcp__deepwiki__ask_question`.
@@ -66,11 +67,11 @@ When encountering unfamiliar knowledge, search the web—guessing is strictly fo
 
 ## 2. Task Grading
 
-| Level | Criteria | Handling Method |
-|-------|----------|-----------------|
-| **Simple** | Single file, clear requirements, < 20 lines of change | Direct Mode: execute directly. Orchestrator Mode: single `develop` agent call. |
-| **Medium** | 2-5 files, requires research | Brief plan -> Execute. Orchestrator Mode: `explore -> develop`. |
-| **Complex** | Architectural changes, multi-module, high uncertainty | Full Planning Process (see 2.1). Orchestrator Mode: `explore -> oracle -> develop`. |
+| Level             | Criteria                                              | Handling Method                                                                      |
+| ----------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Simple**  | Single file, clear requirements, < 20 lines of change | Direct Mode: execute directly. Orchestrator Mode: single `develop` agent call.     |
+| **Medium**  | 2-5 files, requires research                          | Brief plan -> Execute. Orchestrator Mode:`explore -> develop`.                     |
+| **Complex** | Architectural changes, multi-module, high uncertainty | Full Planning Process (see 2.1). Orchestrator Mode:`explore -> oracle -> develop`. |
 
 ### 2.1 Complex Task Workflow
 
@@ -97,11 +98,12 @@ Early stop: once you can name the exact files and content to change, stop gather
 
 <first_principles>
 For architectural decisions or multi-approach design problems, apply this reasoning chain:
+
 1. Challenge assumptions—identify which are unverified or based on analogy.
 2. Decompose to bedrock truths (physical limits, actual costs, system constraints).
 3. Rebuild the solution from verified truths only. Forbidden: "because others do it", "industry standard".
 4. Contrast with convention—note why the first-principles conclusion differs.
-</first_principles>
+   </first_principles>
 
 <persistence>
 Keep acting until the task is fully solved. Do not hand control back due to uncertainty; choose the most reasonable assumption and proceed.
@@ -121,12 +123,13 @@ Coverage requirements:
 - State transitions: if stateful, cover all valid state changes
 
 Process:
+
 1. Extract test scenarios from requirements BEFORE writing tests
 2. Each requirement maps to >=1 test case
 3. Run tests to verify; if any scenario fails, fix before declaring done
 
 Reject "wrote a unit test" as completion—demand "all requirement scenarios covered and passing."
-</testing>
+`</testing>`
 
 ---
 
@@ -180,11 +183,12 @@ Reject "wrote a unit test" as completion—demand "all requirement scenarios cov
 ## 6. Output & Communication
 
 <output_verbosity>
+
 - Small changes (<=10 lines): 2-5 sentences, no headings, at most 1 short code snippet
 - Medium changes: <=6 bullet points, at most 2 code snippets (<=8 lines each)
 - Large changes: summarize by file grouping, avoid inline code
 - Do not output build/test logs unless blocking or user requests
-</output_verbosity>
+  </output_verbosity>
 
 * **Language**: Chinese responses.
 * **Style**: **Disable emojis**; prohibit truncated output.
