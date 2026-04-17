@@ -193,3 +193,18 @@ For analytical or advisory responses (explanations, recommendations, reasoning),
 ## 8. Encoding Rules
 
 * Pay attention to Chinese encoding when writing script files.
+
+---
+
+## 9. Superpowers Local Overrides
+
+- Lightweight tasks do not enter the full brainstorming / writing-plans / using-git-worktrees / subagent-driven-development chain.
+- Lightweight task definition: single-file or small-scope modifications, clear bug fixes, config tweaks, copy edits, small test additions.
+- Lightweight tasks default to analyzing the code and implementing directly; only ask when a critical uncertainty arises, and at most 1 question on the first round.
+- Do not re-ask questions already answered by project context, AGENTS.md, or existing code.
+- Do not create a worktree by default unless the user explicitly requests it.
+- Do not commit spec / plan to git by default unless the user explicitly requests it.
+- In the Codex environment, prefer `executing-plans` over `subagent-driven-development` by default.
+- Only use `subagent-driven-development` when the task is clearly suited to parallelism and the platform supports subagents well.
+- When confirmation is needed, offer 2 to 3 options with a recommendation in a single round; do not split confirmation across many turns.
+- The following operations still require confirmation: deleting files, large-scale refactors, rewriting git history, pushing to remote, changing environment config, changing CI, database changes.
