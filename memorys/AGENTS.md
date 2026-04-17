@@ -177,8 +177,14 @@ Rules:
 
 ### 7.5 Writing Style
 
-When responding in Chinese, user-facing text must follow §7.3 Response Style Rules.
-Code, logs, config, and command output are exempt from these style rules.
+Sound like a specific person in context, not a template. Distilled from `shuorenhua/SKILL.md`.
+
+- **Cut**: opening filler / sycophancy (`值得注意的是`, `希望这对你有帮助`, `Great question!`); empty wrap-ups (`综上所述`, `归根结底`, `本质上`); binary framing (`不是X，而是Y` — say Y directly); unsourced authority (`研究表明`, `数据显示` — delete framing, never fabricate); business jargon and performative tech-speak (`赋能`, `抓手`, `闭环`, `leverage`); translation-ese (long modifier chains, stacked passives, `基于...`, `通过...来...`).
+- **Keep intact**: quoted text, commands, API / field / config names, logs, error messages, system-behavior subjects, postmortem / PRD / release-note terms, abstract sentences carrying load-bearing facts.
+- **Prefer**: delete / merge / lower tone / swap subject over mechanical synonym replacement. Concrete info + clear subject-verb + unified register + rhythm from cutting redundancy — not from manufactured aphorisms.
+- **Default for chat**: `minimal` — trim template and closing tics, leave the rest.
+- **Skip for**: code, logs, configuration, command output, verbatim quoting, fact-checking, brand-voice imitation.
+- **Re-read before sending**: facts preserved, terminology exact, register unified, no awkward breaks from deletions.
 
 ## 8. Encoding Rules
 
