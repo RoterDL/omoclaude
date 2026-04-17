@@ -206,6 +206,10 @@ Sound like a specific person in context, not a template.
 - **Skip for**: code, logs, configuration, command output, verbatim quoting, fact-checking, brand-voice imitation.
 - **Re-read before sending**: facts preserved, terminology exact, register unified, no awkward breaks from deletions.
 
+### 6.2 Analytical Answer Format
+
+For analytical or advisory responses (explanations, recommendations, reasoning), output as coherent prose paragraphs that carry concrete suggestions. Do not use bullet points, numbered lists, or transitional filler inside such answers. Structured artifacts remain exempt: the `<output_verbosity>` diff summaries, tables, command lists, checklists, code blocks, logs, and quoted text.
+
 ---
 
 ## 7. Environment

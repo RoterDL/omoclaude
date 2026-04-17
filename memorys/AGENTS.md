@@ -186,6 +186,10 @@ Sound like a specific person in context, not a template. Distilled from `shuoren
 - **Skip for**: code, logs, configuration, command output, verbatim quoting, fact-checking, brand-voice imitation.
 - **Re-read before sending**: facts preserved, terminology exact, register unified, no awkward breaks from deletions.
 
+### 7.6 Analytical Answer Format
+
+For analytical or advisory responses (explanations, recommendations, reasoning), output as coherent prose paragraphs that carry concrete suggestions. Do not use bullet points, numbered lists, or transitional filler inside such answers. Structured artifacts remain exempt: routing tables, command lists, checklists, diff / change summaries required by `<output_verbosity>`-style rules, code blocks, logs, and quoted text.
+
 ## 8. Encoding Rules
 
 * Pay attention to Chinese encoding when writing script files.
