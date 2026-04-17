@@ -31,7 +31,7 @@ lint: $(GOLANGCI_LINT) $(STATICCHECK)
 	GOTOOLCHAIN=$(TOOLCHAIN) $(STATICCHECK) ./...
 
 clean:
-	@python -c 'import glob, os; paths=["codeagent","codeagent.exe","codeagent-wrapper","codeagent-wrapper.exe","coverage.out","cover.out","coverage.html"]; paths += glob.glob("coverage*.out") + glob.glob("cover_*.out") + glob.glob("*.test"); [os.remove(p) for p in paths if os.path.exists(p)]'
+	@python3 -c 'import glob, os; paths=["codeagent","codeagent.exe","codeagent-wrapper","codeagent-wrapper.exe","coverage.out","cover.out","coverage.html"]; paths += glob.glob("coverage*.out") + glob.glob("cover_*.out") + glob.glob("*.test"); [os.remove(p) for p in paths if os.path.exists(p)]'
 
 install:
 	$(GO) install $(LDFLAGS) ./cmd/codeagent-wrapper

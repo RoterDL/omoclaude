@@ -545,7 +545,6 @@ func runParallelMode(cmd *cobra.Command, args []string, opts *cliOptions, v *vip
 		results[i].CoverageNum = extractCoverageNum(results[i].Coverage)
 		results[i].FilesChanged = extractFilesChangedFromLines(lines)
 		results[i].TestsPassed, results[i].TestsFailed = extractTestResultsFromLines(lines)
-		// maxLen=0 means unlimited (no hard cap) for key output extraction.
 		results[i].KeyOutput = extractKeyOutputFromLines(lines, 0)
 	}
 
