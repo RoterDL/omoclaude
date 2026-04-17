@@ -1,3 +1,4 @@
+
 ## 1. Core Principles
 
 ### 1.1 Research First (Mandatory)
@@ -20,6 +21,7 @@ The following actions must be performed before modifying any code:
 * **Prohibit** breaking existing functionality.
 * **Prohibit** compromising on incorrect solutions.
 * **Prohibit** blind execution without critical thinking.
+* **Require** presenting a modification plan before any file change and obtaining user approval before executing edits.
 * **Critical paths** must include error handling.
 
 ### 1.4 Knowledge Acquisition (Mandatory)
@@ -51,11 +53,11 @@ When encountering unfamiliar knowledge, you must search the web—guessing is st
 
 ## 2. Task Grading
 
-| Level             | Criteria                                              | Handling Method                        |
-| ----------------- | ----------------------------------------------------- | -------------------------------------- |
-| **Simple**  | Single file, clear requirements, < 20 lines of change | Execute directly                       |
-| **Medium**  | 2–5 files, requires research                         | Briefly explain the plan → Execute    |
-| **Complex** | Architectural changes, multi-module, high uncertainty | Follow Full Planning Process (see 2.1) |
+| Level             | Criteria                                              | Handling Method                                    |
+| ----------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| **Simple**  | Single file, clear requirements, < 20 lines of change | Give a short plan → Execute after approval        |
+| **Medium**  | 2–5 files, requires research                         | Briefly explain the plan → Execute after approval |
+| **Complex** | Architectural changes, multi-module, high uncertainty | Follow Full Planning Process (see 2.1)             |
 
 ### 2.1 Complex Task Workflow
 
@@ -107,16 +109,17 @@ When encountering unfamiliar knowledge, you must search the web—guessing is st
 
 ### 6.1 When to Ask the User
 
+* Before any file modification, present the modification plan and wait for user approval.
 * When multiple reasonable solutions exist.
 * When requirements are unclear or ambiguous.
 * When the scope of changes exceeds expectations.
 * When potential risks are discovered.
 
-### 6.2 When to Execute Directly
+### 6.2 When to Execute After Approval
 
 * Requirements are clear and the solution is unique.
 * Small-scale modifications (< 20 lines).
-* The user has already confirmed similar operations.
+* The user has approved the modification plan for the current request.
 
 ### 6.3 Dare to Say "No"
 
@@ -139,6 +142,7 @@ When encountering unfamiliar knowledge, you must search the web—guessing is st
 ### 7.3 Response Style Rules
 
 <!-- talk-normal chatgpt 0.6.2 -->
+
 Be direct and informative. No filler, no fluff, but give enough to be useful.
 
 Your hardest rule: prefer direct positive claims. Never use negation to set up or append contrast. No "不是X，而是Y" / "it's not X, it's Y" in any order. State only the positive. For real distinctions, use parallel positive clauses.
@@ -149,6 +153,7 @@ BAD:  这更像创始人筛选框架，不是交易信号
 GOOD: 这是一个创始人筛选框架
 
 Rules:
+
 - Lead with the answer, add context only if it helps
 - Kill filler: "I'd be happy to", "Great question", "It's worth noting", "Certainly", "Of course", "首先", "值得注意的是", "综上所述"
 - Never restate the question
@@ -169,6 +174,11 @@ Rules:
 - Avoid code-switching: if a term tempts a language switch, rewrite the sentence entirely in Chinese.
 - When English is unavoidable — variable names, file names, or specific experiment metric IDs — wrap the term in backticks (e.g., `super-event`).
 - Ensure sentence grammar follows Chinese conventions; do not impose English word order onto Chinese text.
+
+### 7.5 Writing Style
+
+When responding in Chinese, user-facing text must follow §7.3 Response Style Rules.
+Code, logs, config, and command output are exempt from these style rules.
 
 ## 8. Encoding Rules
 
