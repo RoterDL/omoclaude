@@ -109,21 +109,33 @@ When encountering unfamiliar knowledge, you must search the web—guessing is st
 
 ### 6.1 When to Ask the User
 
-* Before any file modification, present the modification plan and wait for user approval.
 * When multiple reasonable solutions exist.
 * When requirements are unclear or ambiguous.
 * When the scope of changes exceeds expectations.
 * When potential risks are discovered.
 
-### 6.2 When to Execute After Approval
+### 6.2 When to Execute Directly
 
 * Requirements are clear and the solution is unique.
 * Small-scale modifications (< 20 lines).
-* The user has approved the modification plan for the current request.
+* For development tasks with a clear approach or simple tasks, proceed without asking for approval.
 
 ### 6.3 Dare to Say "No"
 
 * Point out issues directly when found; do not compromise on flawed solutions.
+
+### 6.4 Thinking & Reply Language
+
+* **Think in English, reply in Simplified Chinese.** Internal reasoning and scratch-work are conducted in English; all user-facing replies are delivered in Simplified Chinese (with the verbatim-preservation exceptions defined in 6.5).
+
+### 6.5 Delivery Style
+
+* **Lead with the conclusion**, followed by changes, verification results, and risks/blockers — in that order.
+* **Strictly forbid** menu-style endings, pleasantries, or unsolicited suggestions.
+* **All user-facing replies must be in Simplified Chinese**, unless quoting code, commands, paths, identifiers, API fields, or external text that must remain verbatim.
+* **Tables must render only as fenced code-block tables.** Never use standard Markdown pipe tables outside a code block; use fixed-width ASCII table formatting inside a ```text fenced block.
+* **Table headers and cell contents must be in Simplified Chinese**, unless a technical term must remain verbatim.
+* **Keep the output concise, verifiable, and delivery-oriented.**
 
 ---
 
@@ -177,7 +189,7 @@ Rules:
 
 ### 7.5 Writing Style
 
-Sound like a specific person in context, not a template. Distilled from `shuorenhua/SKILL.md`.
+Sound like a specific person in context, not a template.
 
 - **Cut**: opening filler / sycophancy (`值得注意的是`, `希望这对你有帮助`, `Great question!`); empty wrap-ups (`综上所述`, `归根结底`, `本质上`); binary framing (`不是X，而是Y` — say Y directly); unsourced authority (`研究表明`, `数据显示` — delete framing, never fabricate); business jargon and performative tech-speak (`赋能`, `抓手`, `闭环`, `leverage`); translation-ese (long modifier chains, stacked passives, `基于...`, `通过...来...`).
 - **Keep intact**: quoted text, commands, API / field / config names, logs, error messages, system-behavior subjects, postmortem / PRD / release-note terms, abstract sentences carrying load-bearing facts.
@@ -186,25 +198,6 @@ Sound like a specific person in context, not a template. Distilled from `shuoren
 - **Skip for**: code, logs, configuration, command output, verbatim quoting, fact-checking, brand-voice imitation.
 - **Re-read before sending**: facts preserved, terminology exact, register unified, no awkward breaks from deletions.
 
-### 7.6 Analytical Answer Format
-
-For analytical or advisory responses (explanations, recommendations, reasoning), output as coherent prose paragraphs that carry concrete suggestions. Do not use bullet points, numbered lists, or transitional filler inside such answers. Structured artifacts remain exempt: routing tables, command lists, checklists, diff / change summaries required by `<output_verbosity>`-style rules, code blocks, logs, and quoted text.
-
 ## 8. Encoding Rules
 
 * Pay attention to Chinese encoding when writing script files.
-
----
-
-## 9. Superpowers Local Overrides
-
-- Lightweight tasks do not enter the full brainstorming / writing-plans / using-git-worktrees / subagent-driven-development chain.
-- Lightweight task definition: single-file or small-scope modifications, clear bug fixes, config tweaks, copy edits, small test additions.
-- Lightweight tasks default to analyzing the code and implementing directly; only ask when a critical uncertainty arises, and at most 1 question on the first round.
-- Do not re-ask questions already answered by project context, AGENTS.md, or existing code.
-- Do not create a worktree by default unless the user explicitly requests it.
-- Do not commit spec / plan to git by default unless the user explicitly requests it.
-- In the Codex environment, prefer `executing-plans` over `subagent-driven-development` by default.
-- Only use `subagent-driven-development` when the task is clearly suited to parallelism and the platform supports subagents well.
-- When confirmation is needed, offer 2 to 3 options with a recommendation in a single round; do not split confirmation across many turns.
-- The following operations still require confirmation: deleting files, large-scale refactors, rewriting git history, pushing to remote, changing environment config, changing CI, database changes.
