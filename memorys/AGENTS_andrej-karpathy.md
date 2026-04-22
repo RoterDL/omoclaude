@@ -60,6 +60,8 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+**Measure, don't guess.** When data exists — logs, benchmarks, test output, profiler traces, existing metrics — cite it instead of speculating. "Data" means something you can point to with a file path, command, or measurement; your own priors don't count. Guessing in the presence of data is a bug, not a shortcut.
+
 ## 5. Git Discipline
 
 **Don't commit unless asked. Don't sign AI attribution.**
