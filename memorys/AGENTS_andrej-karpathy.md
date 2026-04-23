@@ -13,6 +13,7 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- **Don't fabricate missing details.** When specifics are unclear — field names, file paths, numbers, API shapes, error formats, business rules, experimental setup, user intent — stop and ask. Never invent a plausible-looking value to fill the gap; a fabricated detail that looks right is harder to catch later than an obvious blank.
 
 ## 2. Simplicity First
 
