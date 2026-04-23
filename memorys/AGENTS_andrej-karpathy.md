@@ -63,6 +63,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Measure, don't guess.** When data exists — logs, benchmarks, test output, profiler traces, existing metrics — cite it instead of speculating. "Data" means something you can point to with a file path, command, or measurement; your own priors don't count. Guessing in the presence of data is a bug, not a shortcut.
 
+**Stage long scripts.** Never dump a script over ~80 lines (or containing multiple functional slices / key decisions, whichever comes first) in a single write. Split into phases — skeleton/signatures, one functional slice, next slice — and after each phase verify before continuing: run it, lint it, or read the diff. One big write buries bugs under volume and forces rewrites; staged writes catch wrong assumptions at phase 1 instead of phase 5. Applies to new files and to large rewrites of existing ones. Every script must open with a top-of-file header comment stating purpose, inputs, outputs, and key side effects — written in phase 1 alongside the skeleton, not retrofitted at the end.
+
 ## 5. Git Discipline
 
 **Don't commit unless asked. Don't sign AI attribution.**
