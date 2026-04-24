@@ -24,6 +24,7 @@ Before implementing:
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
+- Write code comments in Simplified Chinese. Keep identifiers, APIs, commands, and quoted error text verbatim. If a file's existing comments are uniformly in another language, match it instead of mixing.
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
