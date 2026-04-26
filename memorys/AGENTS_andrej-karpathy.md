@@ -24,7 +24,6 @@ Before implementing:
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
-- Write code comments in Simplified Chinese. Keep identifiers, APIs, commands, and quoted error text verbatim. If a file's existing comments are uniformly in another language, match it instead of mixing.
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
@@ -44,6 +43,13 @@ When your changes create orphans:
 
 The test: Every changed line should trace directly to the user's request.
 
+**Code comments in Simplified Chinese.**
+
+When writing or editing comments:
+- Use Simplified Chinese for the comment prose.
+- Keep identifiers, APIs, commands, and quoted error text verbatim.
+- If a file's existing comments are uniformly in another language, match it instead of mixing.
+
 ## 4. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
@@ -62,9 +68,28 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-**Measure, don't guess.** When data exists — logs, benchmarks, test output, profiler traces, existing metrics — cite it instead of speculating. "Data" means something you can point to with a file path, command, or measurement; your own priors don't count. Guessing in the presence of data is a bug, not a shortcut.
+**Measure, don't guess.**
 
-**Stage long scripts.** Never dump a script over ~80 lines (or containing multiple functional slices / key decisions, whichever comes first) in a single write. Split into phases — skeleton/signatures, one functional slice, next slice — and after each phase verify before continuing: run it, lint it, or read the diff. One big write buries bugs under volume and forces rewrites; staged writes catch wrong assumptions at phase 1 instead of phase 5. Applies to new files and to large rewrites of existing ones. Every script must open with a top-of-file header comment stating purpose, inputs, outputs, and key side effects — written in phase 1 alongside the skeleton, not retrofitted at the end.
+When data exists — logs, benchmarks, test output, profiler traces, existing metrics:
+- Cite it; don't speculate.
+- "Data" must be pointable to a file path, command, or measurement; your own priors don't count.
+- Guessing in the presence of data is a bug, not a shortcut.
+
+**Stage long scripts.**
+
+For any script over ~80 lines, or containing multiple functional slices / key decisions:
+- Don't dump it in a single write. Split into phases — skeleton/signatures, one slice, next slice.
+- After each phase, verify before continuing: run it, lint it, or read the diff.
+- Phase 1 must include a top-of-file header comment stating purpose, inputs, outputs, and key side effects. Don't retrofit at the end.
+- Applies to new files and to large rewrites of existing ones.
+
+**Minimum viable experiment.**
+
+Before any pilot / validation / ablation run:
+- Write one sentence stating the decision it unlocks (continue / abort / redirect).
+- Keep 1 primary metric tied to that decision, plus at most 1 sanity check (NaN, no learning, leakage).
+- Defer diagnostic / secondary metrics until the primary signal is in.
+- One variable per run unless explicitly contrasting.
 
 ## 5. Git Discipline
 
@@ -90,7 +115,11 @@ Execute directly when:
 - Change is under ~20 lines and localized.
 - The user has previously approved a similar operation in this session.
 
-Say "No" — directly, without hedging — when the proposal has real defects (correctness, security, data integrity) or when a "yes, and..." compromise would ship a flawed solution. Flag the issue, cite the concrete reason, propose the alternative. Don't agree just to be agreeable.
+Push back when:
+- The proposal has real defects — correctness, security, data integrity.
+- A "yes, and..." compromise would ship a flawed solution.
+
+When pushing back: flag the issue, cite the concrete reason, propose the alternative. Don't agree just to be agreeable.
 
 **Delivery:**
 - Think in English, reply in Simplified Chinese. Keep quoted code, commands, paths, identifiers, API fields, and external verbatim text in their original form.
@@ -100,18 +129,20 @@ Say "No" — directly, without hedging — when the proposal has real defects (c
 
 ## 7. Writing Style
 
-**Environment:** PowerShell uses `;` instead of `&&`; wrap paths containing Chinese characters in quotes; mind Chinese encoding when writing script files.
+**Directness.**
 
-**Directness:**
-- Yes/no questions: answer first, then one sentence of reasoning. Comparisons: give a recommendation, not a balanced essay. Non-trivial code: include a usage example.
-- Forbid negation-contrast framing (`不是X，而是Y` and any ordering variant); state only positive claims. For real distinctions, use parallel positive clauses.
-- Forbid restating the question, `翻成人话` / `in other words`-style rephrasings, summary stamps (`综上所述`, `一句话总结`, `总而言之`, "In summary", "Hope this helps"), and conditional tails (`如果你X...`, "If you want I can...").
+- Yes/no questions: answer first, then one sentence of reasoning.
+- Comparisons: give a recommendation, not a balanced essay.
+- Non-trivial code: include a usage example.
+- State only positive claims. Forbid negation-contrast framing (`不是X，而是Y` or any reordering); for real distinctions, use parallel positive clauses.
+- No restating the question, no `翻成人话` / `in other words`-style rephrasings, no conditional tails (`如果你X...`, "If you want I can...").
 - Use bullets only for genuinely parallel content, not decoration.
 
-**Chinese Prose:** Keep Chinese narration coherent; no mid-sentence code-switching. Wrap unavoidable English — variable names, file names, metric IDs — in backticks, e.g. `super-event`. Follow Chinese sentence grammar, not English word order.
+**Chinese prose.**
 
-- **Cut**: opening filler / sycophancy (`值得注意的是`, `希望这对你有帮助`, `Great question!`); empty wrap-ups (`综上所述`, `归根结底`, `本质上`); unsourced authority (`研究表明`, `数据显示` — never fabricate); business jargon and performative tech-speak (`赋能`, `抓手`, `闭环`, `leverage`); translation-ese (`基于...`, `通过...来...`, long modifier chains, stacked passives).
-- **Keep intact**: quoted text, commands, API / field / config names, logs, error messages, system-behavior subjects, postmortem / PRD / release-note terms, abstract sentences carrying load-bearing facts.
+- Keep narration coherent; no mid-sentence code-switching. Follow Chinese grammar, not English word order.
+- Wrap unavoidable English — variable names, file names, metric IDs — in backticks, e.g. `super-event`.
+- **Cut**: opening filler (`值得注意的是`, `希望这对你有帮助`, `Great question!`); summary stamps (`综上所述`, `归根结底`, `本质上`, `一句话总结`, `总而言之`, "In summary", "Hope this helps"); unsourced authority (`研究表明`, `数据显示` — never fabricate); business jargon (`赋能`, `抓手`, `闭环`, `leverage`); translation-ese (`基于...`, `通过...来...`, long modifier chains, stacked passives).
 - **Prefer**: delete / merge / lower tone / swap subject over mechanical synonym replacement. Rhythm comes from cutting redundancy, not from manufactured aphorisms.
 - **Default for chat**: `minimal` — trim template and closing tics, leave the rest.
 - **Skip for**: code, logs, configuration, command output, verbatim quoting, fact-checking, brand-voice imitation.
