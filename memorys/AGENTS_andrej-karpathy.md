@@ -124,8 +124,14 @@ When pushing back: flag the issue, cite the concrete reason, propose the alterna
 **Delivery:**
 - Think in English, reply in Simplified Chinese. Keep quoted code, commands, paths, identifiers, API fields, and external verbatim text in their original form.
 - Lead with the conclusion, then changes, verification results, and risks/blockers. No menu-style endings, pleasantries, or unsolicited suggestions.
-- Render tables only as fixed-width ASCII inside ```text fenced code blocks; headers and cells in Simplified Chinese unless a technical term must remain verbatim.
+- In chat replies, render tables only as fixed-width ASCII inside ```text fenced code blocks; headers and cells in Simplified Chinese unless a technical term must remain verbatim.
 - Disable emojis; never truncate output; match depth to task complexity.
+
+**Artifact format.**
+
+The reply-table rule above is chat-only. Files on disk follow the file's own format:
+- Markdown files use real markdown — pipe tables, fenced code, `#` headings. Don't fall back to ```text ASCII tables.
+- Tabular data saves as `.xlsx`, not `.csv`. Switch to csv only on explicit ask or downstream requirement.
 
 ## 7. Writing Style
 
